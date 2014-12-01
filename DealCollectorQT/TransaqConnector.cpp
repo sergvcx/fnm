@@ -152,11 +152,11 @@ bool CALLBACK acceptor(BYTE *pData)
 				if (xml.isStartElement() && xml.name() == "tick"){					
 					C_Tick tick;
 					ParseTick(xml,tick);
-					//TickQueue.enqueue(tick);
+					TickQueue.enqueue(tick);
 				}
 				xml.readNext();
 			}
-			//pThreadAllDeals->Parse(TickQueue);
+			pThreadAllDeals->Parse(TickQueue);
 		}
 	}
 
@@ -338,17 +338,8 @@ bool CALLBACK acceptor(BYTE *pData)
 			Cmd+="</command>";
 			
 			char buf[]="<command id='subscribe_ticks'>"
-					"<security secid='24' tradeno='1'/>"  
-					"<security secid='25' tradeno='1'/>"  
-					"<security secid='26' tradeno='1'/>"  
-					"<security secid='27' tradeno='1'/>"  
-					"<security secid='833' tradeno='1'/>"  
-					"<security secid='4' tradeno='1'/>"  
-					"<security secid='5' tradeno='1'/>"  
-					"<security secid='6' tradeno='1'/>"  
-					"<security secid='7' tradeno='1'/>"  
-					"<security secid='8' tradeno='1'/>"  
-					"<security secid='10' tradeno='1'/>"  
+					"<security secid='21' tradeno='1'/>"  
+					
 					
 				"</command>";
 

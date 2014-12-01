@@ -6,9 +6,9 @@ extern CThreadAllDeals* pThreadAllDeals;
  int main(int argc, char *argv[])
 	 {
 
-	 //QApplication app(argc, argv);
+	 QApplication app(argc, argv);
 
-	 //MainWindow* mainWin=new MainWindow;
+	 MainWindow* mainWin=new MainWindow;
 	 //if (argc==2){
 	//	 if (strcmp(argv[1],"-auto")==0){
 	//		pThreadAllDeals->start();
