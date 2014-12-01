@@ -22,7 +22,8 @@ char ticks[]="<ticks><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</s
 
 #include <iostream>
 #include <fstream>
-#include "demo.h"
+//#include "demo.h"
+#include "fight.h"
 
 #include "TransaqConnector.h"
 
@@ -403,13 +404,20 @@ bool CALLBACK acceptor(BYTE *pData)
 			return 0;
 	}
 	int C_TransaqConnector::change_pass(){
+		try{	
 			std::cout<<"Sending \"change_pass\" command..."<<std::endl;
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(
-				"<command id='change_pass' oldpass="" newpass="">"
+				"<command id='change_pass' oldpass='' newpass=''>"
 				"</command>"));
 			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
 			FreeMemory(ss);
-			return 0;
+		}
+		catch (std::runtime_error& e) {
+			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+			UnloadLibrary(hm);
+			return 1;
+		}
+		return 0;
 	}
 
 	

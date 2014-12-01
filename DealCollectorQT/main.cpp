@@ -17,9 +17,13 @@ extern CThreadAllDeals* pThreadAllDeals;
 	 C_TransaqConnector TransaqConnector;
 	 
 	 QList<QString> List; List << "GMKN";
-	 TransaqConnector.subscribe_ticks(List);
+	 
 	 //TransaqConnector.subscribe();
 	 //mainWin->show();
+
+	Sleep(1000*10);
+	TransaqConnector.subscribe_ticks(List);
+	//TransaqConnector.change_pass();
 	Sleep(1000*100);
 	 return 1;
 	 //return app.exec();
