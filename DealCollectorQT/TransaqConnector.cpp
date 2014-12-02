@@ -12,13 +12,13 @@
 #include <QStringList>
 #include "ui_ui.h"
 #include "main.h"
+#include "XmlParse.h"
 #define STR(a) a.toAscii().data()
 #define RUS(str) QString::fromLocal8Bit(str.toAscii().data())
 #define ASCII(str) str.toAscii().data()
 
 //char ticks[]="<tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680416</tradeno><tradetime>08.08.2014 09:59:59</tradetime><price>6766</price><quantity>5</quantity><period>O</period><buysell>S</buysell></tick><ti></ti>";
 //char ticks[]="<ticks><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode></tick><tick><secid>834</secid></tick></ticks>";//<board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680416</tradeno><tradetime>08.08.2014 09:59:59</tradetime><price>6766</price><quantity>5</quantity><period>O</period><buysell>S</buysell></tick><ti></ti>";
-char ticks[]="<ticks><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680813</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>6783</price><quantity>20</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>4</secid><board>TQBR</board><seccode>LKOH</seccode><tradeno>2396680814</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>1935.6</price><quantity>16</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680815</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68</price><quantity>60</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680816</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68</price><quantity>1</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680817</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>67.93</price><quantity>99</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680818</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>67.93</price><quantity>47</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680819</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.27</price><quantity>180</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>4</secid><board>TQBR</board><seccode>LKOH</seccode><tradeno>2396680824</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>1933.9</price><quantity>10</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680825</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.15</price><quantity>192</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680828</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>6784</price><quantity>20</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680829</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.28</price><quantity>100</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680830</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.4</price><quantity>30</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680831</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.4</price><quantity>80</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680832</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.16</price><quantity>2</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680833</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.37</price><quantity>100</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680835</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.37</price><quantity>100</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680836</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.37</price><quantity>100</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680838</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.37</price><quantity>50</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>4</secid><board>TQBR</board><seccode>LKOH</seccode><tradeno>2396680839</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>1933</price><quantity>10</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680840</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.37</price><quantity>40</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680841</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.37</price><quantity>20</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680842</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.37</price><quantity>10</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>4</secid><board>TQBR</board><seccode>LKOH</seccode><tradeno>2396680843</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>1933</price><quantity>20</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>4</secid><board>TQBR</board><seccode>LKOH</seccode><tradeno>2396680844</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>1933</price><quantity>10</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680845</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.37</price><quantity>50</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>4</secid><board>TQBR</board><seccode>LKOH</seccode><tradeno>2396680849</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>1932.7</price><quantity>9</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>4</secid><board>TQBR</board><seccode>LKOH</seccode><tradeno>2396680850</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>1932.5</price><quantity>1</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680851</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>6784</price><quantity>20</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>4</secid><board>TQBR</board><seccode>LKOH</seccode><tradeno>2396680852</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>1931</price><quantity>10</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680854</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.33</price><quantity>300</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680857</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.2</price><quantity>20</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680858</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.2</price><quantity>10</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680859</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.16</price><quantity>520</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680860</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>6784</price><quantity>20</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680861</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.33</price><quantity>110</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680862</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.33</price><quantity>10</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680863</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.3</price><quantity>24</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680864</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.33</price><quantity>76</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680865</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.33</price><quantity>104</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680866</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.34</price><quantity>100</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680867</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.37</price><quantity>130</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680868</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.38</price><quantity>920</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680869</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.39</price><quantity>86</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680870</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.39</price><quantity>214</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680871</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.4</price><quantity>20</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680872</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>6784</price><quantity>1</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680873</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>6785</price><quantity>19</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680874</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>6785</price><quantity>20</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680875</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.43</price><quantity>737</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680876</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.45</price><quantity>511</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680877</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>6785</price><quantity>20</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680878</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>6785</price><quantity>20</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680879</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.48</price><quantity>40</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680880</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.42</price><quantity>150</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680881</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.42</price><quantity>96</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680882</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.42</price><quantity>4</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680886</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.48</price><quantity>50</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680887</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.48</price><quantity>100</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680889</tradeno><tradetime>08.08.2014 10:00:01</tradetime><price>68.48</price><quantity>10</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680900</tradeno><tradetime>08.08.2014 10:00:02</tradetime><price>68.42</price><quantity>16</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680901</tradeno><tradetime>08.08.2014 10:00:02</tradetime><price>68.42</price><quantity>20</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680902</tradeno><tradetime>08.08.2014 10:00:02</tradetime><price>68.42</price><quantity>20</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680903</tradeno><tradetime>08.08.2014 10:00:02</tradetime><price>68.42</price><quantity>44</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>4</secid><board>TQBR</board><seccode>LKOH</seccode><tradeno>2396680905</tradeno><tradetime>08.08.2014 10:00:02</tradetime><price>1930</price><quantity>20</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680906</tradeno><tradetime>08.08.2014 10:00:02</tradetime><price>6785</price><quantity>20</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680919</tradeno><tradetime>08.08.2014 10:00:02</tradetime><price>68.42</price><quantity>16</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680920</tradeno><tradetime>08.08.2014 10:00:02</tradetime><price>68.42</price><quantity>20</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>26</secid><board>TQBR</board><seccode>SBER</seccode><tradeno>2396680921</tradeno><tradetime>08.08.2014 10:00:02</tradetime><price>68.41</price><quantity>114</quantity><period>N</period><buysell>S</buysell></tick><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680924</tradeno><tradetime>08.08.2014 10:00:02</tradetime><price>6785</price><quantity>1</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680925</tradeno><tradetime>08.08.2014 10:00:02</tradetime><price>6789</price><quantity>5</quantity><period>N</period><buysell>B</buysell></tick><tick><secid>833</secid><board>TQBR</board><seccode>GMKN</seccode><tradeno>2396680926</tradeno><tradetime>08.08.2014 10:00:02</tradetime><price>6798</price><quantity>37</quantity><period>N</period><buysell>B</buysell></tick></ticks>";
 
 #include <iostream>
 #include <fstream>
@@ -46,55 +46,8 @@ extern CThreadAllDeals* pThreadAllDeals;
 
 
 
-void ParseTick(QXmlStreamReader& xml, C_Tick& tick ){
-	//QMap<QString, QString> Tick;
-	/* Let's check that we're really getting a tick. */
-	if(xml.tokenType() != QXmlStreamReader::StartElement &&	xml.name() == "tick") {
-		return;
-	}
-	xml.readNext();
-	//printf(STR(xml.name().toString()));
-	while(!(xml.tokenType() == QXmlStreamReader::EndElement &&	xml.name() == "tick")) {
-		if(xml.tokenType() == QXmlStreamReader::StartElement) {
-			if(xml.name() == "secid") {
-				tick.secid= xml.readElementText();
-				continue;
-			}
-			if(xml.name() == "board") {
-				tick.board= xml.readElementText();
-				continue;
-			}
-			if(xml.name() == "tradeno"){
-				tick.tradeno= xml.readElementText();
-				continue;
-			}
-			if(xml.name() == "tradetime"){
-				tick.tradetime= xml.readElementText();
-				continue;
-			}
-			if(xml.name() == "price"){
-				tick.price= xml.readElementText();
-				continue;
-			}
-			if(xml.name() == "quantity"){
-				tick.quantity= xml.readElementText();
-				continue;
-			}
-			if(xml.name() == "period"){
-				tick.period= xml.readElementText();
-				continue;
-			}
-			if(xml.name() == "buysell"){
-				tick.buysell= xml.readElementText();
-				continue;
-			}
-		}
-		// ...and next... 
-		xml.readNext();
-		//printf(STR(xml.name().toString()));
-	}
-	return;
-}
+
+
 /*
 class C_TickQueue{
 	QQueue<C_Tick> stack;
@@ -114,16 +67,62 @@ std::ofstream xml_markets;
 std::ofstream xml_ticks;
 std::ofstream xml_securities;
 std::ofstream xml_sec_info_upd;
+std::ofstream warnings;
+std::ofstream xml_server_status; 
+
+
+void OpenXML(){
+
+	setlocale(LC_CTYPE, "");
+
+	xml_markets.open("xml_markets.xml");
+	xml_markets<<"<?xml version='1.0' encoding='UTF-8'?>";
+	xml_markets<<"<root>" <<std::endl;
+
+	xml_ticks.open("xml_ticks.xml");
+	xml_ticks<<"<?xml version='1.0' encoding='UTF-8'?>";
+	xml_ticks<<"<root>" <<std::endl;
+
+	xml_securities.open("xml_securities.xml");
+	xml_securities<<"<?xml version='1.0' encoding='UTF-8'?>";
+	xml_securities<<"<root>" <<std::endl;
+
+	xml_sec_info_upd.open("xml_sec_info_upd.xml");
+	xml_sec_info_upd<<"<?xml version='1.0' encoding='UTF-8'?>";
+	xml_sec_info_upd<<"<root>" <<std::endl;
+
+	xml_server_status.open("xml_server_status.xml");
+	xml_server_status<<"<?xml version='1.0' encoding='UTF-8'?>";
+	xml_server_status<<std::endl;
+
+	
+	warnings.open("warnings.log");
+}
+
+void CloseXML(){
+	xml_markets<<"</root>";
+	xml_ticks<<"</root>";
+	xml_securities<<"</root>";
+	xml_sec_info_upd<<"</root>";
+
+	xml_markets.close();
+	xml_ticks.close();
+	xml_securities.close();
+	xml_sec_info_upd.close();
+	xml_server_status.close();
+	warnings.close();
+}
 
 
 
+QMap<QString,S_SecInfo> mapSeccode;
 
-
+bool isReadyToCommand=false;
 bool CALLBACK acceptor(BYTE *pData)
 {
 	int static counter=0;
 	counter++;
-	std::cout<<"******** CALLBACK ******" << counter << std::endl;
+	std::cout<<"******** CALLBACK -ENTER" << counter;
 	
 	fflush(stdout);
 	QXmlStreamReader xml((char*)pData);
@@ -136,16 +135,42 @@ bool CALLBACK acceptor(BYTE *pData)
 		if (xml.isStartElement() && xml.name() == "markets"){
 			xml_markets<<pData<<  std::endl;
 		}
-		if (xml.isEndElement() && xml.name() == "securities"){
-			xml_securities<<pData<<  std::endl; 
+		//-------------------------------------------------------------
+		if (xml.isStartElement() && xml.name() == "securities"){
+			xml_securities<< pData <<  std::endl; 
+			isReadyToCommand=false;
+			std::cout<<"-security";
+			xml.readNext();
+			while (!(xml.isEndElement() && xml.name()=="securities" )){
+				if (xml.isStartElement() && xml.name() == "security"){					
+					S_SecInfo SecInfo;
+					ParseSecurity(xml,SecInfo);
+					if (SecInfo.seccode!=""){
+						if (!mapSeccode.contains(SecInfo.seccode)){
+							mapSeccode[SecInfo.seccode]=SecInfo;
+							//QString info = SecInfo.seccode + " secid="+SecInfo.secid+ " shortname="+SecInfo.shortname;
+							//std::cout<< ASCII(info) << std::endl;
+						}
+						else 
+							std::cerr << "WARNING: mapSeccode already contains " << STR(SecInfo.seccode) <<std::endl;
+					} else 
+						std::cerr<< "WARNING: Empty seccode" <<std::endl;
+						
+				}
+				xml.readNext();
+			}
+			std::cout<<"-security finished"; fflush(stdout);
+			isReadyToCommand=true;
 		}
-		if (xml.isEndElement() && xml.name() == "sec_info_upd"){
+		//-------------------------------------------------------------
+		if (xml.isStartElement() && xml.name() == "sec_info_upd"){
 			xml_sec_info_upd<<pData<<  std::endl; 
 		}
-
+		//------------------------------------------------------------
 		if (xml.isStartElement() && xml.name() == "ticks"){
+			isReadyToCommand=false;
 			xml_ticks<<pData<<  std::endl; 
-
+			std::cout<<"-ticks";
 			QQueue<C_Tick> TickQueue;
 			xml.readNext();
 			while (!(xml.isEndElement() && xml.name()=="ticks" )){
@@ -156,12 +181,33 @@ bool CALLBACK acceptor(BYTE *pData)
 				}
 				xml.readNext();
 			}
-			pThreadAllDeals->Parse(TickQueue);
+			std::cout<<"-ticks finished"; fflush(stdout);
+			isReadyToCommand=true;
+			//pThreadAllDeals->Parse(TickQueue);
 		}
+		//-------------------------------------------------------------
+		if (xml.isStartElement() && xml.name() == "server_status"){
+			xml_server_status<<pData<<  std::endl; 
+			std::cout<<"-server_status";
+			QXmlStreamAttributes attributes = xml.attributes();
+			if (attributes.hasAttribute("id"))
+				QString id = attributes.value("id").toString();
+
+			if (attributes.hasAttribute("connected"))
+				QString connected = attributes.value("connected").toString();
+
+			if (attributes.hasAttribute("recover"))
+				QString recover = attributes.value("recover").toString();
+
+			if (attributes.hasAttribute("server_tz"))
+				QString server_tz = attributes.value("server_tz").toString();
+		}
+
 	}
 
 
 	FreeMemory(pData);
+	std::cout<<" -EXIT **** " << counter << std::endl;
 	return true;
 }
 
@@ -229,8 +275,8 @@ bool CALLBACK acceptor(BYTE *pData)
 		
 				SetCallback(acceptor);
 		
-				OpenXML();
-				connect();
+				
+				
 
 	/*	
 	#ifdef CONNECTOR_166PLUS
@@ -257,8 +303,8 @@ bool CALLBACK acceptor(BYTE *pData)
 	C_TransaqConnector::~C_TransaqConnector() {
 		
 
-		disconnect();
-		CloseXML();
+		
+		
 		try{	
 
 		#ifdef CONNECTOR_166PLUS
@@ -313,8 +359,8 @@ bool CALLBACK acceptor(BYTE *pData)
 
 	int C_TransaqConnector::server_status(){
 		try {
-			std::cout<<"Sending \"server status\" server status..."<<std::endl;
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id=\"server_status\"/>"));
+			std::cout<<"Sending 'server status' server status..."<<std::endl;
+			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='server_status'/>"));
 			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
 			FreeMemory(ss);
 		}
@@ -328,27 +374,34 @@ bool CALLBACK acceptor(BYTE *pData)
 	
 	int C_TransaqConnector::subscribe_ticks(QList<QString>& SeccodeList, int tradeno){
 		try {
-			std::cout<<"Sending \"subscribe ticks\" command..."<<std::endl;
+			std::cout<<"Sending 'subscribe ticks' command..."<<std::endl;
 			QString Cmd="<command id='subscribe_ticks'>";
 			QString seccode;
 			foreach(seccode,SeccodeList){
-				//Cmd+="<security secid='" + SecidMap[seccode] + "' tradeno='1'/>"  
-				Cmd+="<security secid='24"   "' tradeno='1'/>" ;
+				if (!mapSeccode.contains(seccode)){
+					std::cerr<< "ERROR: mapSeccode does not contains" << STR(seccode) << std::endl;
+					//return 1;
+				}
+				Cmd+="<security secid='" + mapSeccode[seccode].secid + "' tradeno='1'/>"  ;
+				//Cmd+="<security secid='24"   "' tradeno='1'/>" ;
 			}
 			Cmd+="</command>";
 			
 			char buf[]="<command id='subscribe_ticks'>"
 					"<security secid='21' tradeno='1'/>"  
-					
-					
-				"</command>";
+					"</command>";
 
 			printf(STR(Cmd));
-			char* buffer=new char[512];
-			strcpy(buffer,STR(Cmd));
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(buf));
+			//char* buffer=new char[512];
+			//strcpy(buffer,STR(Cmd));
+			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
+			//BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(buf));
+			//BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='subscribe_ticks'>"
+			//	"<security secid='21' tradeno='1'/>"  
+			//	"</command>"));
+
 			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
-			delete buffer;
+			//delete buffer;
 			//Sleep(500000);
 			FreeMemory(ss);
 		}
@@ -360,23 +413,30 @@ bool CALLBACK acceptor(BYTE *pData)
 		return 0;
 	}
 
-	int C_TransaqConnector::subscribe(){
-			/* 
-			В команде 'subscribe' идентификаторы приведены для примера.
-			В реальном коде необходимо использовать данные, присылаемые сервером
-			*/
-			std::cout<<"Sending \"subscribe\" command..."<<std::endl;
-			char buffer[]="<command id='subscribe'>"
+	int C_TransaqConnector::subscribe(QString& seccode){
+			//char* buffer=new char[512];
+			//QString Cmd="<command id='subscribe'>"
+			//			"<alltrades><secid>"+mapSeccode[seccode].secid+"</secid></alltrades>"  
+			//			"<quotations><secid>"+mapSeccode[seccode].secid+"</secid></quotations>" 
+			//			"<quotes><secid>"+mapSeccode[seccode].secid+"</secid></quotes>"
+			//			"</command>";
+
+
+
+			std::cout<<"Sending 'subscribe' command..." << STR(seccode) <<std::endl;
+			QString Cmd="<command id='subscribe'>"
 				"<alltrades><secid>26</secid></alltrades>"  
 				"<quotations><secid>26</secid></quotations>" 
 				"<quotes><secid>26</secid></quotes>"
 				"</command>";
+			//char buffer[128];
+			//strcpy(buffer,STR(Cmd));
 			//BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='subscribe'>"
 			//	"<alltrades><secid>26</secid></alltrades>"  
 			//	"<quotations><secid>26</secid></quotations>" 
 			//	"<quotes><secid>26</secid></quotes>"
 			//	"</command>"));
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(buffer));
+			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
 			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
 			FreeMemory(ss);
 			return 0;
@@ -412,32 +472,3 @@ bool CALLBACK acceptor(BYTE *pData)
 	}
 
 	
-
-	void C_TransaqConnector::OpenXML(){
-
-		setlocale(LC_CTYPE, "");
-		
-		xml_markets.open("xml_markets.xml");
-		xml_markets<<"<?xml version='1.0' encoding='UTF-8'?>";
-		xml_markets<<"<root>" <<std::endl;
-
-		xml_ticks.open("xml_ticks.xml");
-		xml_ticks<<"<?xml version='1.0' encoding='UTF-8'?>";
-		xml_ticks<<"<root>" <<std::endl;
-
-		xml_securities.open("xml_securities.xml");
-		xml_securities<<"<?xml version='1.0' encoding='UTF-8'?>";
-		xml_securities<<"<root>" <<std::endl;
-
-		xml_sec_info_upd.open("xml_sec_info_upd.xml");
-		xml_sec_info_upd<<"<?xml version='1.0' encoding='UTF-8'?>";
-		xml_sec_info_upd<<"<root>" <<std::endl;
-
-	}
-
-	void C_TransaqConnector::CloseXML(){
-		xml_markets<<"</root>";
-		xml_ticks<<"</root>";
-		xml_securities<<"</root>";
-		xml_sec_info_upd<<"</root>";
-	}

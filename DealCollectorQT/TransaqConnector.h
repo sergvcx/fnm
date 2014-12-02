@@ -1,3 +1,5 @@
+#ifndef TRAHNSAQCONNECTOR_DEFINED
+#define TRAHNSAQCONNECTOR_DEFINED
 #include <windows.h>
 
 #define CONNECTOR_166PLUS // пример для версии библиотеки версии 1.66 (5.02) или выше
@@ -14,6 +16,17 @@ typedef BYTE* (WINAPI *typeSetLogLevel)(int level);
 typedef BYTE* (WINAPI *typeUninitialize)();
 #endif
 
+struct S_SecInfo{
+	QString seccode;
+	QString shortname;
+	QString decimails;
+	QString active;
+	QString secid;
+	QString minstep;
+	QString lotsize;
+	QString board;
+};
+
 class C_TransaqConnector {
 	HMODULE hm;
 	static const unsigned buffSize = 256;
@@ -24,6 +37,7 @@ class C_TransaqConnector {
 	typeSetLogLevel  SetLogLevel;
 	typeSetCallback  SetCallback;
 	typeSendCommand  SendCommand;
+	
 public:
 
 	C_TransaqConnector();
@@ -32,9 +46,13 @@ public:
 	int disconnect();
 	int server_status();
 	int subscribe_ticks(QList<QString>& SeccodeList, int tradeno=1);
-	int subscribe();
+	int subscribe(QString& seccode);
 	int get_securities();
 	int change_pass();
-	void OpenXML();
-	void CloseXML();
+
 };
+
+void OpenXML();
+void CloseXML();
+
+#endif
