@@ -120,9 +120,11 @@ QMap<QString,S_SecInfo> mapSeccode;
 bool isReadyToCommand=false;
 bool CALLBACK acceptor(BYTE *pData)
 {
+	isReadyToCommand=false;
 	int static counter=0;
 	counter++;
-	std::cout<<"******** CALLBACK -ENTER" << counter;
+	//std::cout<<"******** CALLBACK -ENTER" << counter;
+	printf("******** CALLBACK - ");
 	
 	fflush(stdout);
 	QXmlStreamReader xml((char*)pData);
@@ -138,7 +140,7 @@ bool CALLBACK acceptor(BYTE *pData)
 		//-------------------------------------------------------------
 		if (xml.isStartElement() && xml.name() == "securities"){
 			xml_securities<< pData <<  std::endl; 
-			isReadyToCommand=false;
+			
 			std::cout<<"-security";
 			xml.readNext();
 			while (!(xml.isEndElement() && xml.name()=="securities" )){
@@ -159,8 +161,8 @@ bool CALLBACK acceptor(BYTE *pData)
 				}
 				xml.readNext();
 			}
-			std::cout<<"-security finished"; fflush(stdout);
-			isReadyToCommand=true;
+			std::cout<<"-security finished" ; fflush(stdout);
+			
 		}
 		//-------------------------------------------------------------
 		if (xml.isStartElement() && xml.name() == "sec_info_upd"){
@@ -168,7 +170,7 @@ bool CALLBACK acceptor(BYTE *pData)
 		}
 		//------------------------------------------------------------
 		if (xml.isStartElement() && xml.name() == "ticks"){
-			isReadyToCommand=false;
+			
 			xml_ticks<<pData<<  std::endl; 
 			std::cout<<"-ticks";
 			QQueue<C_Tick> TickQueue;
@@ -182,8 +184,8 @@ bool CALLBACK acceptor(BYTE *pData)
 				xml.readNext();
 			}
 			std::cout<<"-ticks finished"; fflush(stdout);
-			isReadyToCommand=true;
-			//pThreadAllDeals->Parse(TickQueue);
+			
+			pThreadAllDeals->Parse(TickQueue);
 		}
 		//-------------------------------------------------------------
 		if (xml.isStartElement() && xml.name() == "server_status"){
@@ -201,13 +203,16 @@ bool CALLBACK acceptor(BYTE *pData)
 
 			if (attributes.hasAttribute("server_tz"))
 				QString server_tz = attributes.value("server_tz").toString();
+			std::cout<<"-server_status finished"; fflush(stdout);
+
 		}
 
 	}
 
 
 	FreeMemory(pData);
-	std::cout<<" -EXIT **** " << counter << std::endl;
+	printf(" -EXIT **** \n");
+	isReadyToCommand=true;
 	return true;
 }
 

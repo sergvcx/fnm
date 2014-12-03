@@ -106,7 +106,7 @@ struct PPP{
 
 class C_Tick{
 public:
-	QString secid;		// 4
+	//QString secid;		// 4
 	QString board;		// TQBR
 	QString seccode;	// LKOH
 	QString tradeno;	// 2397108618
@@ -118,7 +118,7 @@ public:
 };
 
 struct SDeal{
-	int		nID;
+	long long		nID;
 	int		nDate;
 	int		nTime;
 	int		nVolume;
@@ -146,9 +146,9 @@ struct SDeal{
 		
 		int insec=nType;
 		if (br)
-			sprintf(str," d:%d d:%d t:%d p:%.4f v:%d\t insec:%x \n",nID, nDate, nTime, Price, nVolume, insec);
+			sprintf(str," d:%d d:%d t:%d p:%.4f v:%d\t insec:%x \n",long(nID), nDate, nTime, Price, nVolume, insec);
 		else 
-			sprintf(str," d:%d d:%d t:%d p:%.4f v:%d\t insec:%x ",  nID, nDate, nTime, Price, nVolume, insec);
+			sprintf(str," d:%d d:%d t:%d p:%.4f v:%d\t insec:%x ",  long(nID), nDate, nTime, Price, nVolume, insec);
 		printf(str);
 	}
 	void Parse(QSqlQuery& query){
@@ -589,7 +589,7 @@ public:
 			else if (Field=="stname")
 				Cmd+= "stname='" +			StockName + "',";
 			else if (Field=="lastid")
-				Cmd+= "lastid=" +			QString::number(LastDealStored.nID) + ",";
+				Cmd+= "lastid=" +			QString::number(long(LastDealStored.nID)) + ",";
 			else 
 				_ASSERTE(0);
 		}

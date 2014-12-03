@@ -10,10 +10,14 @@ void ParseTick(QXmlStreamReader& xml, C_Tick& tick ){
 	//printf(STR(xml.name().toString()));
 	while(!(xml.isEndElement() && xml.name() == "tick")) {
 		if(xml.isStartElement()) {
-			if(xml.name() == "secid") {
-				tick.secid= xml.readElementText();
+			if(xml.name() == "seccode") {
+				tick.seccode= xml.readElementText();
 				continue;
 			}
+			//if(xml.name() == "secid") {
+			//	tick.secid= xml.readElementText();
+			//	continue;
+			//}
 			if(xml.name() == "board") {
 				tick.board= xml.readElementText();
 				continue;
@@ -47,6 +51,11 @@ void ParseTick(QXmlStreamReader& xml, C_Tick& tick ){
 		xml.readNext();
 		//printf(STR(xml.name().toString()));
 	}
+	printf(STR(tick.seccode));printf("-");
+	printf(STR(tick.price));printf("-");
+	printf(STR(tick.tradetime));printf("-");
+	printf(STR(tick.buysell));printf("\n");
+
 	return;
 }
 

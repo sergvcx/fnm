@@ -198,8 +198,9 @@ int CThreadAllDeals::ReadPortfolio(){
 		Portfolio.LastID			= query.value(6).toInt();
 		*/
 		// Добавляем в множество информацию об Акции
+		
 		mapPortfolio[Portfolio.StockCode]=pPortfolio;
-		printf("use portfolio - %s\n",STR(Portfolio.StockCode));
+		//printf("use portfolio - %s\n",STR(Portfolio.StockCode));
 		// создаем таблицы если они не созданы
 		queInstrument << Portfolio.StockCode;
 		if (Portfolio.LastID>nMaxID)
@@ -227,12 +228,12 @@ void CThreadAllDeals::run(){
 void CThreadAllDeals::Parse(QQueue<C_Tick>& TickQueue)
 {
 	
-	if (!db_trading.isOpen()){
-		printf("Error: trading is disconnected\n");	
-		_ASSERTE(0);
-	}
+//	if (!db_trading.isOpen()){
+//		printf("Error: trading is disconnected\n");	
+//		_ASSERTE(0);
+//	}
 	
-	printf("isRunning...\n");
+//	printf("isRunning...\n");
 	int nCurrGlassTimeLive=10;
 	int nPastGlassTimeLive=60;
 
@@ -243,7 +244,7 @@ void CThreadAllDeals::Parse(QQueue<C_Tick>& TickQueue)
 
 	//QQueue<SOffer> QueueOffer;
 	//QQueue<SDeal>  QueueAllDeals;
-	int db_index = ReadPortfolio();
+	long long db_index; //= ReadPortfolio();
 
 	//db_index=0;
 
@@ -286,14 +287,14 @@ void CThreadAllDeals::Parse(QQueue<C_Tick>& TickQueue)
 	//query.lastError().showMessage();
 	//int numRows = query.size();
 	//db_index-=1000;
-	printf ("Deal accepting started\n");
+	//printf ("Deal accepting started\n");
 	//QMap<QString,QQueue<SDeal>> mapQueueDeal;
 	//while(!stopped)
 	{
 
 		//=============== чтение сделок ====================
-		printf("----------(read) ------------\n");
-		sprintf(str,"SELECT * FROM AllDeals WHERE ID>%d  ORDER BY 1 LIMIT 1000;",db_index);
+		//printf("----------(read) ------------\n");
+		//sprintf(str,"SELECT * FROM AllDeals WHERE ID>%d  ORDER BY 1 LIMIT 1000;",db_index);
 //		query.exec(str);
 //		if (!query.isActive())
 //			QMessageBox::critical(0, QObject::tr("Database Error"), query.lastError().text());
@@ -301,10 +302,12 @@ void CThreadAllDeals::Parse(QQueue<C_Tick>& TickQueue)
 
 		while (!TickQueue.isEmpty()) 
 		{
-
+			
 			C_Tick Tick=TickQueue.dequeue();
+			//printf(STR(Tick.seccode));
 			// читаем поля строки из БД
-			db_index	= Tick.tradeno.toInt();
+			bool ok;
+			db_index	= Tick.tradeno.toLongLong(); //printf(STR(Tick.tradeno));
 			db_stcode	= Tick.seccode;
 			db_stdate	= Tick.tradetime.left(10.); //08.08.2014 10:01:52
 			db_sttime	= Tick.tradetime.right(8);
@@ -434,7 +437,7 @@ void CThreadAllDeals::Parse(QQueue<C_Tick>& TickQueue)
 			}
 			LDS=Portfolio.queCurrDeals.last();
 			
-			Portfolio.StoreQueue(trquery); //dequeue inside
+ 			Portfolio.StoreQueue(trquery); //dequeue inside
 			
 			
 			

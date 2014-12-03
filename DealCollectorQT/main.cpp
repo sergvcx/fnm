@@ -16,30 +16,38 @@ extern bool isReadyToCommand;
 	//		pThreadAllDeals->start();
 	//	 }
 	 //}
+	 pThreadAllDeals->ReadPortfolio();
+	//  mainWin->show();
+	// return app.exec();
+
 	 OpenXML();
 	 C_TransaqConnector TransaqConnector;
 
+	 TransaqConnector.disconnect();
+	 Sleep(1000);
 	 TransaqConnector.connect();
 	 while (!isReadyToCommand)
 		Sleep(1000);
 	 
 	 
-	 QList<QString> List; List << "GMKN";
+	 QList<QString> List; List << "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT";
 	 
 	 //TransaqConnector.subscribe();
-	 //mainWin->show();
+	
 
 	//Sleep(1000*10);
 	//TransaqConnector.subscribe(QString("GMKN"));
 	//TransaqConnector.server_status();
 	//Sleep(1000*20);
 	TransaqConnector.server_status();
+	while (!isReadyToCommand)
+		Sleep(1000);
 	TransaqConnector.subscribe_ticks(List);
-	Sleep(1000*60);
+	Sleep(1000*60*60*8);
 	TransaqConnector.disconnect();
 	//TransaqConnector.change_pass();
 	
 	CloseXML();
 	 return 1;
-	 //return app.exec();
+	 
  }
