@@ -6,7 +6,7 @@
 #include <QString>
 #include <QWidget>
 #include <QDateTime>
-#include "../DealCollectorQT/main.h"
+#include "../common/main.h"
 #include <crtdbg.h>
 #include <QPainter>
 #include <QRect>

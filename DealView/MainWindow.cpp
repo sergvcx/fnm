@@ -1,4 +1,4 @@
-#include "../DealCollectorQT/Main.h"
+#include "../common/Main.h"
 #include "MainWindow.h"
 
 #include <QStatusBar>
