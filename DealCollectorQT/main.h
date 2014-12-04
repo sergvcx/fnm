@@ -476,7 +476,7 @@ public:
 	SDealData LastDealStored;	// Последняя классифицированная и сохраненная в БД по инструменту
 	
 
-	int		LastID;			// db - ID последней сделки
+	long long		LastID;			// db - ID последней сделки
 	SDeal*	pLastDealClassified;
 	QQueue<SDealData>	quePastDeals;
 	QQueue<SDealData>	queCurrDeals;
@@ -589,7 +589,7 @@ public:
 			else if (Field=="stname")
 				Cmd+= "stname='" +			StockName + "',";
 			else if (Field=="lastid")
-				Cmd+= "lastid=" +			QString::number(long(LastDealStored.nID)) + ",";
+				Cmd+= "lastid=" +			QString::number(LastDealStored.nID) + ",";
 			else 
 				_ASSERTE(0);
 		}
@@ -632,7 +632,7 @@ public:
 		pLastDealSupply->Price	= query.value(16).toDouble();
 		LastDealDemand.Price	= pLastDealDemand->Price;
 		LastDealSupply.Price	= pLastDealSupply->Price;
-		LastID					= query.value(17).toInt();
+		LastID					= query.value(17).toLongLong();
 		LastDealStored.nDate=LastOfferDate;
 		LastDealStored.nTime=LastOfferTime;
 		LastDealStored.nID  =LastID;
@@ -677,7 +677,7 @@ public:
 				   lastoffersupply	FLOAT, \
 				   lastdealdemand	FLOAT, \
 				   lastdealsupply	FLOAT, \
-				   lastid			INT NULL, \
+				   lastid			BIGINT UNSIGNED NULL, \
 				   rows				INT UNSIGNED NULL, \
 				   lot				INT UNSIGNED NULL, \
 				   step				FLOAT, \
@@ -859,7 +859,7 @@ public:
 	SDeal* 	pLastDealSupply;	// db
 
 
-	int		LastID;			// db - ID последней сделки
+	long long		LastID;			// db - ID последней сделки
 	SDeal*	pLastDealClassified;
 	QQueue<SDeal>	quePastDeals;
 	QQueue<SDeal>	queCurrDeals;
@@ -1009,7 +1009,7 @@ public:
 		LastOfferSupply 		= query.value(14).toDouble();
 		LastDealDemand			= query.value(15).toDouble();
 		LastDealSupply			= query.value(16).toDouble();
-		LastID					= query.value(17).toInt();
+		LastID					= query.value(17).toLongLong();
 
 	}
 
@@ -1051,7 +1051,7 @@ public:
 				   lastoffersupply	FLOAT, \
 				   lastdealdemand	FLOAT, \
 				   lastdealsupply	FLOAT, \
-				   lastid			INT NULL, \
+				   lastid			BIGINT UNSIGNED NULL, \
 				   rows				INT UNSIGNED NULL, \
 				   lot				INT UNSIGNED NULL, \
 				   step				FLOAT, \
