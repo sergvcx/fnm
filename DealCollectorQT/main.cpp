@@ -30,7 +30,9 @@ extern bool isReadyToCommand;
 		Sleep(1000);
 	 
 	 
-	 QList<QString> List; List << "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT";
+	 QList<QString> List; List << "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
+		 << "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
+		 <<"ROSN" <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
 	 
 	 //TransaqConnector.subscribe();
 	
