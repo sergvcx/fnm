@@ -176,8 +176,14 @@ struct SDeal{
 	int IsSupply(){
 		return (nType>>8)<0;
 	}
+	int IsSell(){
+		return (nType>>8)<0;
+	}
 	// Продажа (более низкая цена). На бирже выставлена заявка на покупку. Спрос
 	int IsDemand(){
+		return (nType>>8)>0;
+	}
+	int IsBuy(){
 		return (nType>>8)>0;
 	}
 	// Купля (более высокая цена). На бирже выставлена заявка на продажу. Предложение
@@ -1207,7 +1213,7 @@ class CSqlQuik {
 class CSqlTrading {
 
 };
-
+/*
 struct SOrder{
 	QList<SRequest*> listNewRequestSupply;
 	QList<SRequest*> listNewRequestDemand;
@@ -1229,3 +1235,4 @@ struct SOrder{
 			return 0;
 	}
 };
+*/
