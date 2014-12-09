@@ -1,3 +1,5 @@
+#ifndef TRADE_MASTER
+#define TRADE_MASTER
 #include <QQueue>
 #include "main.h"
 
@@ -62,6 +64,8 @@ public:
 
 	void  Parse(QQueue<SDeal>& qDeals);
 	
-	void MakeOrders();
+	virtual void MakeOrders();
 	void Close();
 };
+
+#endif

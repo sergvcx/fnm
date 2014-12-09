@@ -39,8 +39,22 @@ void C_TradeMaster::Init(float StartPrice, float MinDelta, float MaxDelta, int n
 	maxDelta = MaxDelta;
 	Cash     = fCash;
 	Stocks   = nStocks;
-	GapVolume= (Stocks+Cash/StartPrice)/numTraps;
+	
+	GapVolume= (Stocks)/numTraps;
 	GapPrice = StartPrice*(maxDelta-minDelta)/numTraps;
+
+	//-minDela
+	//
+	// -Trap0
+	//
+	//
+	// -Trap1
+	//
+	//
+	// -Trap2
+	//
+	//-maxDelta
+
 }
 //--------------- complete ---------------------
 
@@ -49,7 +63,7 @@ void C_TradeMaster::CompleteFirstBuyOrder(){
 	LockedCash-=Order.Volume*Order.Price;
 	Cash      -=Order.Volume*Order.Price*Commission;
 	Stocks    +=Order.Volume;
-	//printf("B %d %f Cash=%f LCash=%f Stocks=%d LStocks=%d \n", Order.Volume, Order.Price, Cash, LockedCash, Stocks, LockedStocks);
+	printf("B %d %f Cash=%f LCash=%f Stocks=%d LStocks=%d \n", Order.Volume, Order.Price, Cash, LockedCash, Stocks, LockedStocks);
 	listMyBuyOrder.removeFirst();
 	
 }
@@ -59,7 +73,7 @@ void C_TradeMaster::CompleteFirstSellOrder(){
 	LockedStocks-=Order.Volume;
 	Cash        +=Order.Volume*Order.Price;
 	Cash        -=Order.Volume*Order.Price*Commission;
-	//printf("S %d %f Cash=%f LCash=%f Stocks=%d LStocks=%d \n", Order.Volume, Order.Price, Cash, LockedCash, Stocks, LockedStocks);
+	printf("S %d %f Cash=%f LCash=%f Stocks=%d LStocks=%d \n", Order.Volume, Order.Price, Cash, LockedCash, Stocks, LockedStocks);
 	listMySellOrder.removeFirst();
 	
 }
@@ -191,21 +205,21 @@ void C_TradeMaster::MakeOrders(){
 	}
 
 	//------------------ insert order----------------
-	if (listMyBuyOrder.isEmpty())
+	if ( listMyBuyOrder.isEmpty())
 		InsertFirstBuyOrder(GapVolume,    LastBuyDeal.Price*(1-minDelta)-GapPrice/2);
-	else {
+	if (!listMyBuyOrder.isEmpty()) {
 		while (LastBuyDeal.Price*(1-minDelta)>listMyBuyOrder.first().Price+GapPrice)
-			if (InsertFirstBuyOrder(GapVolume,    listMyBuyOrder.first().Price+GapPrice))
+			if (InsertFirstBuyOrder(GapVolume,listMyBuyOrder.first().Price+GapPrice))
 				break;
 
 		while (LastBuyDeal.Price*(1-maxDelta)<listMyBuyOrder.last().Price-GapPrice)
-			if (InsertLastBuyOrder (GapVolume,    listMyBuyOrder.last().Price-GapPrice))
+			if (InsertLastBuyOrder (GapVolume,listMyBuyOrder.last().Price-GapPrice))
 				break;
 	}
 
-	if (listMySellOrder.isEmpty())
+	if ( listMySellOrder.isEmpty())
 		InsertFirstSellOrder(GapVolume,    LastSellDeal.Price*(1+minDelta)+GapPrice/2);
-	else {
+	if (!listMySellOrder.isEmpty()) {
 		while (LastSellDeal.Price*(1+minDelta)<listMySellOrder.first().Price-GapPrice)
 			if (InsertFirstSellOrder(GapVolume,    listMySellOrder.first().Price-GapPrice))
 				break;

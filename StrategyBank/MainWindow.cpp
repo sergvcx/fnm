@@ -7,8 +7,9 @@
 QScrollArea* extScrollArea;
 
 #include "TradeMaster.h"
+#include "TradeMaster2.h"
 
-
+/*
 class C_DealStreamer{
 public:
 	QVector<SDeal>		vecDeal; 
@@ -29,7 +30,7 @@ public:
 			pTradeMaster->Parse(qDeals);
 		}
 	}
-};
+};*/
 
 MainWindow::MainWindow()
 {
@@ -373,21 +374,22 @@ void MainWindow::Draw(){
 	ReadDeal();
 
 	//C_DealStreamer DealStreamer;
-	C_TradeMaster  TradeMaster;
+	C_TradeMaster2  TradeMaster;
 	
 	QQueue<SDeal> qDeals;
 	
 	
 	
 	float maxDelta =1.0/100;
-	for(float minDelta =0.01/100; minDelta<maxDelta/2; minDelta+=0.01/100){
+	for(float minDelta =0.1/100; minDelta<maxDelta/2; minDelta+=0.01/100){
 		//QQueue<SDeal> qDeals1;
 		//qDeals1<<qDeals;
 		for (int i=0; i<qGraphField->vecDeal.size(); i++)
 			qDeals<<qGraphField->vecDeal[i];
 
 		float price =qDeals.first().Price;
-		TradeMaster.Init(price, minDelta, maxDelta, 4, 100000, 0);
+		//TradeMaster.Init(price, minDelta, maxDelta, 4, 100000, 0);
+		TradeMaster.Init(price, minDelta, maxDelta, 5, price*10, 10, 0.1/100);
 		TradeMaster.Parse(qDeals);
 		TradeMaster.Close();
 		printf("Cash=%f LCash=%f Stocks=%d LStocks=%d \n", TradeMaster.Cash, TradeMaster.LockedCash, TradeMaster.Stocks, TradeMaster.LockedStocks);
