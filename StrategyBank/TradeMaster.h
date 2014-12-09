@@ -16,6 +16,8 @@ struct SOrder{
 	//int		nTransID;		// идентификатор заявки
 	//QQueue<SDeal> queDeal;	// сделки которые совершились по данной заявке
 };
+#define BUY 1
+#define SELL 0
 
 class C_TradeMaster{
 public:
@@ -37,29 +39,27 @@ public:
 	QList<SOrder>  listMySellOrder;
 	QList<SOrder>  listMyBuyOrder;
 
+	QList<SOrder>  listHotSellOrder;
+	QList<SOrder>  listHotBuyOrder;
+
 	C_TradeMaster();
 	void Init(float StartPrice, float MinDelta, float MaxDelta, int nTraps, float fCash, int nStocks);
 	//--------------- complete ---------------------
 
-	void CompleteFirstBuyOrder();
+	void CompleteFirstOrder(QList<SOrder>& qOrder, int Type);
 	
-	void CompleteFirstSellOrder();
+	
 	//--------------- cancle ---------------------
-	void RemoveFirstBuyOrder();
+	void RemoveFirstOrder(QList<SOrder>& listOrder, int Type);
 	
-	void RemoveLastBuyOrder();
+	void RemoveLastOrder(QList<SOrder>& listOrder, int Type);
 	
-	void RemoveFirstSellOrder();
 
-	void RemoveLastSellOrder();
 	//--------------- insert ---------------------
-	bool InsertFirstBuyOrder(int Volume, float Price);
+	bool InsertFirstOrder(QList<SOrder>& qOrder, int Type, int Volume, float Price);
 	
-	bool InsertLastBuyOrder(int Volume, float Price);
+	bool InsertLastOrder(QList<SOrder>& qOrder, int Type, int Volume, float Price);
 	
-	bool InsertFirstSellOrder(int Volume, float Price);
-
-	bool InsertLastSellOrder(int Volume, float Price);
 	//-------------------------------------
 
 	void  Parse(QQueue<SDeal>& qDeals);

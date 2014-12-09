@@ -20,12 +20,12 @@ void C_TradeMaster2::MakeOrders(){
 	C_TradeMaster::MakeOrders();
 	
 	if (int nHotStocks=Cash/LastBuyDeal.Price>1){
-		InsertFirstBuyOrder(nHotStocks,  LastBuyDeal.Price*(1+HotDelta));
+//		InsertFirstBuyOrder(nHotStocks,  LastBuyDeal.Price*(1+HotDelta));
 	}
 
 	
 	if (Stocks){
-		InsertFirstSellOrder(Stocks,  LastSellDeal.Price*(1-HotDelta));
+	//	InsertFirstSellOrder(Stocks,  LastSellDeal.Price*(1-HotDelta));
 	}
 
 
