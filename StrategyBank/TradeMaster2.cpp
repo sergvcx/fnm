@@ -6,12 +6,12 @@ C_TradeMaster2::C_TradeMaster2(){
 	Stocks=0;
 	LockedCash=0;
 	LockedStocks=0;
-	minDelta=0.2/100;
-	maxDelta=1.0/100;
+	TrapNet.minDelta=0.2/100;
+	TrapNet.maxDelta=1.0/100;
 	Commission=0;//0.01/100;
 }
 void C_TradeMaster2::Init(float StartPrice, float MinDelta, float MaxDelta, int nTraps, float fCash, int nStocks, float fHotDelta){
-	C_TradeMaster::Init(StartPrice, MinDelta, MaxDelta, nTraps, fCash, nStocks);
+	//C_TradeMaster::Init(StartPrice, MinDelta, MaxDelta, nTraps, fCash, nStocks);
 	HotDelta = fHotDelta;
 }
 

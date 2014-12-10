@@ -17,7 +17,9 @@ struct SOrder{
 	//QQueue<SDeal> queDeal;	// сделки которые совершились по данной заявке
 };
 #define BUY 1
-#define SELL 0
+#define SELL 2
+#define TRAP   4
+#define HOT    8
 
 class C_TradeMaster{
 public:
@@ -27,23 +29,30 @@ public:
 	float 	Cash;
 	float 	LockedCash;
 	float 	Commission;
-	float 	minDelta;
-	float 	maxDelta;
-	int     GapVolume;
-	int		GapPrice;	
-	int   	numTraps;
+	
+	
 
 	SDeal	LastSellDeal;
 	SDeal	LastBuyDeal;
+	struct S_Net {
+		float 	minDelta;
+		float 	maxDelta;
+		int     GapVolume;
+		float	GapPrice;	
+		int   	numTraps;
+		QList<SOrder>  listSell;
+		QList<SOrder>  listBuy;
+		int     Status;
+	} TrapNet, HotNet; 
 
-	QList<SOrder>  listMySellOrder;
-	QList<SOrder>  listMyBuyOrder;
+	//QList<SOrder>  listMySellOrder;
+	//QList<SOrder>  listMyBuyOrder;
 
-	QList<SOrder>  listHotSellOrder;
-	QList<SOrder>  listHotBuyOrder;
+	//QList<SOrder>  listHotSellOrder;
+	//QList<SOrder>  listHotBuyOrder;
 
 	C_TradeMaster();
-	void Init(float StartPrice, float MinDelta, float MaxDelta, int nTraps, float fCash, int nStocks);
+	void Init(float StartPrice, float fCash, int nStocks, float minHotDelta, float maxHotDelta, float minTrapDelta, float maxTrapDelta);
 	//--------------- complete ---------------------
 
 	void CompleteFirstOrder(QList<SOrder>& qOrder, int Type);
@@ -61,7 +70,8 @@ public:
 	bool InsertLastOrder(QList<SOrder>& qOrder, int Type, int Volume, float Price);
 	
 	//-------------------------------------
-
+	void CutNet(S_Net& Net);
+	void SewNet(S_Net& Net);
 	void  Parse(QQueue<SDeal>& qDeals);
 	
 	virtual void MakeOrders();
