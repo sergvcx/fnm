@@ -106,6 +106,8 @@ struct SStatistic{
 	double PriceMax;
 	double PriceMin;
 	double PriceDif;
+	double DensitySup;
+	double DensityDem;
 	SStatistic(){
 		Reset();
 	}

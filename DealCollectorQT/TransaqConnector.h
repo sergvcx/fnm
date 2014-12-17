@@ -46,7 +46,7 @@ public:
 	int disconnect();
 	int server_status();
 	int subscribe_ticks(QList<QString>& SeccodeList, int tradeno=1);
-	int subscribe(QString& seccode);
+	int subscribe(QList<QString>& SeccodeList);
 	int get_securities();
 	int change_pass();
 

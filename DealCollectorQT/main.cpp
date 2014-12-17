@@ -34,6 +34,9 @@ extern bool isReadyToCommand;
 		 << "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
 		 <<"ROSN" <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
 	 
+
+	 QList<QString> QuoteList; QuoteList << "GMKN" ;
+
 	 //TransaqConnector.subscribe();
 	
 
@@ -45,6 +48,7 @@ extern bool isReadyToCommand;
 	while (!isReadyToCommand)
 		Sleep(1000);
 	TransaqConnector.subscribe_ticks(List);
+	//TransaqConnector.subscribe(QuoteList);
 	Sleep(1000*60*60*8);
 	TransaqConnector.disconnect();
 	//TransaqConnector.change_pass();

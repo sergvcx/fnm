@@ -397,6 +397,8 @@ void GetStat(QVector<SDeal>& vecDeal, SStatistic &Stat){
 				Stat.VolumeDem+=Volume;
 		}
 		Stat.PriceDif=Stat.PriceMax-Stat.PriceMin;
+		Stat.DensitySup=Stat.VolumeSup/Stat.PriceDif;
+		Stat.DensityDem=Stat.VolumeDem/Stat.PriceDif;
 	//}
 
 }
@@ -421,6 +423,8 @@ void QGraphField::mousePressEvent(QMouseEvent *event){
 				WatchDialog->labelVolumeSum->setNum(Statistic.VolumeSum);
 				WatchDialog->labelVolumeSup->setNum(Statistic.VolumeSup);
 				WatchDialog->labelVolumeDem->setNum(Statistic.VolumeDem);
+				WatchDialog->labelDensitySup->setNum(Statistic.DensitySup);
+				WatchDialog->labelDensityDem->setNum(Statistic.DensityDem);
 	//			update();
 			break;
 		case Qt::RightButton:
@@ -434,6 +438,8 @@ void QGraphField::mousePressEvent(QMouseEvent *event){
 				WatchDialog->labelVolumeSum->setNum(Statistic.VolumeSum);
 				WatchDialog->labelVolumeSup->setNum(Statistic.VolumeSup);
 				WatchDialog->labelVolumeDem->setNum(Statistic.VolumeDem);
+				WatchDialog->labelDensitySup->setNum(Statistic.DensitySup);
+				WatchDialog->labelDensityDem->setNum(Statistic.DensityDem);
 	
 			break;
 		case Qt::NoButton:

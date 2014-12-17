@@ -64,6 +64,7 @@ public:
 } TickQueue;
 */
 std::ofstream xml_markets;
+std::ofstream xml_quotes;
 std::ofstream xml_ticks;
 std::ofstream xml_securities;
 std::ofstream xml_sec_info_upd;
@@ -95,6 +96,9 @@ void OpenXML(){
 	xml_server_status<<"<?xml version='1.0' encoding='UTF-8'?>";
 	xml_server_status<<std::endl;
 
+	xml_quotes.open("xml_quotes.xml");
+	xml_quotes<<"<?xml version='1.0' encoding='UTF-8'?>";
+	xml_quotes<<std::endl;
 	
 	warnings.open("warnings.log");
 }
@@ -110,6 +114,7 @@ void CloseXML(){
 	xml_securities.close();
 	xml_sec_info_upd.close();
 	xml_server_status.close();
+	xml_quotes.close();
 	warnings.close();
 }
 
@@ -139,8 +144,8 @@ bool CALLBACK acceptor(BYTE *pData)
 		}
 		//-------------------------------------------------------------
 		if (xml.isStartElement() && xml.name() == "securities"){
-			xml_securities<< pData <<  std::endl; 
 			
+			xml_securities<< pData <<  std::endl; 
 			std::cout<<"-security";
 			xml.readNext();
 			while (!(xml.isEndElement() && xml.name()=="securities" )){
@@ -162,7 +167,34 @@ bool CALLBACK acceptor(BYTE *pData)
 				xml.readNext();
 			}
 			std::cout<<"-security finished" ; fflush(stdout);
-			
+		}
+		//-------------------------------------------------------------
+		if (xml.isStartElement() && xml.name() == "quotes"){
+			xml_quotes << pData << std::endl;
+			/*
+
+			std::cout<<"-quotes";
+			xml.readNext();
+			while (!(xml.isEndElement() && xml.name()=="quotes" )){
+				if (xml.isStartElement() && xml.name() == "quote"){					
+					S_QuotInfo QuotInfo;
+					ParseQuote(xml,SecInfo);
+					if (SecInfo.seccode!=""){
+						if (!mapSeccode.contains(SecInfo.seccode)){
+							mapSeccode[SecInfo.seccode]=SecInfo;
+							//QString info = SecInfo.seccode + " secid="+SecInfo.secid+ " shortname="+SecInfo.shortname;
+							//std::cout<< ASCII(info) << std::endl;
+						}
+						else 
+							std::cerr << "WARNING: mapSeccode already contains " << STR(SecInfo.seccode) <<std::endl;
+					} else 
+						std::cerr<< "WARNING: Empty seccode" <<std::endl;
+
+				}
+				xml.readNext();
+			}
+			std::cout<<"-security finished" ; fflush(stdout);
+			*/
 		}
 		//-------------------------------------------------------------
 		if (xml.isStartElement() && xml.name() == "sec_info_upd"){
@@ -377,24 +409,25 @@ bool CALLBACK acceptor(BYTE *pData)
 		return 0;
 	}
 	
-	int C_TransaqConnector::subscribe_ticks(QList<QString>& SeccodeList, int tradeno){
+	int C_TransaqConnector::subscribe(QList<QString>& SeccodeList){
 		try {
-			std::cout<<"Sending 'subscribe ticks' command..."<<std::endl;
-			QString Cmd="<command id='subscribe_ticks'>";
+			std::cout<<"Sending 'subscribe' command..."<<std::endl;
+			QString Cmd="<command id='subscribe'>";
 			QString seccode;
+			Cmd+="<quotes>";
 			foreach(seccode,SeccodeList){
 				if (!mapSeccode.contains(seccode)){
 					std::cerr<< "ERROR: mapSeccode does not contains" << STR(seccode) << std::endl;
 					//return 1;
 				}
-				Cmd+="<security secid='" + mapSeccode[seccode].secid + "' tradeno='1'/>"  ;
-				//Cmd+="<security secid='24"   "' tradeno='1'/>" ;
+				Cmd+="<security>";
+				Cmd+="<board>"+ mapSeccode[seccode].board +"</board>";
+				Cmd+="<seccode>" + seccode + "</seccode>"  ;
+				Cmd+="</security>";
 			}
+			Cmd+="</quotes>";
 			Cmd+="</command>";
 			
-			char buf[]="<command id='subscribe_ticks'>"
-					"<security secid='21' tradeno='1'/>"  
-					"</command>";
 
 			printf(STR(Cmd));
 			//char* buffer=new char[512];
@@ -418,6 +451,48 @@ bool CALLBACK acceptor(BYTE *pData)
 		return 0;
 	}
 
+	int C_TransaqConnector::subscribe_ticks(QList<QString>& SeccodeList, int tradeno){
+		try {
+			std::cout<<"Sending 'subscribe ticks' command..."<<std::endl;
+			QString Cmd="<command id='subscribe_ticks'>";
+			QString seccode;
+			foreach(seccode,SeccodeList){
+				if (!mapSeccode.contains(seccode)){
+					std::cerr<< "ERROR: mapSeccode does not contains" << STR(seccode) << std::endl;
+					//return 1;
+				}
+				Cmd+="<security secid='" + mapSeccode[seccode].secid + "' tradeno='1'/>"  ;
+				//Cmd+="<security secid='24"   "' tradeno='1'/>" ;
+			}
+			Cmd+="</command>";
+
+			char buf[]="<command id='subscribe_ticks'>"
+				"<security secid='21' tradeno='1'/>"  
+				"</command>";
+
+			printf(STR(Cmd));
+			//char* buffer=new char[512];
+			//strcpy(buffer,STR(Cmd));
+			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
+			//BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(buf));
+			//BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='subscribe_ticks'>"
+			//	"<security secid='21' tradeno='1'/>"  
+			//	"</command>"));
+
+			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
+			//delete buffer;
+			//Sleep(500000);
+			FreeMemory(ss);
+		}
+		catch (std::runtime_error& e) {
+			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+			UnloadLibrary(hm);
+			return 1;
+		}
+		return 0;
+	}
+
+/*
 	int C_TransaqConnector::subscribe(QString& seccode){
 			//char* buffer=new char[512];
 			//QString Cmd="<command id='subscribe'>"
@@ -446,7 +521,7 @@ bool CALLBACK acceptor(BYTE *pData)
 			FreeMemory(ss);
 			return 0;
 	}
-
+*/
 	int C_TransaqConnector::get_securities(){
 			/* 
 			В команде 'get_securites' идентификаторы приведены для примера.
