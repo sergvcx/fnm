@@ -117,6 +117,7 @@ public:
 	QString buysell;	// S
 };
 
+
 struct SDeal{
 	long long		nID;
 	int		nDate;

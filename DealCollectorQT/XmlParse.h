@@ -9,5 +9,6 @@
 
 void ParseTick(QXmlStreamReader& xml, C_Tick& tick );
 int ParseSecurity(QXmlStreamReader& xml, S_SecInfo& SecInfo );
+int ParseQuote(QXmlStreamReader& xml,S_QuoteInfo& QuoteInfo);
 
 #endif
