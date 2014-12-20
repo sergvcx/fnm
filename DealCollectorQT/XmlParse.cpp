@@ -108,3 +108,54 @@ int ParseSecurity(QXmlStreamReader& xml,S_SecInfo& SecInfo){
 	
 	return 0;
 }
+
+int ParseQuote(QXmlStreamReader& xml,S_QuoteInfo& QuoteInfo){
+	if(!(xml.isStartElement() && xml.name() == "quote")) {
+		return 1;
+	}
+
+	QXmlStreamAttributes attributes = xml.attributes();
+	if (attributes.hasAttribute("secid"))
+		QuoteInfo.secid = attributes.value("secid").toString();
+
+
+	xml.readNext();
+	while(!(xml.isEndElement() &&	xml.name() == "quote")) {
+		if(xml.isStartElement()) {
+			if(xml.name() == "board"){
+				QuoteInfo.board= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "seccode"){
+				QuoteInfo.seccode= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "price"){
+				QuoteInfo.price= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "source"){
+				QuoteInfo.source= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "yield"){
+				QuoteInfo.yield= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "buy"){
+				QuoteInfo.buy= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "sell"){
+				QuoteInfo.sell= xml.readElementText();
+				continue;
+			}
+
+		}
+		// ...and next... 
+		xml.readNext();
+	}
+
+
+	return 0;
+}

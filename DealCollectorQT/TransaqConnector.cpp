@@ -72,6 +72,8 @@ std::ofstream warnings;
 std::ofstream xml_server_status; 
 
 
+
+
 void OpenXML(){
 
 	setlocale(LC_CTYPE, "");
@@ -118,9 +120,53 @@ void CloseXML(){
 	warnings.close();
 }
 
+void UpdateBuyQuote(S_QuoteInfo &QuoteInfo, QList<S_Quote>& listQuote){
+	bool ok;
+	S_Quote NewQuote;
+	NewQuote.quantity= QuoteInfo.buy.toInt(&ok,10);  if (!ok) return;
+	NewQuote.price=    QuoteInfo.price.toFloat(&ok); if (!ok) return;
+	QMutableListIterator<S_Quote> i(listQuote);
+	while (i.hasNext()) {
+		S_Quote& Quote=i.value();
+		if (NewQuote.price == Quote.price){
+			if (NewQuote.quantity==-1)
+				i.remove();
+			else 
+				Quote.quantity=NewQuote.quantity;
+			return;
+		}
+		if (NewQuote.price > Quote.price){
+			i.insert(NewQuote);
+			return;
+		}
+	}
+}
+
+void UpdateSellQuote(S_QuoteInfo &QuoteInfo, QList<S_Quote>& listQuote){
+	bool ok;
+	S_Quote NewQuote;
+	NewQuote.quantity= QuoteInfo.sell.toInt(&ok,10);  if (!ok) return;
+	NewQuote.price=    QuoteInfo.price.toDouble(&ok); if (!ok) return;
+	QMutableListIterator<S_Quote> i(listQuote);
+	while (i.hasNext()) {
+		S_Quote& Quote=i.value();
+		if (NewQuote.price == Quote.price){
+			if (NewQuote.quantity==-1)
+				i.remove();
+			else 
+				Quote.quantity=NewQuote.quantity;
+			return;
+		}
+		if (NewQuote.price < Quote.price){
+			i.insert(NewQuote);
+			return;
+		}
+	}
+}
 
 
-QMap<QString,S_SecInfo> mapSeccode;
+QMap<QString,S_Security> mapAllSecurity;
+QMap<QString,S_Security> mapSecurity;
 
 bool isReadyToCommand=false;
 bool CALLBACK acceptor(BYTE *pData)
@@ -153,13 +199,16 @@ bool CALLBACK acceptor(BYTE *pData)
 					S_SecInfo SecInfo;
 					ParseSecurity(xml,SecInfo);
 					if (SecInfo.seccode!=""){
-						if (!mapSeccode.contains(SecInfo.seccode)){
-							mapSeccode[SecInfo.seccode]=SecInfo;
-							//QString info = SecInfo.seccode + " secid="+SecInfo.secid+ " shortname="+SecInfo.shortname;
-							//std::cout<< ASCII(info) << std::endl;
+						if (!mapSecurity.contains(SecInfo.seccode)){
+							 mapSecurity[SecInfo.seccode].SecInfo=SecInfo;
+							 QString fname="xml_quote_"+SecInfo.seccode+".xml";
+							 //mapSecurity[SecInfo.seccode].xml_quote.open("dd");   //fname.toAscii().data());
+							 xml_markets<<"<?xml version='1.0' encoding='UTF-8'?>";
+							 xml_markets<<"<root>" <<std::endl;
+
+							 
 						}
-						else 
-							std::cerr << "WARNING: mapSeccode already contains " << STR(SecInfo.seccode) <<std::endl;
+					
 					} else 
 						std::cerr<< "WARNING: Empty seccode" <<std::endl;
 						
@@ -171,30 +220,29 @@ bool CALLBACK acceptor(BYTE *pData)
 		//-------------------------------------------------------------
 		if (xml.isStartElement() && xml.name() == "quotes"){
 			xml_quotes << pData << std::endl;
-			/*
-
+			
 			std::cout<<"-quotes";
 			xml.readNext();
 			while (!(xml.isEndElement() && xml.name()=="quotes" )){
 				if (xml.isStartElement() && xml.name() == "quote"){					
-					S_QuotInfo QuotInfo;
-					ParseQuote(xml,SecInfo);
-					if (SecInfo.seccode!=""){
-						if (!mapSeccode.contains(SecInfo.seccode)){
-							mapSeccode[SecInfo.seccode]=SecInfo;
-							//QString info = SecInfo.seccode + " secid="+SecInfo.secid+ " shortname="+SecInfo.shortname;
-							//std::cout<< ASCII(info) << std::endl;
+					S_QuoteInfo QuoteInfo;
+					ParseQuote(xml,QuoteInfo);
+					if (QuoteInfo.seccode!=""){
+						QMap<QString,S_Security>::iterator itSec=mapSecurity.find(QuoteInfo.seccode);
+						if (itSec!=mapSecurity.end()){
+							UpdateBuyQuote (QuoteInfo,itSec->listBuyQuote);
+							UpdateSellQuote(QuoteInfo,itSec->listSellQuote);
 						}
 						else 
-							std::cerr << "WARNING: mapSeccode already contains " << STR(SecInfo.seccode) <<std::endl;
+							std::cerr << "WARNING: mapSecurity not found " << STR(QuoteInfo.seccode) <<std::endl;
 					} else 
-						std::cerr<< "WARNING: Empty seccode" <<std::endl;
+						std::cerr<< "ERROR: Empty seccode" <<std::endl;
 
 				}
 				xml.readNext();
 			}
 			std::cout<<"-security finished" ; fflush(stdout);
-			*/
+			
 		}
 		//-------------------------------------------------------------
 		if (xml.isStartElement() && xml.name() == "sec_info_upd"){
@@ -209,9 +257,23 @@ bool CALLBACK acceptor(BYTE *pData)
 			xml.readNext();
 			while (!(xml.isEndElement() && xml.name()=="ticks" )){
 				if (xml.isStartElement() && xml.name() == "tick"){					
-					C_Tick tick;
-					ParseTick(xml,tick);
-					TickQueue.enqueue(tick);
+					C_Tick Tick;
+					ParseTick(xml,Tick);
+
+					TickQueue.enqueue(Tick);
+
+					if (Tick.seccode!=""){
+						QMap<QString,S_Security>::iterator itSec=mapSecurity.find(Tick.seccode);
+						if (itSec!=mapSecurity.end()){
+							itSec->queueTick<< Tick;
+						}
+						//else 
+						///	std::cerr << "WARNING: mapSecurity not found " << STR(QuoteInfo.seccode) <<std::endl;
+					} else 
+						std::cerr<< "ERROR: Empty seccode" <<std::endl;
+
+
+
 				}
 				xml.readNext();
 			}
@@ -416,12 +478,12 @@ bool CALLBACK acceptor(BYTE *pData)
 			QString seccode;
 			Cmd+="<quotes>";
 			foreach(seccode,SeccodeList){
-				if (!mapSeccode.contains(seccode)){
-					std::cerr<< "ERROR: mapSeccode does not contains" << STR(seccode) << std::endl;
+				if (!mapSecurity.contains(seccode)){
+					std::cerr<< "ERROR: mapSecurity does not contains" << STR(seccode) << std::endl;
 					//return 1;
 				}
 				Cmd+="<security>";
-				Cmd+="<board>"+ mapSeccode[seccode].board +"</board>";
+				Cmd+="<board>"+ mapSecurity[seccode].SecInfo.board +"</board>";
 				Cmd+="<seccode>" + seccode + "</seccode>"  ;
 				Cmd+="</security>";
 			}
@@ -457,11 +519,11 @@ bool CALLBACK acceptor(BYTE *pData)
 			QString Cmd="<command id='subscribe_ticks'>";
 			QString seccode;
 			foreach(seccode,SeccodeList){
-				if (!mapSeccode.contains(seccode)){
-					std::cerr<< "ERROR: mapSeccode does not contains" << STR(seccode) << std::endl;
+				if (!mapSecurity.contains(seccode)){
+					std::cerr<< "ERROR: mapSecurity does not contains" << STR(seccode) << std::endl;
 					//return 1;
 				}
-				Cmd+="<security secid='" + mapSeccode[seccode].secid + "' tradeno='1'/>"  ;
+				Cmd+="<security secid='" + mapSecurity[seccode].SecInfo.secid + "' tradeno='1'/>"  ;
 				//Cmd+="<security secid='24"   "' tradeno='1'/>" ;
 			}
 			Cmd+="</command>";
@@ -496,9 +558,9 @@ bool CALLBACK acceptor(BYTE *pData)
 	int C_TransaqConnector::subscribe(QString& seccode){
 			//char* buffer=new char[512];
 			//QString Cmd="<command id='subscribe'>"
-			//			"<alltrades><secid>"+mapSeccode[seccode].secid+"</secid></alltrades>"  
-			//			"<quotations><secid>"+mapSeccode[seccode].secid+"</secid></quotations>" 
-			//			"<quotes><secid>"+mapSeccode[seccode].secid+"</secid></quotes>"
+			//			"<alltrades><secid>"+mapSecurity[seccode].secid+"</secid></alltrades>"  
+			//			"<quotations><secid>"+mapSecurity[seccode].secid+"</secid></quotations>" 
+			//			"<quotes><secid>"+mapSecurity[seccode].secid+"</secid></quotes>"
 			//			"</command>";
 
 
