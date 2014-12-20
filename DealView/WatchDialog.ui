@@ -1,19 +1,20 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>Dialog</class>
- <widget class="QDialog" name="Dialog" >
-  <property name="geometry" >
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>136</width>
-    <height>345</height>
+    <width>133</width>
+    <height>338</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QLabel" name="label" >
-   <property name="geometry" >
+  <widget class="QLabel" name="label">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>20</y>
@@ -21,12 +22,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Date0</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_2" >
-   <property name="geometry" >
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>40</y>
@@ -34,12 +35,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Time0</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelDate0" >
-   <property name="geometry" >
+  <widget class="QLabel" name="labelDate0">
+   <property name="geometry">
     <rect>
      <x>60</x>
      <y>20</y>
@@ -47,12 +48,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Date0</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelTime0" >
-   <property name="geometry" >
+  <widget class="QLabel" name="labelTime0">
+   <property name="geometry">
     <rect>
      <x>60</x>
      <y>40</y>
@@ -60,12 +61,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Time0</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelTime1" >
-   <property name="geometry" >
+  <widget class="QLabel" name="labelTime1">
+   <property name="geometry">
     <rect>
      <x>60</x>
      <y>100</y>
@@ -73,12 +74,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Time1</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_3" >
-   <property name="geometry" >
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>100</y>
@@ -86,12 +87,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Time1</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelDate1" >
-   <property name="geometry" >
+  <widget class="QLabel" name="labelDate1">
+   <property name="geometry">
     <rect>
      <x>60</x>
      <y>70</y>
@@ -99,12 +100,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Date1</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_4" >
-   <property name="geometry" >
+  <widget class="QLabel" name="label_4">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>70</y>
@@ -112,12 +113,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Date1</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_5" >
-   <property name="geometry" >
+  <widget class="QLabel" name="label_5">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>130</y>
@@ -125,12 +126,12 @@
      <height>14</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Price Max</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelPriceMax" >
-   <property name="geometry" >
+  <widget class="QLabel" name="labelPriceMax">
+   <property name="geometry">
     <rect>
      <x>70</x>
      <y>130</y>
@@ -138,12 +139,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Price0</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_6" >
-   <property name="geometry" >
+  <widget class="QLabel" name="label_6">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>200</y>
@@ -151,12 +152,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Volume</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelVolumeSum" >
-   <property name="geometry" >
+  <widget class="QLabel" name="labelVolumeSum">
+   <property name="geometry">
     <rect>
      <x>50</x>
      <y>200</y>
@@ -164,12 +165,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>TextLabel</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelPriceMin" >
-   <property name="geometry" >
+  <widget class="QLabel" name="labelPriceMin">
+   <property name="geometry">
     <rect>
      <x>70</x>
      <y>150</y>
@@ -177,12 +178,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Price0</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_7" >
-   <property name="geometry" >
+  <widget class="QLabel" name="label_7">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>150</y>
@@ -190,12 +191,12 @@
      <height>14</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Price Min</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_8" >
-   <property name="geometry" >
+  <widget class="QLabel" name="label_8">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>170</y>
@@ -203,12 +204,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Price Dif,%</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelPriceDif" >
-   <property name="geometry" >
+  <widget class="QLabel" name="labelPriceDif">
+   <property name="geometry">
     <rect>
      <x>70</x>
      <y>170</y>
@@ -216,12 +217,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Price0</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelVolumeSup" >
-   <property name="geometry" >
+  <widget class="QLabel" name="labelVolumeSup">
+   <property name="geometry">
     <rect>
      <x>50</x>
      <y>220</y>
@@ -229,12 +230,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>TextLabel</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_9" >
-   <property name="geometry" >
+  <widget class="QLabel" name="label_9">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>240</y>
@@ -242,12 +243,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Vol Dem</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelVolumeDem" >
-   <property name="geometry" >
+  <widget class="QLabel" name="labelVolumeDem">
+   <property name="geometry">
     <rect>
      <x>50</x>
      <y>240</y>
@@ -255,12 +256,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>TextLabel</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_10" >
-   <property name="geometry" >
+  <widget class="QLabel" name="label_10">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>220</y>
@@ -268,12 +269,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Vol Sup</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_11" >
-   <property name="geometry" >
+  <widget class="QLabel" name="label_11">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>270</y>
@@ -281,12 +282,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Profit</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelProfit" >
-   <property name="geometry" >
+  <widget class="QLabel" name="labelProfit">
+   <property name="geometry">
     <rect>
      <x>50</x>
      <y>270</y>
@@ -294,12 +295,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>TextLabel</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_12" >
-   <property name="geometry" >
+  <widget class="QLabel" name="label_12">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>290</y>
@@ -307,12 +308,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Dens Sup</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_13" >
-   <property name="geometry" >
+  <widget class="QLabel" name="label_13">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>310</y>
@@ -320,12 +321,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>Dens Dem</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelDensitySup" >
-   <property name="geometry" >
+  <widget class="QLabel" name="labelDensitySup">
+   <property name="geometry">
     <rect>
      <x>60</x>
      <y>290</y>
@@ -333,12 +334,12 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>TextLabel</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelDensityDem" >
-   <property name="geometry" >
+  <widget class="QLabel" name="labelDensityDem">
+   <property name="geometry">
     <rect>
      <x>60</x>
      <y>310</y>
@@ -346,7 +347,7 @@
      <height>16</height>
     </rect>
    </property>
-   <property name="text" >
+   <property name="text">
     <string>TextLabel</string>
    </property>
   </widget>

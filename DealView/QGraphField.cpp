@@ -397,8 +397,8 @@ void GetStat(QVector<SDeal>& vecDeal, SStatistic &Stat){
 				Stat.VolumeDem+=Volume;
 		}
 		Stat.PriceDif=Stat.PriceMax-Stat.PriceMin;
-		Stat.DensitySup=Stat.VolumeSup/Stat.PriceDif;
-		Stat.DensityDem=Stat.VolumeDem/Stat.PriceDif;
+		Stat.DensitySup=Stat.VolumeSup*(Stat.PriceMax+Stat.PriceMin)/Stat.PriceDif/2;
+		Stat.DensityDem=Stat.VolumeDem*(Stat.PriceMax+Stat.PriceMin)/Stat.PriceDif/2;
 	//}
 
 }

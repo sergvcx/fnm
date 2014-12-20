@@ -22,7 +22,7 @@
 
 #include <iostream>
 #include <fstream>
-#include "demo.h"
+//#include "demo.h"
 #include "fight.h"
 
 #include "TransaqConnector.h"
