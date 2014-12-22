@@ -24,8 +24,8 @@
 
 #include <iostream>
 #include <fstream>
-//#include "demo.h"
-#include "fight.h"
+#include "demo.h"
+//#include "fight.h"
 
 #include "TransaqConnector.h"
 
@@ -168,15 +168,16 @@ void UpdateSellQuote(S_QuoteInfo &QuoteInfo, QList<S_Quote>& listQuote){
 }
 
 */
-QMap<QString,S_Security> mapAllSecurity;
-QMap<QString,S_Security> mapSecurity;
+//QMap<QString,S_Security> mapAllSecurity;
+//QMap<QString,S_Security> mapSecurity;
 
-bool isReadyToCommand=false;
+
 extern C_TransaqConnector TransaqConnector;
 bool CALLBACK acceptor(BYTE *pData)
 {
 	QMap<QString,QQueue<S_XML_Tick>> mapTick;
 	QMap<QString,QQueue<S_XML_QuoteInfo>> mapQuote;
+	QMap<QString,S_XML_SecInfo> mapSecInfo;
 
 	TransaqConnector.isBusy=true;
 	int static counter=0;
@@ -208,12 +209,12 @@ bool CALLBACK acceptor(BYTE *pData)
 					if (SecInfo.seccode=="")
 						std::cerr<< "ERROR: Empty seccode" <<std::endl;
 					else{
-						if (mapSecurity.contains(SecInfo.seccode)){
-							mapSecurity[SecInfo.seccode].SecInfo=SecInfo;
-							QString fname="xml_quote_"+SecInfo.seccode+".xml";
+						if (TransaqConnector.mapInstrument.contains(SecInfo.seccode)){
+							TransaqConnector.mapInstrument[SecInfo.seccode].pData->Info=SecInfo;
+							//QString fname="xml_quote_"+SecInfo.seccode+".xml";
 							 //mapSecurity[SecInfo.seccode].xml_quote.open("dd");   //fname.toAscii().data());
-							 xml_markets<<"<?xml version='1.0' encoding='UTF-8'?>";
-							 xml_markets<<"<root>" <<std::endl;
+							 //xml_markets<<"<?xml version='1.0' encoding='UTF-8'?>";
+							 //xml_markets<<"<root>" <<std::endl;
 						}
 					} 
 						
@@ -464,8 +465,9 @@ bool CALLBACK acceptor(BYTE *pData)
 			UnloadLibrary(hm);
 		}
 	}
-	//=======================================================
-	int C_TransaqConnector::connect(){
+	//============ connect ===========================================
+	int C_TransaqConnector::connect()
+	{
 		try{	
 			std::cout<<"Sending \"connect\" command..."<<std::endl;
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(
@@ -482,7 +484,9 @@ bool CALLBACK acceptor(BYTE *pData)
 		}
 		return 0;
 	}
-	int C_TransaqConnector::disconnect(){
+	//============ disconnect ===========================================
+	int C_TransaqConnector::disconnect()
+	{
 		try{
 			std::cout<<"Sending \"disconnect\" command..."<<std::endl;
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(	"<command id='disconnect'/>"));
@@ -495,8 +499,9 @@ bool CALLBACK acceptor(BYTE *pData)
 		}
 		return 0;
 	}
-
-	int C_TransaqConnector::server_status(){
+	//============ server_status ===========================================
+	int C_TransaqConnector::server_status()
+	{
 		try {
 			std::cout<<"Sending 'server status' server status..."<<std::endl;
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='server_status'/>"));
@@ -510,54 +515,32 @@ bool CALLBACK acceptor(BYTE *pData)
 		}
 		return 0;
 	}
-	
-	int C_TransaqConnector::subscribe(QList<QString>& SeccodeList){
+	//============ subscribe (quotes only) ===========================================
+	int C_TransaqConnector::subscribe(QList<QString>& SeccodeList)
+	{
 		try {
 			std::cout<<"Sending 'subscribe' command..."<<std::endl;
-			QString Cmd="<command id='subscribe'>";
+			QString Cmd;
 			QString seccode;
-			Cmd+="<quotes>";
+			Cmd ="<command id='subscribe'>";
+			Cmd+=	"<quotes>";
 			foreach(seccode,SeccodeList){
-				if (!mapSecurity.contains(seccode)){
+				if (!TransaqConnector.mapInstrument.contains(seccode)){
 					std::cerr<< "ERROR: mapSecurity does not contains" << STR(seccode) << std::endl;
-					//return 1;
+					return 1;
 				}
-				Cmd+="<security>";
-				Cmd+="<board>"+ TransaqConnector.mapInstrument[seccode].pData->Info.board +"</board>";
-				Cmd+="<seccode>" + seccode + "</seccode>"  ;
-				Cmd+="</security>";
+				Cmd+=	"<security>";
+				Cmd+=		"<board>"+ QString(TransaqConnector.mapInstrument[seccode].pData->Info.board) +"</board>";
+				Cmd+=		"<seccode>" + seccode + "</seccode>"  ;
+				Cmd+=	"</security>";
 			}
-			Cmd+="</quotes>";
-/*
-			Cmd+="<alltrades>";
-			foreach(seccode,SeccodeList){
-				if (!mapSecurity.contains(seccode)){
-					std::cerr<< "ERROR: mapSecurity does not contains" << STR(seccode) << std::endl;
-					//return 1;
-				}
-				Cmd+="<security>";
-				Cmd+="<board>"+ mapSecurity[seccode].SecInfo.board +"</board>";
-				Cmd+="<seccode>" + seccode + "</seccode>"  ;
-				Cmd+="</security>";
-			}
-			Cmd+="</alltrades>";
-
-*/
+			Cmd+=	"</quotes>";
 			Cmd+="</command>";
 			
 
 			printf(STR(Cmd));
-			//char* buffer=new char[512];
-			//strcpy(buffer,STR(Cmd));
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			//BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(buf));
-			//BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='subscribe_ticks'>"
-			//	"<security secid='21' tradeno='1'/>"  
-			//	"</command>"));
-
 			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
-			//delete buffer;
-			//Sleep(500000);
 			FreeMemory(ss);
 		}
 		catch (std::runtime_error& e) {
@@ -567,46 +550,25 @@ bool CALLBACK acceptor(BYTE *pData)
 		}
 		return 0;
 	}
-
-	int C_TransaqConnector::subscribe_ticks(QList<QString>& SeccodeList, int tradeno){
+	//============ subscribe_ticks (list) ===========================================
+	int C_TransaqConnector::subscribe_ticks(QList<QString>& SeccodeList, int tradeno)
+	{
 		try {
 			std::cout<<"Sending 'subscribe ticks' command..."<<std::endl;
-			QString Cmd="<command id='subscribe_ticks'>";
+			QString Cmd;
 			QString seccode;
+			Cmd ="<command id='subscribe_ticks'>";
 			foreach(seccode,SeccodeList){
-				if (!mapSecurity.contains(seccode)){
+				if (!TransaqConnector.mapInstrument.contains(seccode)){
 					std::cerr<< "ERROR: mapSecurity does not contains" << STR(seccode) << std::endl;
-					//return 1;
+					continue;
 				}
-				//Cmd+="<security secid='" + mapSecurity[seccode].SecInfo.secid + "' tradeno='1'/>"  ;
-				Cmd+="<security>";
-					Cmd+="<board> TQBR </board>";
-					Cmd+="<seccode>"+seccode+"</seccode>";
-					Cmd+="<tradeno>1</tradeno>";
-					
-				Cmd+="</security>";
-				Cmd+="<filter>false</filter>";
-				//Cmd+="<board>" mapSecurity[seccode].SecInfo.secid + "' tradeno='1'/>"  ;
-				//Cmd+="<security secid='24"   "' tradeno='1'/>" ;
+				Cmd+="<security secid='" + QString(TransaqConnector.mapInstrument[seccode].pData->Info.secid) + "' tradeno='1'/>"  ;
 			}
 			Cmd+="</command>";
-
-			//char buf[]="<command id='subscribe_ticks'>"
-			//	"<security secid='21' tradeno='1'/>"  
-			//	"</command>";
-
 			printf(STR(Cmd));
-			//char* buffer=new char[512];
-			//strcpy(buffer,STR(Cmd));
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			//BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(buf));
-			//BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='subscribe_ticks'>"
-			//	"<security secid='21' tradeno='1'/>"  
-			//	"</command>"));
-
 			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
-			//delete buffer;
-			//Sleep(500000);
 			FreeMemory(ss);
 		}
 		catch (std::runtime_error& e) {
@@ -616,42 +578,29 @@ bool CALLBACK acceptor(BYTE *pData)
 		}
 		return 0;
 	}
-	int C_TransaqConnector::subscribe_ticks(QString& seccode){
+	//============ subscribe_ticks (seccode) ===========================================
+	int C_TransaqConnector::subscribe_ticks(QString& seccode)
+	{
 		try {
 			std::cout<<"Sending 'subscribe ticks' command..."<<std::endl;
-			QString Cmd="<command id='subscribe_ticks'>";
-			//QString seccode;
 			
-			if (!mapSecurity.contains(seccode)){
-				std::cerr<< "ERROR: mapSecurity does not contains" << STR(seccode) << std::endl;
-				//return 1;
+			if (!TransaqConnector.mapInstrument.contains(seccode)){
+				std::cerr<< "ERROR: TransaqConnector does not contains" << STR(seccode) << std::endl;
+				return 1;
 			}
-			//Cmd+="<security secid='" + mapSecurity[seccode].SecInfo.secid + "' tradeno='1'/>"  ;
-			Cmd+="<security>";
-				Cmd+="<board> TQBR </board>";
-				Cmd+="<seccode>"+seccode+"</seccode>";
-				Cmd+="<tradeno>1</tradeno>";
-				
-			Cmd+="</security>";
-			Cmd+="<filter>false</filter>";
+			QString Cmd;
+			Cmd ="<command id='subscribe_ticks'>";
+			Cmd+=	"<security>";
+			Cmd+=		"<board> TQBR </board>";
+			Cmd+=		"<seccode>"+seccode+"</seccode>";
+			Cmd+=		"<tradeno>1</tradeno>";
+			Cmd+=	"</security>";
+			Cmd+=	"<filter>false</filter>";
 			Cmd+="</command>";
 
-			//char buf[]="<command id='subscribe_ticks'>"
-			//	"<security secid='21' tradeno='1'/>"  
-			//	"</command>";
-
 			printf(STR(Cmd));
-			//char* buffer=new char[512];
-			//strcpy(buffer,STR(Cmd));
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			//BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(buf));
-			//BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='subscribe_ticks'>"
-			//	"<security secid='21' tradeno='1'/>"  
-			//	"</command>"));
-
 			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
-			//delete buffer;
-			//Sleep(500000);
 			FreeMemory(ss);
 		}
 		catch (std::runtime_error& e) {
@@ -692,11 +641,10 @@ bool CALLBACK acceptor(BYTE *pData)
 			return 0;
 	}
 */
+	//============ get_securities  ===========================================
 	int C_TransaqConnector::get_securities(){
-			/* 
-			В команде 'get_securites' идентификаторы приведены для примера.
-			В реальном коде необходимо использовать данные, присылаемые сервером
-			*/
+			//В команде 'get_securites' идентификаторы приведены для примера.
+			//В реальном коде необходимо использовать данные, присылаемые сервером
 			std::cout<<"Sending \"get_securities\" command..."<<std::endl;
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='get_securities'>"
 				"</command>"));
@@ -704,6 +652,7 @@ bool CALLBACK acceptor(BYTE *pData)
 			FreeMemory(ss);
 			return 0;
 	}
+	//============ change_pass  ===========================================
 	int C_TransaqConnector::change_pass(){
 		try{	
 			std::cout<<"Sending \"change_pass\" command..."<<std::endl;
@@ -720,15 +669,16 @@ bool CALLBACK acceptor(BYTE *pData)
 		}
 		return 0;
 	}
-
-	
-
+	//=====================================================================
 	C_TransaqConnector& C_TransaqConnector::operator<< (char * sec_code){
 		QString seccode(sec_code);
 		listActive << seccode;
 		C_Instrument Instrument;
+		bool ok;
 		Instrument.pSharedMemory=new QSharedMemory(seccode);
-		Instrument.pSharedMemory->create(sizeof(C_SharedMemoryInstrument));
+		if (Instrument.pSharedMemory->isAttached())
+			Instrument.pSharedMemory->detach();
+		Instrument.pSharedMemory->create(sizeof(C_SharedMemoryInstrument),QSharedMemory::ReadWrite);
 		Instrument.pData=(C_SharedMemoryInstrument*)Instrument.pSharedMemory->data();
 		mapInstrument[seccode]=Instrument;
 		return *this;

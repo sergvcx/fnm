@@ -6,7 +6,7 @@
 #include "shared.h"
 extern CThreadAllDeals* pThreadAllDeals;
 
-extern bool isReadyToCommand;
+
 
 C_TransaqConnector TransaqConnector;
 
@@ -76,9 +76,41 @@ C_TransaqConnector TransaqConnector;
 	 //}
 	//if (!TransaqConnector.subscribe_ticks(TransaqConnector.listActive))
 	//	TransaqConnector.disconnect();
+
+	QMap<QString,C_Instrument> mapInstrument;
+
 	
+	C_Instrument Instrument;
+	Instrument.pSharedMemory=new QSharedMemory("GMKN");
+	if (Instrument.pSharedMemory->attach()){
+		
+		return 1;
+	}
+	
+	Instrument.pData=(C_SharedMemoryInstrument*)Instrument.pSharedMemory->data();	
+
+	while (1){
+	
+		//QString xml_glass=Instrument.pData->Quotes.toXML();
+		for(int i=0; i<Instrument.pData->Ticks.size; i++){
+			//QString xml_glass=Instrument.pData->Ticks.data[i].;
+			S_Tick &Tick=Instrument.pData->Ticks.data[i];
+			printf("%f %d %d \n", Tick.price, Tick.quntity, Tick.datetime);
+		}
+		
+		Sleep(1000);
+
+	}
+
+	
+	//mapInstrument[seccode]=Instrument;
+
+
+	//while 
 	Sleep(1000*60*60*8);
+
 	TransaqConnector.disconnect();
+	Instrument.pSharedMemory->detach();
 	//TransaqConnector.change_pass();
 	
 	CloseXML();

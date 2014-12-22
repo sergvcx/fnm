@@ -15,6 +15,7 @@
 #define LIMIT_QOUTES 1024*1024		// must be power of two
 
 
+
 class C_SharedMemoryInstrument {
 public:
 	
@@ -126,8 +127,45 @@ public:
 			}
 		}
 
-		
+		QString& toXML(int history=100)
+		{
+			QList<S_Quote> Sell;
+			QList<S_Quote> Buy;
+			QString XML;
+
+			XML ="<quotes>\n"; // seccode='" + QString(Info.seccode)+"'>\n";
+
+
+			for(int i=Sell.size()-1; i>=0; i--){
+				S_Quote& Quote=Sell[i];
+				QString price;
+				QString quantity;
+				QString create;
+				QString update;
+				price.setNum(Quote.price);
+				quantity.setNum(Quote.quantity);
+				create=Quote.datetime_create.toString();
+				update=Quote.datetime_update.toString();
+				XML+="	<sell price='"+price+"' volume='"+quantity+"' create='"+create+"' update='"+update+"'>\n";
+			}
+			for(int i=0; i<Buy.size(); i++){
+				S_Quote& Quote=Buy[i];
+				QString price;
+				QString quantity;
+				QString create;
+				QString update;
+				price.setNum(Quote.price);
+				quantity.setNum(Quote.quantity);
+				create=Quote.datetime_create.toString();
+				update=Quote.datetime_update.toString();
+				XML+="	<buy price='"+price+"' volume='"+quantity+"' create='"+create+"' update='"+update+"'>\n";
+			}
+			XML+="</quotes>\n";
+			return XML;
+		}
 	} Quotes;
+
+	
 };
 
 #define LIMIT_SECCODES 128

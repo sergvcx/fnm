@@ -85,6 +85,8 @@ struct S_XML_QuoteInfo {
 	QString yield;	// доходность (актуально только для 	облигаций)</yield>
 	QString buy;	// количество бумаг к покупке</buy>
 	QString sell;	// количество бумаг к продаже</sell>
+
+	
 };
 
 struct S_XML_ServerStatus{
@@ -99,7 +101,6 @@ struct S_Quote {
 	float price;
 	QDateTime datetime_create;
 	QDateTime datetime_update;
-	
 };
 struct  S_Security {
 	//QFile file;
@@ -111,15 +112,27 @@ struct  S_Security {
 };
 	
 struct S_InstrumentInfo{
-	QString seccode;
-	QString shortname;
+	char	seccode[16];
+	char	shortname[16];
 	int		decimails;
-	QString active;
-	int		secid;
+	char	active[16];
+	char	secid[16];
 	int		market;
 	double	minstep;
 	double	lotsize;
-	QString board;
+	char	board[16];
+	
+	void operator = (S_XML_SecInfo& xml_secinfo){
+		bool ok;
+		strcpy(seccode,STR(xml_secinfo.seccode));
+		strcpy(shortname,STR(xml_secinfo.shortname));
+		decimails=xml_secinfo.decimails.toInt(&ok);		_ASSERTE(ok);
+		strcpy(active,STR(xml_secinfo.active));
+		strcpy(secid ,STR(xml_secinfo.secid));
+		minstep	 =xml_secinfo.minstep.toDouble(&ok);	_ASSERTE(ok);
+		lotsize	 =xml_secinfo.lotsize.toDouble(&ok);	_ASSERTE(ok);
+		strcpy(board,STR(xml_secinfo.board));
+	}
 };
 
 struct S_Tick{
