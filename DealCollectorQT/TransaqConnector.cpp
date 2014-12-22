@@ -11,9 +11,11 @@
 #include <QTreeWidgetItem>
 #include <QStringList>
 #include <QSharedMemory>
+#include <QTextCodec>
 #include "ui_ui.h"
 #include "main.h"
 #include "XmlParse.h"
+#include <QtDebug>
 
 #define STR(a) a.toAscii().data()
 #define RUS(str) QString::fromLocal8Bit(str.toAscii().data())
@@ -301,7 +303,7 @@ bool CALLBACK acceptor(BYTE *pData)
 		//-------------------------------------------------------------
 		if (xml.isStartElement() && xml.name() == "server_status"){
 			xml_server_status<<pData<<  std::endl; 
-			std::cout<<"-server_status";
+			
 			QXmlStreamAttributes attributes = xml.attributes();
 			if (attributes.hasAttribute("id"))
 				TransaqConnector.ServerStatus.id = attributes.value("id").toString();
@@ -314,7 +316,16 @@ bool CALLBACK acceptor(BYTE *pData)
 
 			if (attributes.hasAttribute("server_tz"))
 				TransaqConnector.ServerStatus.server_tz = attributes.value("server_tz").toString();
-			std::cout<<"-server_status finished"; fflush(stdout);
+			
+			TransaqConnector.ServerStatus.status= xml.readElementText();
+			
+			//QTextCodec *codec = QTextCodec::codecForName("CP1251");
+			QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
+
+			QByteArray dest = codec->fromUnicode(TransaqConnector.ServerStatus.connected);
+			printf("==========",dest.data());
+			//QByteArray wtf = codec->fromUnicode(wtf_s);
+			std::cout<<"-server_status " << STR(TransaqConnector.ServerStatus.connected) << ":" << STR(TransaqConnector.ServerStatus.status) ; fflush(stdout);
 
 		}
 
@@ -475,7 +486,13 @@ bool CALLBACK acceptor(BYTE *pData)
 					CONNECT_INFO
 					"<logsdir>.\\LOGS\\</logsdir><loglevel>2</loglevel></command>"));
 			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
-			Sleep(10000); 
+
+			printf("=======ddd===",STR(QString((char*)ss)));
+			QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
+			QByteArray dest = codec->fromUnicode(QString((char*)ss));
+			printf("==========",dest.data());
+
+			//Sleep(10000); 
 			FreeMemory(ss);
 		}
 		catch (std::runtime_error& e) {
@@ -491,6 +508,18 @@ bool CALLBACK acceptor(BYTE *pData)
 			std::cout<<"Sending \"disconnect\" command..."<<std::endl;
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(	"<command id='disconnect'/>"));
 			std::cout<<reinterpret_cast<char*>(ss)<<std::endl;
+			std::cout<<reinterpret_cast<char*>(ss)<<std::endl;
+			printf("=======ddd===",ss);
+
+			QString fff("error ðóññêé");
+			qDebug() << fff;
+			printf("======ûûûû==",STR(fff));
+			printf("=======ddd===",STR(QString((char*)ss)));
+			QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
+			QByteArray dest = codec->fromUnicode(QString((char*)ss));
+			printf("==========",dest.data());
+
+
 			FreeMemory(ss);
 		} 
 		catch (std::runtime_error& e) {

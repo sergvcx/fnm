@@ -94,6 +94,7 @@ struct S_XML_ServerStatus{
 	QString connected;
 	QString recover;
 	QString server_tz;
+	QString status;
 };
 
 struct S_Quote {

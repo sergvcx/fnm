@@ -6,12 +6,33 @@
 #include "shared.h"
 extern CThreadAllDeals* pThreadAllDeals;
 
-
+#include <QTextCodec>
+#include <QTDebug>
+using namespace std;
 
 C_TransaqConnector TransaqConnector;
 
  int main(int argc, char *argv[])
 	 {
+		 setlocale(LC_ALL, "Russian");
+		 //setlocale(LC_CTYPE, "");
+		 cout << "Русский текст в консоли" << endl;
+
+
+		 QByteArray msg = QByteArray::fromHex("cde5eff0e0e2e8ebfcedeee520f1eeeee1f9e5ede8e5204b4f4e5f544d5f484f53544b4e4620eef220d3cad2d121");
+		 QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
+		 QString strf = codec->toUnicode(msg);
+		 qDebug() << strf;
+
+
+		 QByteArray wtf_s(strf.toStdString().c_str()); //либо так
+		 //wtf_s.append(strf); //либо так
+
+		 QByteArray wtf = codec->fromUnicode(wtf_s);
+		 qDebug() << wtf.toHex();
+
+
+
 		// C_SharedPortfolio SharedPortfolio;
 
 		 //SharedPortfolio <<  "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
@@ -21,16 +42,16 @@ C_TransaqConnector TransaqConnector;
 
 		
 //		 printf(STR(sss));
-	setlocale(LC_CTYPE, "");
+	
 	 QApplication app(argc, argv);
 
-	 MainWindow* mainWin=new MainWindow;
+	 //MainWindow* mainWin=new MainWindow;
 	 //if (argc==2){
 	//	 if (strcmp(argv[1],"-auto")==0){
 	//		pThreadAllDeals->start();
 	//	 }
 	 //}
-	 pThreadAllDeals->ReadPortfolio();
+	 //pThreadAllDeals->ReadPortfolio();
 	//  mainWin->show();
 	// return app.exec();
 
@@ -43,6 +64,9 @@ C_TransaqConnector TransaqConnector;
 	 TransaqConnector.disconnect();
 	 Sleep(1000);
 	 TransaqConnector.connect();
+
+	 TransaqConnector.server_status();
+	 while(1);
 	TransaqConnector.isConnected();
 	 TransaqConnector.connect();
 	 TransaqConnector.isConnected();
