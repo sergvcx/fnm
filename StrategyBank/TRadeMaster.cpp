@@ -12,7 +12,7 @@ void  SplitBuySell(QQueue<SDeal>& qDeals, QQueue<SDeal>& qBuyDeals,QQueue<SDeal>
 			qBuyDeals<<Deal;
 	}
 }
-void FirstSecond(QQueue<SDeal>& qDeals, QQueue<SDeal>& qInSecDeals ){
+void ExtractInSecondTicks(QQueue<SDeal>& qDeals, QQueue<SDeal>& qInSecDeals ){
 	SDeal Deal;
 	if (qDeals.isEmpty())
 		return;
@@ -22,7 +22,24 @@ void FirstSecond(QQueue<SDeal>& qDeals, QQueue<SDeal>& qInSecDeals ){
 		qInSecDeals.enqueue(Deal);
 	}
 }
-
+bool GetBuyQuote(QQueue<SDeal>& qDeals, float& BuyQoute){
+	for(int i=0;i<qDeals.size();i++){
+		if (qDeals[i].IsBuy()){
+			BuyQoute=qDeals[i].Price;
+			return true;
+		}
+	}
+	return false;
+}
+bool GetSellQuote(QQueue<SDeal>& qDeals, float& SellQoute){
+	for(int i=0;i<qDeals.size();i++){
+		if (qDeals[i].IsSell()){
+			SellQoute=qDeals[i].Price;
+			return true;
+		}
+	}
+	return false;
+}
 
 C_TradeMaster::C_TradeMaster(){
 	Cash=0;
@@ -31,27 +48,32 @@ C_TradeMaster::C_TradeMaster(){
 	LockedStocks=0;
 	TrapNet.minDelta=0.2/100;
 	TrapNet.maxDelta=1.0/100;
-	Commission=0;//0.01/100;
+	Commission=0.07/100;//0.01/100;
+	
 }
 
 void C_TradeMaster::Init(float StartPrice, float fCash, int nStocks, float minHotDelta, float maxHotDelta, float minTrapDelta, float maxTrapDelta){
 	TrapNet.numTraps = nStocks;
 	TrapNet.minDelta = minTrapDelta*StartPrice;
 	TrapNet.maxDelta = maxTrapDelta*StartPrice;
-	TrapNet.GapVolume= nStocks/TrapNet.numTraps;
-	TrapNet.GapPrice = (TrapNet.maxDelta-TrapNet.minDelta)/TrapNet.numTraps;
+//	TrapNet.GapVolume= nStocks/TrapNet.numTraps;
+//	TrapNet.GapPrice = (TrapNet.maxDelta-TrapNet.minDelta)/TrapNet.numTraps;
 	TrapNet.Status   = TRAP;
 
 	HotNet.numTraps = nStocks;
 	HotNet.minDelta = minHotDelta*StartPrice;
 	HotNet.maxDelta = maxHotDelta*StartPrice;
-	HotNet.GapVolume= nStocks/HotNet.numTraps;
-	HotNet.GapPrice = (HotNet.maxDelta-HotNet.minDelta)/HotNet.numTraps;
+	//HotNet.GapVolume= nStocks/HotNet.numTraps;
+//	HotNet.GapPrice = (HotNet.maxDelta-HotNet.minDelta)/HotNet.numTraps;
 	HotNet.Status  = HOT;
 
+	Cash=0;
+	Stocks=0;
+	LockedCash=0;
+	LockedStocks=0;
 	Cash     = fCash;
 	Stocks   = nStocks;
-	
+	Counter=0;
 	
 	//-minDela
 	//
@@ -72,6 +94,7 @@ void C_TradeMaster::Init(float StartPrice, float fCash, int nStocks, float minHo
 
 void C_TradeMaster::CompleteFirstOrder(QList<SOrder>& listOrder, int Type){
 	if (Type&BUY){
+		Counter++;
 		SOrder& Order=listOrder.first();
 		LockedCash-=Order.Volume*Order.Price;
 		//_ASSERTE(LockedCash>=0);
@@ -198,28 +221,60 @@ bool C_TradeMaster::InsertLastOrder(QList<SOrder>& listOrder, int Type, int Volu
 	QQueue<SDeal>	qSellDeals;
 	
 	while (!qDeals.isEmpty()){
-		FirstSecond(qDeals,qSecondDeals);
+		ExtractInSecondTicks(qDeals,qSecondDeals);
+		if (qSecondDeals[0].nTime<103000){
+			qSecondDeals.clear();
+			continue;
+		}
+		if (qSecondDeals[0].nTime>184000){
+			Close();
+			qSecondDeals.clear();
+			continue;
+		}
 		SplitBuySell(qSecondDeals,qBuyDeals,qSellDeals);
 		if (!qBuyDeals.isEmpty()){
-			LastBuyDeal=qBuyDeals.last();
+			LastBuyDeal=qBuyDeals.dequeue();
+			while (!qBuyDeals.isEmpty()){
+				if (LastBuyDeal.Price>qBuyDeals.last().Price)
+					LastBuyDeal=qBuyDeals.dequeue();
+				else 
+					qBuyDeals.dequeue();
+			}
+
 			while (!TrapNet.listBuy.isEmpty() && LastBuyDeal.Price<=TrapNet.listBuy.first().Price){
 				CompleteFirstOrder(TrapNet.listBuy,BUY);
 			}
 			while (!HotNet.listBuy.isEmpty() && LastBuyDeal.Price<=HotNet.listBuy.first().Price){
 				CompleteFirstOrder(HotNet.listBuy,BUY);
 			}
-			qBuyDeals.clear();
+			//qBuyDeals.clear();
 		}
 		if (!qSellDeals.isEmpty()){
-			LastSellDeal=qSellDeals.last();
+			LastSellDeal=qSellDeals.dequeue();
+			while (!qSellDeals.isEmpty()){
+				if (LastSellDeal.Price<qSellDeals.last().Price)
+					LastSellDeal=qSellDeals.dequeue();
+				else 
+					qSellDeals.dequeue();
+			}
+
+
 			while (!TrapNet.listSell.isEmpty() && LastSellDeal.Price>=TrapNet.listSell.first().Price){
 				CompleteFirstOrder(TrapNet.listSell,SELL);
 			}
 			while (!HotNet.listSell.isEmpty() && LastSellDeal.Price>=HotNet.listSell.first().Price){
 				CompleteFirstOrder(HotNet.listSell,SELL);
 			}
-			qSellDeals.clear();
+			//qSellDeals.clear();
 		}
+		if (Counter==120)
+			int g=1;
+		if (Cash>100000)
+			int g=1;
+		//if (!qBuyDeals.isEmpty()){
+		//	LastBuyDeal=qBuyDeals.dequeue();
+		GetBuyQuote(qDeals,BuyQuote);
+		GetSellQuote(qDeals,SellQuote);
 		MakeOrders();
 	}
 }
@@ -242,6 +297,16 @@ void C_TradeMaster::CutNet(S_Net& Net)
 
 void C_TradeMaster::SewNet(S_Net& Net)
 {
+
+	if (Stocks==0 && LockedStocks==0)
+		if ( Net.listBuy.isEmpty())
+			InsertFirstOrder(Net.listBuy, BUY|Net.Status,1,    (LastBuyDeal.Price-(Net.minDelta+Net.maxDelta)/2));//-Net.GapPrice/2);
+
+	if (Stocks==1)
+		if ( Net.listSell.isEmpty())
+			InsertFirstOrder(Net.listSell, SELL|Net.Status, 1,   SellQuote);
+
+	/*
 	if ( Net.listBuy.isEmpty())
 		InsertFirstOrder(Net.listBuy, BUY|Net.Status, Net.GapVolume,    (LastBuyDeal.Price-Net.minDelta)-Net.GapPrice/2);
 	if (!Net.listBuy.isEmpty()) {
@@ -264,6 +329,7 @@ void C_TradeMaster::SewNet(S_Net& Net)
 			if (InsertLastOrder(Net.listSell, SELL|Net.Status, Net.GapVolume,     Net.listSell.last().Price+Net.GapPrice))
 				break;
 	}
+	*/
 }
 
 
@@ -273,12 +339,12 @@ void C_TradeMaster::MakeOrders(){
 	//printf("hot  %d %d\n",HotNet.listBuy.size(), HotNet.listSell.size());
 	CutNet(TrapNet);
 	//printf("trap %d %d\n",TrapNet.listBuy.size(), TrapNet.listSell.size());
-	CutNet(HotNet);
+	//CutNet(HotNet);
 	//printf("hot  %d %d\n",HotNet.listBuy.size(), HotNet.listSell.size());
 	//------------------ insert order----------------
 	SewNet(TrapNet);
 	//printf("trap %d %d\n",TrapNet.listBuy.size(), TrapNet.listSell.size());
-	SewNet(HotNet);
+	//SewNet(HotNet);
 	//printf("hot  %d %d\n",HotNet.listBuy.size(), HotNet.listSell.size());
 
 

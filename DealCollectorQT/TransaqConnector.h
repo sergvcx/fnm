@@ -5,6 +5,39 @@
 #include <iostream>
 #include <fstream>
 #include <qfile>
+#include <QSharedMemory>
+
+#include "main.h"
+//#include "shared.h"
+class C_SharedMemoryInstrument;
+//class C_Instrument;
+
+class C_Instrument {
+public:
+	/*
+	C_Instrument(const C_Insrument& Inst){
+
+	}
+	C_Instrument(){
+
+	}*/
+	//C_Insrument& operator = (const C_Insrument& Inst){
+	//	this->pData=Inst.pData;
+	//	this->pSharedMemory=Inst.pSharedMemory;
+	//	return *this;
+	//}
+	C_SharedMemoryInstrument* pData;
+	QSharedMemory* pSharedMemory;
+	void Lock(){
+		pSharedMemory->lock();
+	}
+	void Unlock(){
+		pSharedMemory->unlock();
+	}
+
+};
+	
+
 #define CONNECTOR_166PLUS // пример для версии библиотеки версии 1.66 (5.02) или выше
 
 #define TACCESS_API  __declspec(dllimport)
@@ -19,7 +52,7 @@ typedef BYTE* (WINAPI *typeSetLogLevel)(int level);
 typedef BYTE* (WINAPI *typeUninitialize)();
 #endif
 
-class S_Tick{
+struct S_XML_Tick{
 	//QString secid;		// 4
 	QString board;		// TQBR
 	QString seccode;	// LKOH
@@ -31,7 +64,7 @@ class S_Tick{
 	QString buysell;	// S
 };
 
-struct S_SecInfo{
+struct S_XML_SecInfo{
 	QString seccode;
 	QString shortname;
 	QString decimails;
@@ -42,7 +75,7 @@ struct S_SecInfo{
 	QString board;
 };
 
-struct S_QuoteInfo {
+struct S_XML_QuoteInfo {
 
 	QString secid;	// "внутренний код">
 	QString board;	// Идентификатор режима торгов по умолчанию 
@@ -54,22 +87,55 @@ struct S_QuoteInfo {
 	QString sell;	// количество бумаг к продаже</sell>
 };
 
+struct S_XML_ServerStatus{
+	QString id ;
+	QString connected;
+	QString recover;
+	QString server_tz;
+};
+
 struct S_Quote {
-	float price;
-	float time_create;
-	float time_update;
 	int	  quantity;
+	float price;
+	QDateTime datetime_create;
+	QDateTime datetime_update;
+	
 };
 struct  S_Security {
 	//QFile file;
-	S_SecInfo SecInfo;
+	S_XML_SecInfo SecInfo;
 	QList<S_Quote> listSellQuote;
 	QList<S_Quote> listBuyQuote;
-	QQueue<C_Tick> queueTick;
+	QQueue<S_XML_Tick> queueTick;
 	QFile* xml_quotses;
 };
 	
+struct S_InstrumentInfo{
+	QString seccode;
+	QString shortname;
+	int		decimails;
+	QString active;
+	int		secid;
+	int		market;
+	double	minstep;
+	double	lotsize;
+	QString board;
+};
 
+struct S_Tick{
+	float		price;
+	int			quntity;
+	int			type;
+	QDateTime	datetime;
+};
+
+
+struct C_EasyQuote{
+	float		price;
+	int			buy;
+	int			sell;
+	QDateTime	datetime;
+};
 
 class C_TransaqConnector {
 	HMODULE hm;
@@ -83,6 +149,8 @@ class C_TransaqConnector {
 	typeSendCommand  SendCommand;
 	
 public:
+	bool isBusy;
+	S_XML_ServerStatus ServerStatus;
 
 	QList<QString> listActive;
 	C_TransaqConnector();
@@ -91,10 +159,19 @@ public:
 	int disconnect();
 	int server_status();
 	int subscribe_ticks(QList<QString>& SeccodeList, int tradeno=1);
+	int subscribe_ticks(QString& seccode);
 	int subscribe(QList<QString>& SeccodeList);
 	int get_securities();
 	int change_pass();
 
+	C_TransaqConnector& operator << (char * seccode);
+	QMap<QString,C_Instrument> mapInstrument;	
+
+	//QQueue<S_XML_Tick> queueTick;
+	//QQueue<S_XML_QuoteInfo> queueQuote;
+
+
+	bool isConnected();
 };
 
 void OpenXML();

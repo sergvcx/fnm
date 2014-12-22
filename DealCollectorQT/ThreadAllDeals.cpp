@@ -225,7 +225,8 @@ void CThreadAllDeals::run(){
 
 
 }
-void CThreadAllDeals::Parse(QQueue<C_Tick>& TickQueue)
+
+void CThreadAllDeals::Parse(QQueue<S_XML_Tick>& TickQueue)
 {
 	
 //	if (!db_trading.isOpen()){
@@ -303,7 +304,7 @@ void CThreadAllDeals::Parse(QQueue<C_Tick>& TickQueue)
 		while (!TickQueue.isEmpty()) 
 		{
 			
-			C_Tick Tick=TickQueue.dequeue();
+			S_XML_Tick Tick=TickQueue.dequeue();
 			//printf(STR(Tick.seccode));
 			// читаем поля строки из БД
 			bool ok;

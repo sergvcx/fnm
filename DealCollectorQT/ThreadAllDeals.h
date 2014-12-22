@@ -2,7 +2,7 @@
 #include <QThread>
 #include "main.h"
 #include "DBManager.h"
-
+#include "shared.h"
 class CThreadAllDeals:public QThread 
 {
 	char cmd[1024];
@@ -28,7 +28,7 @@ public slots:
 	void onSMSTimer();
 	void run(); 
 	void stop(); 
-	void Parse(QQueue<C_Tick>& TickQueue);
+	void Parse(QQueue<S_XML_Tick>& TickQueue);
 private: 
 	QString messageStr; 
 	volatile bool stopped;

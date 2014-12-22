@@ -7,7 +7,8 @@
  int main(int argc, char *argv[])
  {
 	
-
+	QDateTime dt;
+	int t=sizeof(dt);
 	QApplication app(argc, argv);
 	//app.setWindowTitle("LefcoView");
 	//MyWidget widget;

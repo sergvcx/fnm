@@ -100,7 +100,7 @@ void QGraphField::paintEvent(QPaintEvent * event)
 
 		int x=x2pix(idx);
 		mapTime[vecDeal[idx].nTime]=x;
-		printf("%d %d\n",vecDeal[idx].nTime,x);
+		//printf("%d %d\n",vecDeal[idx].nTime,x);
 
 		if (vecDeal[idx].nType&IN_SECOND){
 			SwitchColor=-SwitchColor;

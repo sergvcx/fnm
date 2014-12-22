@@ -2,11 +2,25 @@
 #include "MainWindow.h"
 #include <QApplication>
 #include "TransaqConnector.h"
+
+#include "shared.h"
 extern CThreadAllDeals* pThreadAllDeals;
 
 extern bool isReadyToCommand;
+
+C_TransaqConnector TransaqConnector;
+
  int main(int argc, char *argv[])
 	 {
+		// C_SharedPortfolio SharedPortfolio;
+
+		 //SharedPortfolio <<  "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
+		//	 << "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
+		//	 <<"ROSN" <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
+
+
+		
+//		 printf(STR(sss));
 	setlocale(LC_CTYPE, "");
 	 QApplication app(argc, argv);
 
@@ -21,39 +35,41 @@ extern bool isReadyToCommand;
 	// return app.exec();
 
 	 OpenXML();
-	 C_TransaqConnector TransaqConnector;
+
+
+
+	 
 
 	 TransaqConnector.disconnect();
 	 Sleep(1000);
 	 TransaqConnector.connect();
-	 while (!isReadyToCommand)
-		Sleep(1000);
 	 
+	 if (!TransaqConnector.isConnected())
+		 if (!TransaqConnector.isConnected())
+			return 1;
 	 
-	 QList<QString> List; List << "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
+
+	 TransaqConnector << "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
 		 << "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
 		 <<"ROSN" <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
 	 
 
-//	 QList<QString> QuoteList; QuoteList << "GMKN" ;
-	QList<QString> QuoteList; QuoteList<< "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
-		 << "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
-		 <<"ROSN" <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
-
-
-
-	 //TransaqConnector.subscribe();
 	
 
 	//Sleep(1000*10);
 	//TransaqConnector.subscribe(QString("GMKN"));
 	//TransaqConnector.server_status();
 	//Sleep(1000*20);
-	TransaqConnector.server_status();
-	while (!isReadyToCommand)
-		Sleep(1000);
-	TransaqConnector.subscribe_ticks(List);
-	TransaqConnector.subscribe(QuoteList);
+	//TransaqConnector.server_status();
+	//while (!isReadyToCommand)
+	//	Sleep(1000);
+	 if (TransaqConnector.subscribe_ticks(QString("GMKN"))){
+		TransaqConnector.disconnect();
+		return 1;
+	 }
+	//if (!TransaqConnector.subscribe_ticks(TransaqConnector.listActive))
+	//	TransaqConnector.disconnect();
+	//TransaqConnector.subscribe(TransaqConnector.listActive);
 	Sleep(1000*60*60*8);
 	TransaqConnector.disconnect();
 	//TransaqConnector.change_pass();

@@ -1,7 +1,8 @@
 #include "XmlParse.h"
 #include <iostream>
+#include "main.h"
 
-void ParseTick(QXmlStreamReader& xml, C_Tick& tick ){
+void ParseTick(QXmlStreamReader& xml, S_XML_Tick& tick ){
 	if(!(xml.isStartElement() && xml.name() == "tick")) {
 		return;
 	}
@@ -51,16 +52,13 @@ void ParseTick(QXmlStreamReader& xml, C_Tick& tick ){
 		xml.readNext();
 		//printf(STR(xml.name().toString()));
 	}
-	printf(STR(tick.seccode));printf("-");
-	printf(STR(tick.price));printf("-");
-	printf(STR(tick.tradetime));printf("-");
-	printf(STR(tick.buysell));printf("\n");
+	
 
 	return;
 }
 
 
-int ParseSecurity(QXmlStreamReader& xml,S_SecInfo& SecInfo){
+int ParseSecurity(QXmlStreamReader& xml,S_XML_SecInfo& SecInfo){
 	if(!(xml.isStartElement() && xml.name() == "security")) {
 		return 1;
 	}
@@ -109,7 +107,7 @@ int ParseSecurity(QXmlStreamReader& xml,S_SecInfo& SecInfo){
 	return 0;
 }
 
-int ParseQuote(QXmlStreamReader& xml,S_QuoteInfo& QuoteInfo){
+int ParseQuote(QXmlStreamReader& xml,S_XML_QuoteInfo& QuoteInfo){
 	if(!(xml.isStartElement() && xml.name() == "quote")) {
 		return 1;
 	}

@@ -377,6 +377,12 @@ void MainWindow::Draw(){
 	C_TradeMaster TradeMaster;
 	
 	QQueue<SDeal> qDeals;
+
+	
+	
+
+
+
 	for (int i=0; i<qGraphField->vecDeal.size(); i++)
 			qDeals<<qGraphField->vecDeal[i];
 	
@@ -388,8 +394,8 @@ void MainWindow::Draw(){
 
 	float price =qDeals.first().Price;
 	int i=0;
-	for(maxTrapDelta=0.1/100; i<20; i++, maxTrapDelta+=0.1/100)
-	for(minTrapDelta=0.05/100; minTrapDelta<maxTrapDelta/2; minTrapDelta+=maxTrapDelta/20)
+	for(maxTrapDelta=0.05/100; maxTrapDelta<10.0/100; i++, maxTrapDelta+=0.05/100){
+	for(minTrapDelta=0.01/100; minTrapDelta<maxTrapDelta/2; minTrapDelta+=maxTrapDelta/20)
 	{
 		//QQueue<SDeal> qDeals1;
 		//qDeals1<<qDeals;
@@ -398,10 +404,12 @@ void MainWindow::Draw(){
 
 		float price =qDeals.first().Price;
 
-		TradeMaster.Init(price, price*10, 10, minHotDelta, maxHotDelta, minTrapDelta, maxTrapDelta);
+		TradeMaster.Init(price,20000, 0, minHotDelta, maxHotDelta, minTrapDelta, maxTrapDelta);
 		TradeMaster.Parse(qDeals);
 		TradeMaster.Close();
-		printf("[%f] Cash=%f LCash=%f Stocks=%d LStocks=%d \n", price*20, TradeMaster.Cash, TradeMaster.LockedCash, TradeMaster.Stocks, TradeMaster.LockedStocks);
+		//printf("[%f] Cash=%f LCash=%f Stocks=%d LStocks=%d \n", price*10, TradeMaster.Cash, TradeMaster.LockedCash, TradeMaster.Stocks, TradeMaster.LockedStocks);
+		if (TradeMaster.Cash>20000)
+			printf("[%f] Cash=%f Stocks=%d min=%f max=%f count=%d\n",(TradeMaster.Cash-20000.0)/ price*100, TradeMaster.Cash,  TradeMaster.Stocks, minTrapDelta, maxTrapDelta, TradeMaster.Counter);
 
 
 		//TradeMaster.Init(price, minDelta, maxDelta, 4, 100000, 0);
@@ -409,6 +417,7 @@ void MainWindow::Draw(){
 		//TradeMaster.Parse(qDeals);
 		//TradeMaster.Close();
 		//printf("Cash=%f LCash=%f Stocks=%d LStocks=%d \n", TradeMaster.Cash, TradeMaster.LockedCash, TradeMaster.Stocks, TradeMaster.LockedStocks);
+	}
 	}
 	//DealStreamer.
 	//DealStreamer.vecDeal<< qGraphField->vecDeal;

@@ -5,7 +5,7 @@
 
 
 void  SplitBuySell(QQueue<SDeal>& qDeals, QQueue<SDeal>& qBuyDeals,QQueue<SDeal>& qSellDeals );
-void FirstSecond(QQueue<SDeal>& qDeals, QQueue<SDeal>& qInSecDeals );
+void ExtractInSecondTicks(QQueue<SDeal>& qDeals, QQueue<SDeal>& qInSecDeals );
 
 struct SOrder{
 	float	Price;			// цена
@@ -21,16 +21,23 @@ struct SOrder{
 #define TRAP   4
 #define HOT    8
 
+class C_EasyTrade
+{
+public:
+
+
+};
 class C_TradeMaster{
 public:
-	
+	int		Counter;
 	int		Stocks;
 	int		LockedStocks;
 	float 	Cash;
 	float 	LockedCash;
 	float 	Commission;
 	
-	
+	float BuyQuote;
+	float SellQuote;
 
 	SDeal	LastSellDeal;
 	SDeal	LastBuyDeal;

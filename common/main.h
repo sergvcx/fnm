@@ -103,6 +103,20 @@ struct PPP{
 
 };*/
 #define EMPTY 0
+/*
+class C_Tick{
+public:
+	//QString secid;		// 4
+	QString board;		// TQBR
+	QString seccode;	// LKOH
+	QString tradeno;	// 2397108618
+	QString tradetime;	// 08.08.2014 09:59:59
+	QString price;		// 1928.3
+	QString quantity;	// 2
+	QString period;		// L
+	QString buysell;	// S
+};
+*/
 
 class C_Tick{
 public:
