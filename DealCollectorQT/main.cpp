@@ -43,15 +43,17 @@ C_TransaqConnector TransaqConnector;
 	 TransaqConnector.disconnect();
 	 Sleep(1000);
 	 TransaqConnector.connect();
-	 
-	 if (!TransaqConnector.isConnected())
-		 if (!TransaqConnector.isConnected())
-			return 1;
-	 
+	 while(!TransaqConnector.isConnected()){
+		 printf("Transaq not connected\n");
+		 Sleep(1000);
+	 }
+	 printf("Transaq connected!\n");
 
-	 TransaqConnector << "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
-		 << "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
-		 <<"ROSN" <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
+	 
+	 TransaqConnector << "GMKN" ;
+	 //<<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
+	//	 << "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
+	//	 <<"ROSN" <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
 	 
 
 	
@@ -63,13 +65,18 @@ C_TransaqConnector TransaqConnector;
 	//TransaqConnector.server_status();
 	//while (!isReadyToCommand)
 	//	Sleep(1000);
-	 if (TransaqConnector.subscribe_ticks(QString("GMKN"))){
+	 if (TransaqConnector.subscribe(TransaqConnector.listActive)){
 		TransaqConnector.disconnect();
 		return 1;
 	 }
+	
+	// if (TransaqConnector.subscribe_ticks(QString("GMKN"))){
+	//	TransaqConnector.disconnect();
+	//	return 1;
+	 //}
 	//if (!TransaqConnector.subscribe_ticks(TransaqConnector.listActive))
 	//	TransaqConnector.disconnect();
-	//TransaqConnector.subscribe(TransaqConnector.listActive);
+	
 	Sleep(1000*60*60*8);
 	TransaqConnector.disconnect();
 	//TransaqConnector.change_pass();

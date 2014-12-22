@@ -182,7 +182,7 @@ bool CALLBACK acceptor(BYTE *pData)
 	int static counter=0;
 	counter++;
 	//std::cout<<"******** CALLBACK -ENTER" << counter;
-	printf("******** CALLBACK - ");
+	printf("<<<<<< CALLBACK - ");
 	
 	fflush(stdout);
 	QXmlStreamReader xml((char*)pData);
@@ -345,6 +345,7 @@ bool CALLBACK acceptor(BYTE *pData)
 	FreeMemory(pData);
 	//printf(" -EXIT **** \n");
 	TransaqConnector.isBusy=false;
+	printf(" CALLBACK  >>>>>>>>>>");
 	return true;
 }
 
@@ -522,7 +523,7 @@ bool CALLBACK acceptor(BYTE *pData)
 					//return 1;
 				}
 				Cmd+="<security>";
-				Cmd+="<board>"+ mapSecurity[seccode].SecInfo.board +"</board>";
+				Cmd+="<board>"+ TransaqConnector.mapInstrument[seccode].pData->Info.board +"</board>";
 				Cmd+="<seccode>" + seccode + "</seccode>"  ;
 				Cmd+="</security>";
 			}
@@ -734,8 +735,11 @@ bool CALLBACK acceptor(BYTE *pData)
 	}
 
 	bool C_TransaqConnector::isConnected(){
-		while (isBusy)
-			Sleep(500);
-		server_status();
+		//while (isBusy)
+		//	Sleep(500);
+		//server_status();
+		//Sleep(500);
+		//while (isBusy)
+		//	Sleep(500);
 		return (ServerStatus.connected=="true");
 	}
