@@ -43,10 +43,13 @@ C_TransaqConnector TransaqConnector;
 	 TransaqConnector.disconnect();
 	 Sleep(1000);
 	 TransaqConnector.connect();
-	 while(!TransaqConnector.isConnected()){
-		 printf("Transaq not connected\n");
-		 Sleep(1000);
-	 }
+	TransaqConnector.isConnected();
+	 TransaqConnector.connect();
+	 TransaqConnector.isConnected();
+	 //while(!TransaqConnector.isConnected()){
+	//	 printf("Transaq not connected\n");
+	//	 Sleep(1000);
+	// }
 	 printf("Transaq connected!\n");
 
 	 
