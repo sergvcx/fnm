@@ -137,14 +137,20 @@ struct S_Tick{
 	}
 
 	QString toXML(){
+		QDateTime dt=DateTime();
 		QString str_price;		str_price.setNum(price); 
 		QString str_quantity;	str_quantity.setNum(quantity); 
-		QString str_date;		str_date="date";
-		QString str_time;		str_time="time";
+		QString str_date;		str_date=dt.date().toString();
+		QString str_time;		str_time=dt.time().toString();
 		QString str_type;		str_type="type";
 		QString XML="	<tick price='"+str_price+"' volume='"+str_quantity+"' date='"+str_date+"' time='"+str_time+"' type='"+str_type+"' >";
 		qDebug()<< str_price << " " << str_quantity;
 		return XML;
+	}
+	QDateTime DateTime(){
+		QDateTime dt;
+		dt.setTime_t(datetime);
+		return dt;
 	}
 };
 

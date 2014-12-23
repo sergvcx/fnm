@@ -35,8 +35,8 @@ struct S_EasyTicks{
 		NewTick.price    =Tick.price.toFloat(&ok);
 		NewTick.quantity =Tick.quantity.toInt(&ok);
 		
-		
-		QDateTime dt= QDateTime::fromString(Tick.tradetime,"dd.MM.yyyy ss:mm:hh"); 
+		//qDebug() << Tick.tradetime;
+		QDateTime dt= QDateTime::fromString(Tick.tradetime,"dd.MM.yyyy hh:mm:ss"); 
 		ok = dt.isValid();
 		if (ok){
 			NewTick.datetime=dt.toTime_t();

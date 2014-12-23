@@ -264,7 +264,7 @@ bool CALLBACK acceptor(BYTE *pData)
 		if (xml.isStartElement() && xml.name() == "ticks"){
 			
 			xml_ticks<<pData<<  std::endl; 
-			std::cout<<"-ticks";
+			//std::cout<<"-ticks";
 			QQueue<S_XML_Tick> TickQueue;
 			xml.readNext();
 			while (!(xml.isEndElement() && xml.name()=="ticks" )){
@@ -272,10 +272,10 @@ bool CALLBACK acceptor(BYTE *pData)
 					S_XML_Tick Tick;
 					ParseTick(xml,Tick);
 					
-					printf(STR(Tick.seccode));printf("-");
-					printf(STR(Tick.price));printf("-");
-					printf(STR(Tick.tradetime));printf("-");
-					printf(STR(Tick.buysell));printf("\n");
+					//printf(STR(Tick.seccode));printf("-");
+					//printf(STR(Tick.price));printf("-");
+					//printf(STR(Tick.tradetime));printf("-");
+					//printf(STR(Tick.buysell));printf("\n");
 					
 					mapTick[Tick.seccode].enqueue(Tick);
 					//TransaqConnector.queueTick<<Tick;
@@ -296,7 +296,7 @@ bool CALLBACK acceptor(BYTE *pData)
 				}
 				xml.readNext();
 			}
-			std::cout<<"-ticks finished"; fflush(stdout);
+			//std::cout<<"-ticks finished"; fflush(stdout);
 			
 			//pThreadAllDeals->Parse(TickQueue);
 		}
