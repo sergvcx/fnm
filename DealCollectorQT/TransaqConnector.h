@@ -116,9 +116,19 @@ struct S_InstrumentInfo{
 
 struct S_Tick{
 	float		price;
-	int			quntity;
+	int			quantity;
 	int			type;
 	QDateTime	datetime;
+
+	void SetSellType(){
+		type&=0xFF;
+		type|=(-1)<<8;
+	}
+	// Продажа (более низкая цена). На бирже выставлена заявка на покупку. Спрос
+	void SetBuyType(){
+		type&=0xFF;
+		type|=(1)<<8;
+	}
 };
 
 

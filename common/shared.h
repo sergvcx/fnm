@@ -22,15 +22,19 @@ public:
 		int		size;
 		void operator << (S_XML_Tick& Tick){
 			bool ok;
-			/*
-			C_EasyQuote& quote=data[size&(LIMIT_QOUTES-1)];
-			quote.price    =QuoteInfo.price.toFloat(&ok);
-			quote.buy      =QuoteInfo.buy.toInt(&ok);
-			if (!ok) quote.buy  =0;
-			quote.sell     =QuoteInfo.sell.toInt(&ok);
-			if (!ok) quote.sell =0;
-			quote.datetime =QDateTime::currentDateTime();
-			*/
+			
+			S_Tick& NewTick =data[ size&(LIMIT_QOUTES-1)];
+			S_Tick& LastTick=data[(size-1)&(LIMIT_QOUTES-1)];
+			NewTick.type     =0;
+			NewTick.price    =Tick.price.toFloat(&ok);
+			NewTick.quantity =Tick.price.toInt(&ok);
+			NewTick.datetime= QDateTime::fromString(Tick.tradetime,"dd.MM.yyyy ss:mm:hh"); 
+			if (NewTick.datetime==LastTick.datetime){
+				NewTick.type |=IN_SECOND;
+				LastTick.type|=IN_SECOND;
+			}
+			else 
+				NewTick.type|=FIRST_IN_SECOND;
 		}
 	} Ticks;
 
@@ -84,6 +88,7 @@ public:
 									NewQuote.quantity=HistoryQuote.sell;
 									NewQuote.datetime_create=HistoryQuote.datetime;
 									NewQuote.datetime_update=HistoryQuote.datetime;
+									Iter.previous();
 									Iter.insert(NewQuote);
 									break;
 								}
@@ -131,6 +136,7 @@ public:
 									NewQuote.quantity		=HistoryQuote.buy;
 									NewQuote.datetime_create=HistoryQuote.datetime;
 									NewQuote.datetime_update=HistoryQuote.datetime;
+									Iter.previous();
 									Iter.insert(NewQuote);
 									break;
 								}

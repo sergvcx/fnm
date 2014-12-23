@@ -331,7 +331,7 @@ bool CALLBACK acceptor(BYTE *pData)
 			QQueue<S_XML_Tick>& queueTick=mapTick[seccode];
 			Instrument.Lock();
 			while (!queueTick.isEmpty())
-				Instrument.pData->Ticks<< queueTick.dequeue();
+				Instrument.pData->Ticks << queueTick.dequeue();
 			Instrument.Unlock();
 		}
 	}

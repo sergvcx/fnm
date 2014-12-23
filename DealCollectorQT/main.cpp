@@ -28,13 +28,13 @@ C_TransaqConnector TransaqConnector;
 	
 	 QApplication app(argc, argv);
 
-	 //MainWindow* mainWin=new MainWindow;
+	 MainWindow* mainWin=new MainWindow;
 	 //if (argc==2){
 	//	 if (strcmp(argv[1],"-auto")==0){
 	//		pThreadAllDeals->start();
 	//	 }
 	 //}
-	 //pThreadAllDeals->ReadPortfolio();
+
 	//  mainWin->show();
 	// return app.exec();
 
@@ -52,6 +52,7 @@ C_TransaqConnector TransaqConnector;
 	}
 	else 
 		TransaqConnector.connect();
+	pThreadAllDeals->ReadPortfolio();
 	while(!TransaqConnector.isConnected()){
 		qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
 		Sleep(500);
