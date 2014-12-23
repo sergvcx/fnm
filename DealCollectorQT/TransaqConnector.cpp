@@ -202,7 +202,7 @@ bool CALLBACK acceptor(BYTE *pData)
 		if (xml.isStartElement() && xml.name() == "securities"){
 			
 			xml_securities<< pData <<  std::endl; 
-			std::cout<<"-security";
+			//std::cout<<"-security";
 			xml.readNext();
 			while (!(xml.isEndElement() && xml.name()=="securities" )){
 				if (xml.isStartElement() && xml.name() == "security"){					
@@ -211,6 +211,7 @@ bool CALLBACK acceptor(BYTE *pData)
 					if (SecInfo.seccode=="")
 						std::cerr<< "ERROR: Empty seccode" <<std::endl;
 					else{
+						qDebug() << SecInfo.seccode << "\n";
 						if (TransaqConnector.mapInstrument.contains(SecInfo.seccode)){
 							TransaqConnector.mapInstrument[SecInfo.seccode].pData->Info=SecInfo;
 							//QString fname="xml_quote_"+SecInfo.seccode+".xml";
@@ -223,7 +224,7 @@ bool CALLBACK acceptor(BYTE *pData)
 				}
 				xml.readNext();
 			}
-			std::cout<<"-security finished" ; fflush(stdout);
+			//std::cout<<"-security finished" ; fflush(stdout);
 		}
 		//-------------------------------------------------------------
 		if (xml.isStartElement() && xml.name() == "quotes"){
@@ -271,13 +272,14 @@ bool CALLBACK acceptor(BYTE *pData)
 				if (xml.isStartElement() && xml.name() == "tick"){					
 					S_XML_Tick Tick;
 					ParseTick(xml,Tick);
+					//printf(".");
+					//qDebug() << Tick.seccode << "\n";
+					printf(STR(Tick.seccode));printf("-");
+					printf(STR(Tick.price));printf("-");
+					printf(STR(Tick.tradetime));printf("-");
+					printf(STR(Tick.buysell));printf("\n");
 					
-					//printf(STR(Tick.seccode));printf("-");
-					//printf(STR(Tick.price));printf("-");
-					//printf(STR(Tick.tradetime));printf("-");
-					//printf(STR(Tick.buysell));printf("\n");
-					
-					mapTick[Tick.seccode].enqueue(Tick);
+					//mapTick[Tick.seccode].enqueue(Tick);
 					//TransaqConnector.queueTick<<Tick;
 					//TickQueue.enqueue(Tick);
 					/*

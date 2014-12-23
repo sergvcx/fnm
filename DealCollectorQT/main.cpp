@@ -96,9 +96,9 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size){
 
 	 //TransaqConnector.disconnect();
 	 //Sleep(1000);
-	 TransaqConnector	<< "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
-		 				<< "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
-		 				<<"ROSN"  <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
+	 TransaqConnector	<< "AFLT" ;//<< "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
+		 		//		<< "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
+		 		//		<<"ROSN"  <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
 
 
 	if (TransaqConnector.isConnected()){
@@ -181,7 +181,7 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size){
 					QString sss=Ticks.data[i].toXML() ;
 					qDebug() << seccode << " " << sss << "\n";
 				}
-				Ticks2Mysql( tick_query, seccode, Ticks.data+Instrument.tail, Ticks.size-Instrument.tail);
+				//Ticks2Mysql( tick_query, seccode, Ticks.data+Instrument.tail, Ticks.size-Instrument.tail);
 			}
 		}
 		//for(int i=0; i<Instrument.pData->Ticks.size; i++){
