@@ -12,31 +12,36 @@
 
 
 
+struct S_EasyTicks{
+	S_Tick	data[LIMIT_TICKS];
+	int		size;
+	void operator << (S_XML_Tick& Tick){
+		bool ok;
+		S_Tick& NewTick =data[ size   &(LIMIT_QOUTES-1)];
+		S_Tick& LastTick=data[(size-1)&(LIMIT_QOUTES-1)];
+		NewTick.type     =0;
+		NewTick.price    =Tick.price.toFloat(&ok);
+		NewTick.quantity =Tick.price.toInt(&ok);
+		NewTick.datetime= QDateTime::fromString(Tick.tradetime,"dd.MM.yyyy ss:mm:hh"); 
+		if (NewTick.datetime==LastTick.datetime){
+			NewTick.type |=IN_SECOND;
+			LastTick.type|=IN_SECOND;
+		}
+		else 
+			NewTick.type|=FIRST_IN_SECOND;
+		if (Tick.buysell=="S")
+			NewTick.SetSellType();
+		else 
+			NewTick.SetBuyType();
+		size++;
+	}
+};
+
 class C_SharedMemoryInstrument {
 public:
 	
 	S_InstrumentInfo Info;
-
-	struct S_EasyTicks{
-		S_Tick	data[LIMIT_TICKS];
-		int		size;
-		void operator << (S_XML_Tick& Tick){
-			bool ok;
-			
-			S_Tick& NewTick =data[ size&(LIMIT_QOUTES-1)];
-			S_Tick& LastTick=data[(size-1)&(LIMIT_QOUTES-1)];
-			NewTick.type     =0;
-			NewTick.price    =Tick.price.toFloat(&ok);
-			NewTick.quantity =Tick.price.toInt(&ok);
-			NewTick.datetime= QDateTime::fromString(Tick.tradetime,"dd.MM.yyyy ss:mm:hh"); 
-			if (NewTick.datetime==LastTick.datetime){
-				NewTick.type |=IN_SECOND;
-				LastTick.type|=IN_SECOND;
-			}
-			else 
-				NewTick.type|=FIRST_IN_SECOND;
-		}
-	} Ticks;
+	S_EasyTicks	Ticks;
 
 	struct S_EasyQuotes{
 		C_EasyQuote data[LIMIT_QOUTES];
@@ -212,17 +217,18 @@ public:
 	/*
 	C_Instrument(const C_Insrument& Inst){
 
-	}
-	C_Instrument(){
-
 	}*/
+	C_Instrument(){
+		tail=0;
+		pData=0;
+	}
 	//C_Insrument& operator = (const C_Insrument& Inst){
 	//	this->pData=Inst.pData;
 	//	this->pSharedMemory=Inst.pSharedMemory;
 	//	return *this;
 	//}
 	
-	
+	unsigned tail;
 
 	bool Create(QString seccode){
 		pSharedMemory=new QSharedMemory(seccode);

@@ -129,6 +129,16 @@ struct S_Tick{
 		type&=0xFF;
 		type|=(1)<<8;
 	}
+
+	QString toXML(){
+		QString str_price;		str_price.setNum(price);
+		QString str_quantity;	str_price.setNum(quantity);
+		QString str_date;		str_date="date";
+		QString str_time;		str_time="time";
+		QString str_type;		str_type="type";
+		QString XML="	<tick price='"+str_price+"' volume='"+str_quantity+"' date='"+str_date+"' time='"+str_time+"' type='"+str_type+"' >\n";
+		return XML;
+	}
 };
 
 

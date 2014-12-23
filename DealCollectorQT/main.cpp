@@ -46,7 +46,11 @@ C_TransaqConnector TransaqConnector;
 
 	 //TransaqConnector.disconnect();
 	 //Sleep(1000);
-	TransaqConnector << "GMKN" ;
+	 TransaqConnector	<< "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
+		 				<< "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
+		 				<<"ROSN"  <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
+
+
 	if (TransaqConnector.isConnected()){
 		qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
 	}
@@ -69,14 +73,19 @@ C_TransaqConnector TransaqConnector;
 	// }
 
 	 
-	 
-	 //<<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
-	//	 << "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
-	//	 <<"ROSN" <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
+	QMap<QString,C_Instrument> mapInstrument;
+	for(int i=0; i<TransaqConnector.listActive.size();i++){
+		QString seccode=TransaqConnector.listActive.at(i);
+		C_Instrument Instrument;
+		bool ok=Instrument.Attach(seccode);
+		if (ok)
+			mapInstrument[seccode]=Instrument;
+	}
+
 	 
 
 	 C_Instrument Instrument;
-	 bool ok=Instrument.Attach("GMKN");
+	 
 
 	// int dec=Instrument.pData->Info.decimals;
 	
@@ -103,10 +112,23 @@ C_TransaqConnector TransaqConnector;
 	//QMap<QString,C_Instrument> mapInstrument;
 
 
+
 	while (1){
 		//Instrument.pData->Quotes.UpdateCurrentQuotes()
 		QString xml_glass=Instrument.pData->Quotes.Current();
 		qDebug() << xml_glass;
+		
+		
+		for(int i=0; i<TransaqConnector.listActive.size();i++){
+			QString seccode=TransaqConnector.listActive.at(i);
+			C_Instrument& Instrument=mapInstrument[seccode];
+			S_EasyTicks& Ticks=Instrument.pData->Ticks;
+			for(;Instrument.tail<Ticks.size; Instrument.tail++){
+				qDebug() << Ticks.data[Instrument.tail].toXML() << "\n";
+
+			}
+			
+		}
 		//for(int i=0; i<Instrument.pData->Ticks.size; i++){
 			//QString xml_glass=Instrument.pData->Ticks.data[i].;
 		//	S_Tick &Tick=Instrument.pData->Ticks.data[i];
