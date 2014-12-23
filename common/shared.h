@@ -15,13 +15,23 @@
 struct S_EasyTicks{
 	S_Tick	data[LIMIT_TICKS];
 	int		size;
+	void Init(){
+		S_Tick* tick=data;
+		for(int i=0; i<size; i++,tick++){
+			tick->price=0;
+			tick->quantity=0;
+			tick->type=0;
+			tick->datetime=QDateTime();
+		}
+	}
 	void operator << (S_XML_Tick& Tick){
 		bool ok;
 		S_Tick& NewTick =data[ size   &(LIMIT_QOUTES-1)];
 		S_Tick& LastTick=data[(size-1)&(LIMIT_QOUTES-1)];
 		NewTick.type     =0;
 		NewTick.price    =Tick.price.toFloat(&ok);
-		NewTick.quantity =Tick.price.toInt(&ok);
+		NewTick.quantity =Tick.quantity.toInt(&ok);
+		ok =LastTick.datetime.isValid();
 		NewTick.datetime= QDateTime::fromString(Tick.tradetime,"dd.MM.yyyy ss:mm:hh"); 
 		if (NewTick.datetime==LastTick.datetime){
 			NewTick.type |=IN_SECOND;
@@ -42,7 +52,9 @@ public:
 	
 	S_InstrumentInfo Info;
 	S_EasyTicks	Ticks;
-
+	void Init(){
+		Ticks.Init();
+	}
 	struct S_EasyQuotes{
 		C_EasyQuote data[LIMIT_QOUTES];
 		int			size;
@@ -238,6 +250,7 @@ public:
 			pSharedMemory->detach();
 		pSharedMemory->create(sizeof(C_SharedMemoryInstrument),QSharedMemory::ReadWrite);
 		pData=(C_SharedMemoryInstrument*)pSharedMemory->data();
+		pData->Init();
 		return true;
 	}
 

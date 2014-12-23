@@ -16,6 +16,10 @@ C_TransaqConnector TransaqConnector;
  int main(int argc, char *argv[])
  {
 	 setlocale(LC_ALL, "Russian");
+
+	 
+	 //return XML;
+
 	// cout << "Русский текст в консоли" << endl;
 
 
@@ -84,7 +88,7 @@ C_TransaqConnector TransaqConnector;
 
 	 
 
-	 C_Instrument Instrument;
+	// C_Instrument Instrument;
 	 
 
 	// int dec=Instrument.pData->Info.decimals;
@@ -97,10 +101,10 @@ C_TransaqConnector TransaqConnector;
 	//TransaqConnector.server_status();
 	//while (!isReadyToCommand)
 	//	Sleep(1000);
-	 if (TransaqConnector.subscribe(TransaqConnector.listActive)){
-		TransaqConnector.disconnect();
-		return 1;
-	 }
+	// if (TransaqConnector.subscribe(TransaqConnector.listActive)){
+	//	TransaqConnector.disconnect();
+	//	return 1;
+	 //}
 	
 	 if (TransaqConnector.subscribe_ticks(QString("GMKN"))){
 		TransaqConnector.disconnect();
@@ -115,19 +119,22 @@ C_TransaqConnector TransaqConnector;
 
 	while (1){
 		//Instrument.pData->Quotes.UpdateCurrentQuotes()
-		QString xml_glass=Instrument.pData->Quotes.Current();
-		qDebug() << xml_glass;
+		//QString xml_glass=Instrument.pData->Quotes.Current();
+		//qDebug() << xml_glass;
 		
 		
 		for(int i=0; i<TransaqConnector.listActive.size();i++){
 			QString seccode=TransaqConnector.listActive.at(i);
-			C_Instrument& Instrument=mapInstrument[seccode];
-			S_EasyTicks& Ticks=Instrument.pData->Ticks;
-			for(;Instrument.tail<Ticks.size; Instrument.tail++){
-				qDebug() << Ticks.data[Instrument.tail].toXML() << "\n";
+			if (mapInstrument.contains(seccode)){
+				C_Instrument& Instrument=mapInstrument[seccode];
+				S_EasyTicks& Ticks=Instrument.pData->Ticks;
+				for(;Instrument.tail<Ticks.size; Instrument.tail++){
+					QString sss=Ticks.data[Instrument.tail].toXML() ;
+					printf(STR(sss));
+					//qDebug() << << "\n";
 
+				}
 			}
-			
 		}
 		//for(int i=0; i<Instrument.pData->Ticks.size; i++){
 			//QString xml_glass=Instrument.pData->Ticks.data[i].;
