@@ -7,7 +7,7 @@
 
 #include "TransaqConnector.h"
 
-#define LIMIT_TICKS 1024*1024		// must be power of two
+#define LIMIT_TICKS  1024*1024		// must be power of two
 #define LIMIT_QOUTES 1024*1024		// must be power of two
 
 
@@ -15,15 +15,18 @@
 struct S_EasyTicks{
 	S_Tick	data[LIMIT_TICKS];
 	int		size;
+	
 	void Init(){
+		size=0;
 		S_Tick* tick=data;
 		for(int i=0; i<size; i++,tick++){
-			tick->price=0;
-			tick->quantity=0;
-			tick->type=0;
-			tick->datetime=QDateTime();
+			tick->price		=0;
+			tick->quantity	=0;
+			tick->type		=0;
+			tick->datetime	=0;
 		}
 	}
+
 	void operator << (S_XML_Tick& Tick){
 		bool ok;
 		S_Tick& NewTick =data[ size   &(LIMIT_QOUTES-1)];
@@ -31,14 +34,19 @@ struct S_EasyTicks{
 		NewTick.type     =0;
 		NewTick.price    =Tick.price.toFloat(&ok);
 		NewTick.quantity =Tick.quantity.toInt(&ok);
-		ok =LastTick.datetime.isValid();
-		NewTick.datetime= QDateTime::fromString(Tick.tradetime,"dd.MM.yyyy ss:mm:hh"); 
-		if (NewTick.datetime==LastTick.datetime){
-			NewTick.type |=IN_SECOND;
-			LastTick.type|=IN_SECOND;
+		
+		
+		QDateTime dt= QDateTime::fromString(Tick.tradetime,"dd.MM.yyyy ss:mm:hh"); 
+		ok = dt.isValid();
+		if (ok){
+			NewTick.datetime=dt.toTime_t();
+			if (NewTick.datetime==LastTick.datetime){
+				NewTick.type |=IN_SECOND;
+				LastTick.type|=IN_SECOND;
+			}
+			else 
+				NewTick.type|=FIRST_IN_SECOND;	
 		}
-		else 
-			NewTick.type|=FIRST_IN_SECOND;
 		if (Tick.buysell=="S")
 			NewTick.SetSellType();
 		else 

@@ -118,7 +118,7 @@ struct S_Tick{
 	float		price;
 	int			quantity;
 	int			type;
-	QDateTime	datetime;
+	uint		datetime;
 
 	S_Tick(){
 		price=0;

@@ -17,6 +17,10 @@ C_TransaqConnector TransaqConnector;
  {
 	 setlocale(LC_ALL, "Russian");
 
+	 uint dt=0;
+	 QDateTime datetime;
+	 datetime.setTime_t(0);//=QDateTime::
+	 qDebug() << datetime.toString();
 	 
 	 //return XML;
 
