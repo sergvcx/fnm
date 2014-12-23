@@ -77,8 +77,8 @@ int ParseSecurity(QXmlStreamReader& xml,S_XML_SecInfo& SecInfo){
 				SecInfo.shortname= xml.readElementText();
 				continue;
 			}
-			if(xml.name() == "decimails"){
-				SecInfo.decimails= xml.readElementText();
+			if(xml.name() == "decimals"){
+				SecInfo.decimals= xml.readElementText();
 				continue;
 			}
 			if(xml.name() == "minstep"){

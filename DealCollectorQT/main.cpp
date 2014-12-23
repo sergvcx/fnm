@@ -12,36 +12,19 @@ using namespace std;
 
 C_TransaqConnector TransaqConnector;
 
+
  int main(int argc, char *argv[])
-	 {
-		 setlocale(LC_ALL, "Russian");
-		 //setlocale(LC_CTYPE, "");
-		 cout << "Русский текст в консоли" << endl;
+ {
+	 setlocale(LC_ALL, "Russian");
+	// cout << "Русский текст в консоли" << endl;
 
 
-		 QByteArray msg = QByteArray::fromHex("cde5eff0e0e2e8ebfcedeee520f1eeeee1f9e5ede8e5204b4f4e5f544d5f484f53544b4e4620eef220d3cad2d121");
-		 QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
-		 QString strf = codec->toUnicode(msg);
-		 qDebug() << strf;
+	// C_SharedPortfolio SharedPortfolio;
 
+ //SharedPortfolio <<  "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
+	//	 << "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
+	//	 <<"ROSN" <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
 
-		 QByteArray wtf_s(strf.toStdString().c_str()); //либо так
-		 //wtf_s.append(strf); //либо так
-
-		 QByteArray wtf = codec->fromUnicode(wtf_s);
-		 qDebug() << wtf.toHex();
-
-
-
-		// C_SharedPortfolio SharedPortfolio;
-
-		 //SharedPortfolio <<  "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
-		//	 << "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
-		//	 <<"ROSN" <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
-
-
-		
-//		 printf(STR(sss));
 	
 	 QApplication app(argc, argv);
 
@@ -61,28 +44,40 @@ C_TransaqConnector TransaqConnector;
 
 	 
 
-	 TransaqConnector.disconnect();
-	 Sleep(1000);
-	 TransaqConnector.connect();
-
-	 TransaqConnector.server_status();
-	 while(1);
-	TransaqConnector.isConnected();
-	 TransaqConnector.connect();
-	 TransaqConnector.isConnected();
+	 //TransaqConnector.disconnect();
+	 //Sleep(1000);
+	TransaqConnector << "GMKN" ;
+	if (TransaqConnector.isConnected()){
+		qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
+	}
+	else 
+		TransaqConnector.connect();
+	while(!TransaqConnector.isConnected()){
+		qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
+		Sleep(500);
+	}
+	
+	qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
+	//TransaqConnector.server_status();
+	//TransaqConnector.isConnected();
+	 //TransaqConnector.connect();
+	 //TransaqConnector.isConnected();
 	 //while(!TransaqConnector.isConnected()){
 	//	 printf("Transaq not connected\n");
 	//	 Sleep(1000);
 	// }
-	 printf("Transaq connected!\n");
 
 	 
-	 TransaqConnector << "GMKN" ;
+	 
 	 //<<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
 	//	 << "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
 	//	 <<"ROSN" <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
 	 
 
+	 C_Instrument Instrument;
+	 bool ok=Instrument.Attach("GMKN");
+
+	// int dec=Instrument.pData->Info.decimals;
 	
 
 	//Sleep(1000*10);
@@ -97,33 +92,25 @@ C_TransaqConnector TransaqConnector;
 		return 1;
 	 }
 	
-	// if (TransaqConnector.subscribe_ticks(QString("GMKN"))){
-	//	TransaqConnector.disconnect();
-	//	return 1;
-	 //}
+	 if (TransaqConnector.subscribe_ticks(QString("GMKN"))){
+		TransaqConnector.disconnect();
+		return 1;
+	 }
 	//if (!TransaqConnector.subscribe_ticks(TransaqConnector.listActive))
 	//	TransaqConnector.disconnect();
 
-	QMap<QString,C_Instrument> mapInstrument;
+	//QMap<QString,C_Instrument> mapInstrument;
 
-	
-	C_Instrument Instrument;
-	Instrument.pSharedMemory=new QSharedMemory("GMKN");
-	if (Instrument.pSharedMemory->attach()){
-		
-		return 1;
-	}
-	
-	Instrument.pData=(C_SharedMemoryInstrument*)Instrument.pSharedMemory->data();	
 
 	while (1){
-	
-		//QString xml_glass=Instrument.pData->Quotes.toXML();
-		for(int i=0; i<Instrument.pData->Ticks.size; i++){
+		//Instrument.pData->Quotes.UpdateCurrentQuotes()
+		QString xml_glass=Instrument.pData->Quotes.Current();
+		qDebug() << xml_glass;
+		//for(int i=0; i<Instrument.pData->Ticks.size; i++){
 			//QString xml_glass=Instrument.pData->Ticks.data[i].;
-			S_Tick &Tick=Instrument.pData->Ticks.data[i];
-			printf("%f %d %d \n", Tick.price, Tick.quntity, Tick.datetime);
-		}
+		//	S_Tick &Tick=Instrument.pData->Ticks.data[i];
+		//	printf("%f %d %d \n", Tick.price, Tick.quntity, Tick.datetime);
+		//}
 		
 		Sleep(1000);
 
@@ -137,7 +124,7 @@ C_TransaqConnector TransaqConnector;
 	Sleep(1000*60*60*8);
 
 	TransaqConnector.disconnect();
-	Instrument.pSharedMemory->detach();
+	//Instrument.pSharedMemory->detach();
 	//TransaqConnector.change_pass();
 	
 	CloseXML();

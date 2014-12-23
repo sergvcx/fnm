@@ -26,8 +26,8 @@
 
 #include <iostream>
 #include <fstream>
-#include "demo.h"
-//#include "fight.h"
+//#include "demo.h"
+#include "fight.h"
 
 #include "TransaqConnector.h"
 
@@ -185,7 +185,7 @@ bool CALLBACK acceptor(BYTE *pData)
 	int static counter=0;
 	counter++;
 	//std::cout<<"******** CALLBACK -ENTER" << counter;
-	printf("<<<<<< CALLBACK - ");
+	//printf("<<<<<< CALLBACK - ");
 	
 	fflush(stdout);
 	QXmlStreamReader xml((char*)pData);
@@ -300,7 +300,7 @@ bool CALLBACK acceptor(BYTE *pData)
 			
 			//pThreadAllDeals->Parse(TickQueue);
 		}
-		//-------------------------------------------------------------
+		//--------------------- server_status ----------------------------------------
 		if (xml.isStartElement() && xml.name() == "server_status"){
 			xml_server_status<<pData<<  std::endl; 
 			
@@ -319,13 +319,7 @@ bool CALLBACK acceptor(BYTE *pData)
 			
 			TransaqConnector.ServerStatus.status= xml.readElementText();
 			
-			//QTextCodec *codec = QTextCodec::codecForName("CP1251");
-			QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
-
-			QByteArray dest = codec->fromUnicode(TransaqConnector.ServerStatus.connected);
-			printf("==========",dest.data());
-			//QByteArray wtf = codec->fromUnicode(wtf_s);
-			std::cout<<"-server_status " << STR(TransaqConnector.ServerStatus.connected) << ":" << STR(TransaqConnector.ServerStatus.status) ; fflush(stdout);
+			qDebug() <<"[server_status-callback:] " << TransaqConnector.ServerStatus.status << "\n"; 
 
 		}
 
@@ -357,12 +351,12 @@ bool CALLBACK acceptor(BYTE *pData)
 	FreeMemory(pData);
 	//printf(" -EXIT **** \n");
 	TransaqConnector.isBusy=false;
-	printf(" CALLBACK  >>>>>>>>>>");
+	//printf(" CALLBACK  >>>>>>>>>>");
 	return true;
 }
 
 
-
+	//============ init ===========================================
 	C_TransaqConnector::C_TransaqConnector(){
 		isBusy=false;
 		error[0]=0;
@@ -450,11 +444,8 @@ bool CALLBACK acceptor(BYTE *pData)
 			}
 		}
 	}
-
+	//============ deinit ===========================================
 	C_TransaqConnector::~C_TransaqConnector() {
-		
-
-		
 		
 		try{	
 
@@ -480,19 +471,18 @@ bool CALLBACK acceptor(BYTE *pData)
 	int C_TransaqConnector::connect()
 	{
 		try{	
-			std::cout<<"Sending \"connect\" command..."<<std::endl;
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(
-					"<command id='connect'>"
-					CONNECT_INFO
-					"<logsdir>.\\LOGS\\</logsdir><loglevel>2</loglevel></command>"));
-			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
+			QString Cmd;
+			Cmd = "<command id='connect'>\n";
+			Cmd+= CONNECT_INFO;
+			Cmd+= "		<logsdir>.\\LOGS\\</logsdir>\n";
+			Cmd+= "		<loglevel>2</loglevel>\n";
+			Cmd+= "</command>";
+			qDebug() << "[connect-command:]\n" << Cmd+"\n"; 
+			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
+			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+			QString  Echo = codec->toUnicode((char*)ss); 
+			qDebug() << "[connect-echo   :]\n" << Echo +"\n"; 
 
-			printf("=======ddd===",STR(QString((char*)ss)));
-			QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
-			QByteArray dest = codec->fromUnicode(QString((char*)ss));
-			printf("==========",dest.data());
-
-			//Sleep(10000); 
 			FreeMemory(ss);
 		}
 		catch (std::runtime_error& e) {
@@ -505,21 +495,12 @@ bool CALLBACK acceptor(BYTE *pData)
 	int C_TransaqConnector::disconnect()
 	{
 		try{
-			std::cout<<"Sending \"disconnect\" command..."<<std::endl;
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(	"<command id='disconnect'/>"));
-			std::cout<<reinterpret_cast<char*>(ss)<<std::endl;
-			std::cout<<reinterpret_cast<char*>(ss)<<std::endl;
-			printf("=======ddd===",ss);
-
-			QString fff("error русскй");
-			qDebug() << fff;
-			printf("======ыыыы==",STR(fff));
-			printf("=======ddd===",STR(QString((char*)ss)));
-			QTextCodec *codec = QTextCodec::codecForName("Windows-1251");
-			QByteArray dest = codec->fromUnicode(QString((char*)ss));
-			printf("==========",dest.data());
-
-
+			QString  Cmd="<command id='disconnect'/>";
+			qDebug() << "[disconnect-command:]\n" << Cmd << "\n"; 
+			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
+			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+			QString  Echo = codec->toUnicode((char*)ss); 
+			qDebug() << "[connect-echo   :]\n" << Echo +"\n"; 
 			FreeMemory(ss);
 		} 
 		catch (std::runtime_error& e) {
@@ -534,7 +515,10 @@ bool CALLBACK acceptor(BYTE *pData)
 		try {
 			std::cout<<"Sending 'server status' server status..."<<std::endl;
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='server_status'/>"));
-			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
+			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+			QString  en = codec->toUnicode((char*)ss); 
+			qDebug() << en+"\n"; 
+
 			FreeMemory(ss);
 		}
 		catch (std::runtime_error& e) {
@@ -567,9 +551,12 @@ bool CALLBACK acceptor(BYTE *pData)
 			Cmd+="</command>";
 			
 
-			printf(STR(Cmd));
+			qDebug() << Cmd+"\n";
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
+			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+			QString  en = codec->toUnicode((char*)ss); 
+			qDebug() << en+"\n"; 
+
 			FreeMemory(ss);
 		}
 		catch (std::runtime_error& e) {
@@ -595,9 +582,12 @@ bool CALLBACK acceptor(BYTE *pData)
 				Cmd+="<security secid='" + QString(TransaqConnector.mapInstrument[seccode].pData->Info.secid) + "' tradeno='1'/>"  ;
 			}
 			Cmd+="</command>";
-			printf(STR(Cmd));
+			qDebug() << Cmd+"\n";
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
+			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+			QString  en = codec->toUnicode((char*)ss); 
+			qDebug() << en+"\n"; 
+
 			FreeMemory(ss);
 		}
 		catch (std::runtime_error& e) {
@@ -629,7 +619,10 @@ bool CALLBACK acceptor(BYTE *pData)
 
 			printf(STR(Cmd));
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
+			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+			QString  en = codec->toUnicode((char*)ss); 
+			qDebug() << en+"\n"; 
+
 			FreeMemory(ss);
 		}
 		catch (std::runtime_error& e) {
@@ -640,44 +633,15 @@ bool CALLBACK acceptor(BYTE *pData)
 		return 0;
 	}
 
-/*
-	int C_TransaqConnector::subscribe(QString& seccode){
-			//char* buffer=new char[512];
-			//QString Cmd="<command id='subscribe'>"
-			//			"<alltrades><secid>"+mapSecurity[seccode].secid+"</secid></alltrades>"  
-			//			"<quotations><secid>"+mapSecurity[seccode].secid+"</secid></quotations>" 
-			//			"<quotes><secid>"+mapSecurity[seccode].secid+"</secid></quotes>"
-			//			"</command>";
-
-
-
-			std::cout<<"Sending 'subscribe' command..." << STR(seccode) <<std::endl;
-			QString Cmd="<command id='subscribe'>"
-				"<alltrades><secid>26</secid></alltrades>"  
-				"<quotations><secid>26</secid></quotations>" 
-				"<quotes><secid>26</secid></quotes>"
-				"</command>";
-			//char buffer[128];
-			//strcpy(buffer,STR(Cmd));
-			//BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='subscribe'>"
-			//	"<alltrades><secid>26</secid></alltrades>"  
-			//	"<quotations><secid>26</secid></quotations>" 
-			//	"<quotes><secid>26</secid></quotes>"
-			//	"</command>"));
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
-			FreeMemory(ss);
-			return 0;
-	}
-*/
 	//============ get_securities  ===========================================
 	int C_TransaqConnector::get_securities(){
 			//В команде 'get_securites' идентификаторы приведены для примера.
 			//В реальном коде необходимо использовать данные, присылаемые сервером
 			std::cout<<"Sending \"get_securities\" command..."<<std::endl;
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='get_securities'>"
-				"</command>"));
-			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
+			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='get_securities'></command>"));
+			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+			QString  en = codec->toUnicode((char*)ss); 
+			qDebug() << en+"\n"; 
 			FreeMemory(ss);
 			return 0;
 	}
@@ -685,10 +649,10 @@ bool CALLBACK acceptor(BYTE *pData)
 	int C_TransaqConnector::change_pass(){
 		try{	
 			std::cout<<"Sending \"change_pass\" command..."<<std::endl;
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(
-				"<command id='change_pass' oldpass='' newpass=''>"
-				"</command>"));
-			std::cout<<reinterpret_cast<const char*>(ss)<<std::endl;
+			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='change_pass' oldpass='' newpass=''></command>"));
+			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+			QString  en = codec->toUnicode((char*)ss); 
+			qDebug() << en+"\n"; 
 			FreeMemory(ss);
 		}
 		catch (std::runtime_error& e) {
@@ -699,17 +663,20 @@ bool CALLBACK acceptor(BYTE *pData)
 		return 0;
 	}
 	//=====================================================================
-	C_TransaqConnector& C_TransaqConnector::operator<< (char * sec_code){
-		QString seccode(sec_code);
+	C_TransaqConnector& C_TransaqConnector::operator<< (QString seccode){
 		listActive << seccode;
 		C_Instrument Instrument;
+		Instrument.Create(seccode);
 		bool ok;
-		Instrument.pSharedMemory=new QSharedMemory(seccode);
-		if (Instrument.pSharedMemory->isAttached())
-			Instrument.pSharedMemory->detach();
-		Instrument.pSharedMemory->create(sizeof(C_SharedMemoryInstrument),QSharedMemory::ReadWrite);
-		Instrument.pData=(C_SharedMemoryInstrument*)Instrument.pSharedMemory->data();
+	
+		//Instrument.pSharedMemory=new QSharedMemory(seccode);
+		//if (Instrument.pSharedMemory->isAttached())
+		//	Instrument.pSharedMemory->detach();
+		//Instrument.pSharedMemory->create(sizeof(C_SharedMemoryInstrument),QSharedMemory::ReadWrite);
+		//Instrument.pData=(C_SharedMemoryInstrument*)Instrument.pSharedMemory->data();
+		Instrument.pData->Info.decimals=1234;
 		mapInstrument[seccode]=Instrument;
+		
 		return *this;
 	}
 

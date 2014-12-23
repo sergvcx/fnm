@@ -6,37 +6,12 @@
 #include <fstream>
 #include <qfile>
 #include <QSharedMemory>
-
+#include <qtdEBUG>
 #include "main.h"
 //#include "shared.h"
 class C_SharedMemoryInstrument;
-//class C_Instrument;
+class C_Instrument;
 
-class C_Instrument {
-public:
-	/*
-	C_Instrument(const C_Insrument& Inst){
-
-	}
-	C_Instrument(){
-
-	}*/
-	//C_Insrument& operator = (const C_Insrument& Inst){
-	//	this->pData=Inst.pData;
-	//	this->pSharedMemory=Inst.pSharedMemory;
-	//	return *this;
-	//}
-	C_SharedMemoryInstrument* pData;
-	QSharedMemory* pSharedMemory;
-	void Lock(){
-		pSharedMemory->lock();
-	}
-	void Unlock(){
-		pSharedMemory->unlock();
-	}
-
-};
-	
 
 #define CONNECTOR_166PLUS // пример для версии библиотеки версии 1.66 (5.02) или выше
 
@@ -67,7 +42,7 @@ struct S_XML_Tick{
 struct S_XML_SecInfo{
 	QString seccode;
 	QString shortname;
-	QString decimails;
+	QString decimals;
 	QString active;
 	QString secid;
 	QString minstep;
@@ -95,6 +70,9 @@ struct S_XML_ServerStatus{
 	QString recover;
 	QString server_tz;
 	QString status;
+	//S_XML_ServerStatus(){
+	///	connected="false";
+	//}
 };
 
 struct S_Quote {
@@ -115,7 +93,7 @@ struct  S_Security {
 struct S_InstrumentInfo{
 	char	seccode[16];
 	char	shortname[16];
-	int		decimails;
+	int		decimals;
 	char	active[16];
 	char	secid[16];
 	int		market;
@@ -127,7 +105,7 @@ struct S_InstrumentInfo{
 		bool ok;
 		strcpy(seccode,STR(xml_secinfo.seccode));
 		strcpy(shortname,STR(xml_secinfo.shortname));
-		decimails=xml_secinfo.decimails.toInt(&ok);		_ASSERTE(ok);
+		decimals=xml_secinfo.decimals.toInt(&ok);		_ASSERTE(ok);
 		strcpy(active,STR(xml_secinfo.active));
 		strcpy(secid ,STR(xml_secinfo.secid));
 		minstep	 =xml_secinfo.minstep.toDouble(&ok);	_ASSERTE(ok);
@@ -178,7 +156,7 @@ public:
 	int get_securities();
 	int change_pass();
 
-	C_TransaqConnector& operator << (char * seccode);
+	C_TransaqConnector& operator << (QString seccode);
 	QMap<QString,C_Instrument> mapInstrument;	
 
 	//QQueue<S_XML_Tick> queueTick;

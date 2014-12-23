@@ -4,10 +4,6 @@
 #include <QSharedMemory>
 
 #define  MAX_TICS 1024
-//struct C_EasyTick{
-//	C_Tick	data[MAX_TICS];
-//	int		number;
-//};
 
 #include "TransaqConnector.h"
 
@@ -41,6 +37,9 @@ public:
 	struct S_EasyQuotes{
 		C_EasyQuote data[LIMIT_QOUTES];
 		int			size;
+		S_EasyQuotes(){
+			size=0;
+		}
 		void operator << (S_XML_QuoteInfo& QuoteInfo){
 			bool ok;
 			C_EasyQuote& quote=data[size&(LIMIT_QOUTES-1)];
@@ -50,6 +49,7 @@ public:
 			quote.sell     =QuoteInfo.sell.toInt(&ok);
 			if (!ok) quote.sell =0;
 			quote.datetime =QDateTime::currentDateTime();
+			size++;
 		}
 		
 
@@ -68,25 +68,38 @@ public:
 						listSellQuote << NewQuote;
 					}
 					else {
-						QMutableListIterator<S_Quote> iSell(listSellQuote);
-						while (iSell.hasNext()) {
-							S_Quote& CurQuote=iSell.value();
-							if (HistoryQuote.price == CurQuote.price){
-								if (HistoryQuote.sell==-1)
-									iSell.remove();
-								else {
+						QMutableListIterator<S_Quote> Iter(listSellQuote);
+						Iter.toFront();
+						while (Iter.hasNext()) {
+							S_Quote& CurQuote=Iter.next();
+							if (HistoryQuote.sell==-1){
+								if (HistoryQuote.price == CurQuote.price){
+									Iter.remove();
+									break;
+								}
+							}
+							else {
+								if (HistoryQuote.price < CurQuote.price ){
+									NewQuote.price   =HistoryQuote.price;
+									NewQuote.quantity=HistoryQuote.sell;
+									NewQuote.datetime_create=HistoryQuote.datetime;
+									NewQuote.datetime_update=HistoryQuote.datetime;
+									Iter.insert(NewQuote);
+									break;
+								}
+								if (HistoryQuote.price == CurQuote.price){
 									CurQuote.quantity=HistoryQuote.sell;
 									CurQuote.datetime_update=HistoryQuote.datetime;
+									break;
 								}
-								break;
-							}
-							if (HistoryQuote.price < CurQuote.price){
-								NewQuote.price   =HistoryQuote.price;
-								NewQuote.quantity=HistoryQuote.sell;
-								NewQuote.datetime_create=HistoryQuote.datetime;
-								NewQuote.datetime_update=HistoryQuote.datetime;
-								iSell.insert(NewQuote);
-								break;
+								if (!Iter.hasNext()){
+									NewQuote.price			=HistoryQuote.price;
+									NewQuote.quantity		=HistoryQuote.sell;
+									NewQuote.datetime_create=HistoryQuote.datetime;
+									NewQuote.datetime_update=HistoryQuote.datetime;
+									listSellQuote.append(NewQuote);
+									break;
+								}
 							}
 						}
 					}
@@ -101,25 +114,39 @@ public:
 						listBuyQuote << NewQuote;
 					}
 					else {
-						QMutableListIterator<S_Quote> iBuy(listBuyQuote);
-						while (iBuy.hasNext()) {
-							S_Quote& CurQuote=iBuy.value();
-							if (HistoryQuote.price == CurQuote.price){
-								if (HistoryQuote.sell==-1)
-									iBuy.remove();
-								else {
-									CurQuote.quantity=HistoryQuote.buy;
-									CurQuote.datetime_update=HistoryQuote.datetime;
+						QMutableListIterator<S_Quote> Iter(listBuyQuote);
+						
+						Iter.toFront();
+						while (Iter.hasNext()) {
+							S_Quote& CurQuote=Iter.next();
+							if (HistoryQuote.buy==-1){
+								if (HistoryQuote.price == CurQuote.price){
+									Iter.remove();
+									break;
 								}
-								break;
 							}
-							if (HistoryQuote.price < CurQuote.price){
-								NewQuote.price   =HistoryQuote.price;
-								NewQuote.quantity=HistoryQuote.buy;
-								NewQuote.datetime_create=HistoryQuote.datetime;
-								NewQuote.datetime_update=HistoryQuote.datetime;
-								iBuy.insert(NewQuote);
-								break;
+							else {
+								if (HistoryQuote.price > CurQuote.price ){
+									NewQuote.price			=HistoryQuote.price;
+									NewQuote.quantity		=HistoryQuote.buy;
+									NewQuote.datetime_create=HistoryQuote.datetime;
+									NewQuote.datetime_update=HistoryQuote.datetime;
+									Iter.insert(NewQuote);
+									break;
+								}
+								if (HistoryQuote.price == CurQuote.price){
+									CurQuote.quantity		=HistoryQuote.buy;
+									CurQuote.datetime_update=HistoryQuote.datetime;
+									break;
+								}
+								if (!Iter.hasNext()){
+									NewQuote.price			=HistoryQuote.price;
+									NewQuote.quantity		=HistoryQuote.buy;
+									NewQuote.datetime_create=HistoryQuote.datetime;
+									NewQuote.datetime_update=HistoryQuote.datetime;
+									listBuyQuote.append(NewQuote);
+									break;
+								}
 							}
 						}
 					}
@@ -127,11 +154,13 @@ public:
 			}
 		}
 
-		QString& toXML(int history=100)
+		QString Current(int history=100)
 		{
 			QList<S_Quote> Sell;
 			QList<S_Quote> Buy;
 			QString XML;
+
+			UpdateCurrentQuotes(Buy,Sell);
 
 			XML ="<quotes>\n"; // seccode='" + QString(Info.seccode)+"'>\n";
 
@@ -167,6 +196,64 @@ public:
 
 	
 };
+
+
+
+class C_Instrument {
+	QSharedMemory* pSharedMemory;
+public:
+	C_SharedMemoryInstrument* pData;
+	/*
+	C_Instrument(const C_Insrument& Inst){
+
+	}
+	C_Instrument(){
+
+	}*/
+	//C_Insrument& operator = (const C_Insrument& Inst){
+	//	this->pData=Inst.pData;
+	//	this->pSharedMemory=Inst.pSharedMemory;
+	//	return *this;
+	//}
+	
+	
+
+	bool Create(QString seccode){
+		pSharedMemory=new QSharedMemory(seccode);
+		if (!pSharedMemory)
+			return false;
+		if (pSharedMemory->isAttached())
+			pSharedMemory->detach();
+		pSharedMemory->create(sizeof(C_SharedMemoryInstrument),QSharedMemory::ReadWrite);
+		pData=(C_SharedMemoryInstrument*)pSharedMemory->data();
+		return true;
+	}
+
+	bool Attach(QString seccode){
+		pSharedMemory=new QSharedMemory(seccode);
+		if (!pSharedMemory)
+			return false;
+		if (!pSharedMemory->attach()) 
+			return false;
+		pData=(C_SharedMemoryInstrument*)pSharedMemory->data();
+		return true;
+	}
+
+
+
+	
+	
+	void Lock(){
+		pSharedMemory->lock();
+	}
+	void Unlock(){
+		pSharedMemory->unlock();
+	}
+
+};
+	
+
+
 
 #define LIMIT_SECCODES 128
 class C_SharedMemoryPortfolio {
