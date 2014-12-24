@@ -314,8 +314,13 @@ bool CALLBACK acceptor(BYTE *pData)
 			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
 			QQueue<S_XML_Tick>& queueTick=mapTick[seccode];
 			Instrument.Lock();
-			while (!queueTick.isEmpty())
-				Instrument.pData->Ticks << queueTick.dequeue();
+			while (!queueTick.isEmpty()){
+				S_XML_Tick& tick=queueTick.head();
+				*Instrument.pTickLog<<tick.toXML();
+				*Instrument.pTickLog<<"\n";
+				Instrument.pData->Ticks << tick;
+				queueTick.dequeue();
+			}
 			Instrument.Unlock();
 		}
 	}
@@ -655,6 +660,9 @@ bool CALLBACK acceptor(BYTE *pData)
 		C_Instrument Instrument;
 		Instrument.Create(seccode);
 		Instrument.pQuoteLog= new C_XML_Logger(seccode+"_quote.xml");
+		Instrument.pQuoteLog->Header();
+		Instrument.pTickLog= new C_XML_Logger(seccode+"_tick.xml");
+		Instrument.pTickLog->Header();
 		bool ok;
 		
 		mapInstrument[seccode]=Instrument;

@@ -243,7 +243,7 @@ public:
 			logStream = new QTextStream(logFile);
 		}
 	}
-	bool Header(){
+	void Header(){
 		*logStream<<"<?xml version='1.0' encoding='UTF-8'?>" <<"\n";
 	}
 	void Flush(){
@@ -269,6 +269,8 @@ private:
 	
 public:
 	C_XML_Logger* pQuoteLog;
+	C_XML_Logger* pTickLog;
+//	C_XML_Logger Quote
 	C_SharedMemoryInstrument* pData;
 	
 		void Open(){
