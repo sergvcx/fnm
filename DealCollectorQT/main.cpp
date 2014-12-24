@@ -113,11 +113,12 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 
 	 //TransaqConnector.disconnect();
 	 //Sleep(1000);
-	 TransaqConnector	<< "GMKN" <<"LKOH" << "AFLT" ;//<< "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
-		 		//		<< "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
-		 		//		<<"ROSN"  <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
+	 QList<QString> Active;
+	 Active 	<<  "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
+		 				<< "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
+		 				<<"ROSN"  <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
 
-
+	TransaqConnector<<Active;
 	if (TransaqConnector.isConnected()){
 		qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
 	}
@@ -166,10 +167,10 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 	//TransaqConnector.server_status();
 	//while (!isReadyToCommand)
 	//	Sleep(1000);
-	if (TransaqConnector.subscribe(TransaqConnector.listActive)){
-		TransaqConnector.disconnect();
-		return 1;
-	}
+// 	if (TransaqConnector.subscribe(TransaqConnector.listActive)){
+// 		TransaqConnector.disconnect();
+// 		return 1;
+// 	}
 	
 	//if (TransaqConnector.subscribe_ticks(QString("GMKN"))){
 	if (TransaqConnector.subscribe_ticks(TransaqConnector.listActive)){	 

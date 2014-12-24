@@ -348,6 +348,7 @@ class C_SharedMemoryPortfolio {
 
 
 /*
+
 class C_SharedPortfolio{
 public:
 	QList<QString> listActive;
@@ -359,6 +360,7 @@ public:
 		listActive<< seccode;
 		mapSharedMemory[seccode]=new QSharedMemory(seccode);
 		mapSharedMemory[seccode]->create(sizeof(C_SharedInstrument));
+
 		mapSharedInstrument[seccode]=(C_SharedInstrument*)mapSharedMemory[seccode]->data();
 		return *this;
 	}
