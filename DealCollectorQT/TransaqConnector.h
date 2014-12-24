@@ -65,6 +65,10 @@ struct S_XML_QuoteInfo {
 	QString buy;	// количество бумаг к покупке</buy>
 	QString sell;	// количество бумаг к продаже</sell>
 
+	QString toXML(){
+		QString XML="<S_XML_QuoteInfo seccode='"+seccode+"' price='"+price+"' buy='"+buy+"' sell='"+sell+"'>";
+		return XML;
+	}
 	
 };
 

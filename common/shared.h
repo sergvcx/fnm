@@ -228,19 +228,85 @@ public:
 	
 };
 
+#define LOGGER_APPEND QIODevice::Append
+#define LOGGER_WRITE QIODevice::WriteOnly
+#define LOGGER_READWRITE QIODevice::ReadWrite
+#define LOGGER_TEXT QIODevice::Text
+class C_XML_Logger
+{
+	QFile* logFile;
+	QTextStream* logStream;	
+public:
+	C_XML_Logger(QString filename  ){ //QIODevice::OpenModeFlag mode
+		logFile = new QFile(filename);
+		if(logFile->open(QIODevice::WriteOnly | QIODevice::Text)){
+			logStream = new QTextStream(logFile);
+		}
+	}
+	bool Header(){
+		*logStream<<"<?xml version='1.0' encoding='UTF-8'?>" <<"\n";
+	}
+	void Flush(){
 
+	}
+	//bool Reopen();
+	void operator << (char* log){
+		*logStream	<< log;
+	}
+	void operator << (QString& log){
+		*logStream	<< log;
+	}
+	void close(){
+		//logStream->close();
+		logFile->close();
+	}
+};
 
 class C_Instrument {
+private:
+	
 	QSharedMemory* pSharedMemory;
+	
 public:
+	C_XML_Logger* pQuoteLog;
 	C_SharedMemoryInstrument* pData;
+	
+		void Open(){
+			
+		}
+	struct {	
+		void Log(){
+
+		}
+		void Close(){
+
+		}
+
+	} QouteLogger;
+
+	void OpenQuoteXML(){
+		
+	}
+	void LogQuoteXML(){
+
+	}
+	void CloseQouteXML(){
+
+	}
 	/*
 	C_Instrument(const C_Insrument& Inst){
 
 	}*/
+	QString Name(){
+		QString name(pData->Info.seccode);
+		return name;
+	}
+
 	C_Instrument(){
 		tail=0;
 		pData=0;
+		tailLogQuote=0;
+		//FileQuote=0;
 	}
 	//C_Insrument& operator = (const C_Insrument& Inst){
 	//	this->pData=Inst.pData;
@@ -249,6 +315,7 @@ public:
 	//}
 	
 	unsigned tail;
+	unsigned tailLogQuote;
 
 	bool Create(QString seccode){
 		pSharedMemory=new QSharedMemory(seccode);

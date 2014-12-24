@@ -68,11 +68,19 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
  {
 	 setlocale(LC_ALL, "Russian");
 
-	 uint dt=0;
-	 QDateTime datetime;
-	 datetime.setTime_t(0);//=QDateTime::
-	 qDebug() << datetime.toString();
-	 
+// 	 uint dt=0;
+// 	 QDateTime datetime;
+// 	 datetime.setTime_t(0);//=QDateTime::
+// 	 qDebug() << datetime.toString();
+// 	 
+
+
+// 	 C_XML_Logger Logger("logger.xml");
+// 	 Logger<< "<root>";
+// 	 Logger << "text";
+// 	 Logger<< "</root>";
+// 	 Logger.close();
+
 	 //return XML;
 
 	// cout << "Русский текст в консоли" << endl;
@@ -105,7 +113,7 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 
 	 //TransaqConnector.disconnect();
 	 //Sleep(1000);
-	 TransaqConnector	<< "GMKN" <<"LKOH"  ;//"AFLT" ;//<< "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
+	 TransaqConnector	<< "GMKN" <<"LKOH" << "AFLT" ;//<< "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
 		 		//		<< "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
 		 		//		<<"ROSN"  <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
 

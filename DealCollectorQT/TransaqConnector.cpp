@@ -324,8 +324,11 @@ bool CALLBACK acceptor(BYTE *pData)
 			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
 			QQueue<S_XML_QuoteInfo>& queueQuote=mapQuote[seccode];
 			Instrument.Lock();
-			while (!queueQuote.isEmpty())
-				Instrument.pData->Quotes<< queueQuote.dequeue();
+			while (!queueQuote.isEmpty()){
+				S_XML_QuoteInfo Q=queueQuote.dequeue();
+				*Instrument.pQuoteLog<<Q.toXML();
+				Instrument.pData->Quotes<< Q;
+			}
 			Instrument.Unlock();
 		}
 	}
@@ -651,14 +654,9 @@ bool CALLBACK acceptor(BYTE *pData)
 		listActive << seccode;
 		C_Instrument Instrument;
 		Instrument.Create(seccode);
+		Instrument.pQuoteLog= new C_XML_Logger(seccode+"_quote.xml");
 		bool ok;
-	
-		//Instrument.pSharedMemory=new QSharedMemory(seccode);
-		//if (Instrument.pSharedMemory->isAttached())
-		//	Instrument.pSharedMemory->detach();
-		//Instrument.pSharedMemory->create(sizeof(C_SharedMemoryInstrument),QSharedMemory::ReadWrite);
-		//Instrument.pData=(C_SharedMemoryInstrument*)Instrument.pSharedMemory->data();
-		Instrument.pData->Info.decimals=1234;
+		
 		mapInstrument[seccode]=Instrument;
 		
 		return *this;
