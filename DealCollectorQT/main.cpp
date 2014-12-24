@@ -13,13 +13,13 @@ using namespace std;
 C_TransaqConnector TransaqConnector;
 
 
-void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size){
+void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, bool echo){
 
 
 		if (size==0)
 			return;
 
-		int err=query.prepare("INSERT INTO " + seccode+ "_deal (trdate,trtime,volume,price,trtype)  VALUES (?, ?, ?, ?, ?)");
+		//int err=query.prepare("INSERT INTO " + seccode+ "_deal (trdate,trtime,volume,price,trtype)  VALUES (?, ?, ?, ?, ?)");
 
 		QVariantList listDate;
 		QVariantList listTime;
@@ -27,6 +27,8 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size){
 		QVariantList listPrice;
 		QVariantList listType;
 
+		if (echo)
+			qDebug()<< "<" +seccode+ ">";
 		for (int i=0; i<size; i++,data++){
 			S_Tick& tick =*data;
 			
@@ -35,14 +37,20 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size){
 			listVolume	<< tick.quantity;
 			listPrice	<< tick.price;
 			listType	<< tick.type;
+
+			if (echo)
+				qDebug()<<"    " << tick.toXML() ;//<< "\n";
 			
 		}
+		if (echo)
+			qDebug()<< "</" +seccode+ ">";
+		/*
 		query.addBindValue(listDate);
 		query.addBindValue(listTime);
 		query.addBindValue(listVolume);
 		query.addBindValue(listPrice);
 		query.addBindValue(listType);
-
+	
 		printf("execBatch...");
 		if (!query.execBatch()){
 			printf(ASCII( query.lastQuery()));
@@ -51,7 +59,8 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size){
 			printf("\n");
 			QMessageBox::critical(0, QObject::tr("Database Error"), query.lastError().text());
 		}
-		printf("ok! %d ticks inserted\n",size);
+		*/
+		//printf("ok! %d ticks inserted\n",size);
 
 	}
 
@@ -96,7 +105,7 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size){
 
 	 //TransaqConnector.disconnect();
 	 //Sleep(1000);
-	 TransaqConnector	<< "AFLT" ;//<< "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
+	 TransaqConnector	<< "GMKN" <<"LKOH"  ;//"AFLT" ;//<< "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
 		 		//		<< "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
 		 		//		<<"ROSN"  <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
 
@@ -149,12 +158,13 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size){
 	//TransaqConnector.server_status();
 	//while (!isReadyToCommand)
 	//	Sleep(1000);
-	// if (TransaqConnector.subscribe(TransaqConnector.listActive)){
-	//	TransaqConnector.disconnect();
-	//	return 1;
-	 //}
+	if (TransaqConnector.subscribe(TransaqConnector.listActive)){
+		TransaqConnector.disconnect();
+		return 1;
+	}
 	
-	 if (TransaqConnector.subscribe_ticks(QString("GMKN"))){
+	//if (TransaqConnector.subscribe_ticks(QString("GMKN"))){
+	if (TransaqConnector.subscribe_ticks(TransaqConnector.listActive)){	 
 		TransaqConnector.disconnect();
 		return 1;
 	 }
@@ -168,38 +178,30 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size){
 
 	while (1){
 		//Instrument.pData->Quotes.UpdateCurrentQuotes()
-		//QString xml_glass=Instrument.pData->Quotes.Current();
+		
 		//qDebug() << xml_glass;
 		
 		
-		for(int i=0; i<TransaqConnector.listActive.size();i++){
-			QString seccode=TransaqConnector.listActive.at(i);
-			if (mapInstrument.contains(seccode)){
-				C_Instrument& Instrument=mapInstrument[seccode];
-				S_EasyTicks& Ticks=Instrument.pData->Ticks;
-				for(i=Instrument.tail;i<Ticks.size; i++){
-					QString sss=Ticks.data[i].toXML() ;
-					qDebug() << seccode << " " << sss << "\n";
-				}
-				//Ticks2Mysql( tick_query, seccode, Ticks.data+Instrument.tail, Ticks.size-Instrument.tail);
-			}
+		foreach(QString seccode , mapInstrument.keys()){
+			C_Instrument& Instrument=mapInstrument[seccode];
+			S_EasyTicks& Ticks=Instrument.pData->Ticks;
+
+			int count= Ticks.size-Instrument.tail;
+			Ticks2Mysql( tick_query, seccode, Ticks.data+Instrument.tail,count, true);
+			Instrument.tail+=count;
+
+			QString xml_glass=Instrument.pData->Quotes.toXML();
+			qDebug() << xml_glass;
+			//}
 		}
-		//for(int i=0; i<Instrument.pData->Ticks.size; i++){
-			//QString xml_glass=Instrument.pData->Ticks.data[i].;
-		//	//S_Tick &Tick=Instrument.pData->Ticks.data[i];
-		//	printf("%f %d %d \n", Tick.price, Tick.quntity, Tick.datetime);
-		//}
+		
 		
 		Sleep(1000);
 		pThreadAllDeals->db_trading.commit();
 	}
 	
 	
-	//mapInstrument[seccode]=Instrument;
-
-
-	//while 
-	Sleep(1000*60*60*8);
+	//Sleep(1000*60*60*8);
 
 	TransaqConnector.disconnect();
 	//Instrument.pSharedMemory->detach();

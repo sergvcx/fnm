@@ -185,7 +185,7 @@ public:
 			}
 		}
 
-		QString Current(int history=100)
+		QString toXML(int history=100)
 		{
 			QList<S_Quote> Sell;
 			QList<S_Quote> Buy;
@@ -204,8 +204,8 @@ public:
 				QString update;
 				price.setNum(Quote.price);
 				quantity.setNum(Quote.quantity);
-				create=Quote.datetime_create.toString();
-				update=Quote.datetime_update.toString();
+				create=Quote.datetime_create.toString("yyyy-MM-dd");
+				update=Quote.datetime_update.toString("hh:mm:ss");
 				XML+="	<sell price='"+price+"' volume='"+quantity+"' create='"+create+"' update='"+update+"'>\n";
 			}
 			for(int i=0; i<Buy.size(); i++){
@@ -216,11 +216,11 @@ public:
 				QString update;
 				price.setNum(Quote.price);
 				quantity.setNum(Quote.quantity);
-				create=Quote.datetime_create.toString();
-				update=Quote.datetime_update.toString();
+				create=Quote.datetime_create.toString("yyyy-MM-dd");
+				update=Quote.datetime_update.toString("hh:mm:ss");
 				XML+="	<buy price='"+price+"' volume='"+quantity+"' create='"+create+"' update='"+update+"'>\n";
 			}
-			XML+="</quotes>\n";
+			XML+="</quotes>";
 			return XML;
 		}
 	} Quotes;

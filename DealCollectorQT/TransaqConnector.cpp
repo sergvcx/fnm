@@ -211,7 +211,7 @@ bool CALLBACK acceptor(BYTE *pData)
 					if (SecInfo.seccode=="")
 						std::cerr<< "ERROR: Empty seccode" <<std::endl;
 					else{
-						qDebug() << SecInfo.seccode << "\n";
+						qDebug() << SecInfo.seccode ;
 						if (TransaqConnector.mapInstrument.contains(SecInfo.seccode)){
 							TransaqConnector.mapInstrument[SecInfo.seccode].pData->Info=SecInfo;
 							//QString fname="xml_quote_"+SecInfo.seccode+".xml";
@@ -273,27 +273,9 @@ bool CALLBACK acceptor(BYTE *pData)
 					S_XML_Tick Tick;
 					ParseTick(xml,Tick);
 					//printf(".");
-					//qDebug() << Tick.seccode << "\n";
-					printf(STR(Tick.seccode));printf("-");
-					printf(STR(Tick.price));printf("-");
-					printf(STR(Tick.tradetime));printf("-");
-					printf(STR(Tick.buysell));printf("\n");
-					
-					//mapTick[Tick.seccode].enqueue(Tick);
-					//TransaqConnector.queueTick<<Tick;
-					//TickQueue.enqueue(Tick);
-					/*
-					if (Tick.seccode!=""){
-						QMap<QString,S_Security>::iterator itSec=mapSecurity.find(Tick.seccode);
-						if (itSec!=mapSecurity.end()){
-							itSec->queueTick<< Tick;
-						}
-						//else 
-						///	std::cerr << "WARNING: mapSecurity not found " << STR(QuoteInfo.seccode) <<std::endl;
-					} else 
-						std::cerr<< "ERROR: Empty seccode" <<std::endl;
-					*/
-
+					qDebug() << Tick.toXML();
+				
+					mapTick[Tick.seccode].enqueue(Tick);
 
 				}
 				xml.readNext();
@@ -557,7 +539,7 @@ bool CALLBACK acceptor(BYTE *pData)
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
 			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
 			QString  en = codec->toUnicode((char*)ss); 
-			qDebug() << en+"\n"; 
+			qDebug() << "[subscribe echo:]" << en << "\n"; 
 
 			FreeMemory(ss);
 		}
@@ -588,7 +570,7 @@ bool CALLBACK acceptor(BYTE *pData)
 			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
 			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
 			QString  en = codec->toUnicode((char*)ss); 
-			qDebug() << en+"\n"; 
+			qDebug() << "[subscribe_ticks echo:]"<< en << "\n"; 
 
 			FreeMemory(ss);
 		}

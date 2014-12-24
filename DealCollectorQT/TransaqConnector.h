@@ -37,6 +37,10 @@ struct S_XML_Tick{
 	QString quantity;	// 2
 	QString period;		// L
 	QString buysell;	// S
+	QString toXML(){
+		QString XML="<S_XML_Tick seccode='"+seccode+"' price='"+price+"' quantity='"+quantity+"' tradetime='"+tradetime+"' buysell='"+buysell+"' >";
+		return XML;
+	}
 };
 
 struct S_XML_SecInfo{
@@ -140,11 +144,10 @@ struct S_Tick{
 		QDateTime dt=DateTime();
 		QString str_price;		str_price.setNum(price); 
 		QString str_quantity;	str_quantity.setNum(quantity); 
-		QString str_date;		str_date=dt.date().toString();
-		QString str_time;		str_time=dt.time().toString();
-		QString str_type;		str_type="type";
-		QString XML="	<tick price='"+str_price+"' volume='"+str_quantity+"' date='"+str_date+"' time='"+str_time+"' type='"+str_type+"' >";
-		qDebug()<< str_price << " " << str_quantity;
+		QString str_date;		str_date=dt.date().toString("yyyy-MM-dd");
+		QString str_time;		str_time=dt.time().toString("hh:mm:ss");
+		QString str_type;		str_type.setNum(type);
+		QString XML="<S_Tick price='"+str_price+"' volume='"+str_quantity+"' date='"+str_date+"' time='"+str_time+"' type='"+str_type+"' >";
 		return XML;
 	}
 	QDateTime DateTime(){
