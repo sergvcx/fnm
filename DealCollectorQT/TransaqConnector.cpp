@@ -669,7 +669,10 @@ bool CALLBACK acceptor(BYTE *pData)
 		
 		return *this;
 	}
-
+	//C_TransaqConnector& C_TransaqConnector::operator<< (Qlist<QString>& seccode){
+	//	
+	//	return *this;
+	//}
 	bool C_TransaqConnector::isConnected(){
 		//while (isBusy)
 		//	Sleep(500);

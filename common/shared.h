@@ -7,8 +7,8 @@
 
 #include "TransaqConnector.h"
 
-#define LIMIT_TICKS  8*1024*1024		// must be power of two
-#define LIMIT_QOUTES 8*1024*1024		// must be power of two
+#define LIMIT_TICKS  1024*1024		// must be power of two
+#define LIMIT_QOUTES 1024*1024		// must be power of two
 
 
 
@@ -19,7 +19,7 @@ struct S_EasyTicks{
 	void Init(){
 		size=0;
 		S_Tick* tick=data;
-		for(int i=0; i<size; i++,tick++){
+		for(int i=0; i<LIMIT_TICKS; i++,tick++){
 			tick->price		=0;
 			tick->quantity	=0;
 			tick->type		=0;
@@ -298,12 +298,17 @@ public:
 
 	bool Create(QString seccode){
 		pSharedMemory=new QSharedMemory(seccode);
-		if (!pSharedMemory)
-			return false;
+		//if (!pSharedMemory)
+		//	return false;
+		_ASSERTE(pSharedMemory);
 		if (pSharedMemory->isAttached())
 			pSharedMemory->detach();
-		pSharedMemory->create(sizeof(C_SharedMemoryInstrument),QSharedMemory::ReadWrite);
-		pData=(C_SharedMemoryInstrument*)pSharedMemory->data();
+		bool ok=pSharedMemory->create(sizeof(C_SharedMemoryInstrument),QSharedMemory::ReadWrite);
+		_ASSERTE(ok);
+		if (ok)
+			pData=(C_SharedMemoryInstrument*)pSharedMemory->data();
+		
+		_ASSERTE(pData);
 		pData->Init();
 		return true;
 	}

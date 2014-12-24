@@ -197,6 +197,7 @@ public:
 	int change_pass();
 
 	C_TransaqConnector& operator << (QString seccode);
+	//C_TransaqConnector& operator << (QList<QString>& list);
 	QMap<QString,C_Instrument> mapInstrument;	
 
 	//QQueue<S_XML_Tick> queueTick;
