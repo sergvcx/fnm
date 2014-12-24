@@ -316,10 +316,9 @@ bool CALLBACK acceptor(BYTE *pData)
 			Instrument.Lock();
 			while (!queueTick.isEmpty()){
 				S_XML_Tick& tick=queueTick.head();
-				*Instrument.pTickLog<<tick.toXML();
-				*Instrument.pTickLog<<"\n";
+				*Instrument.pTickLog<<tick.toXML() <<"\n";
 				Instrument.pData->Ticks << tick;
-				queueTick.dequeue();
+				queueTick.removeFirst();
 			}
 			Instrument.Unlock();
 		}
@@ -330,9 +329,10 @@ bool CALLBACK acceptor(BYTE *pData)
 			QQueue<S_XML_QuoteInfo>& queueQuote=mapQuote[seccode];
 			Instrument.Lock();
 			while (!queueQuote.isEmpty()){
-				S_XML_QuoteInfo Q=queueQuote.dequeue();
-				*Instrument.pQuoteLog<<Q.toXML();
-				Instrument.pData->Quotes<< Q;
+				S_XML_QuoteInfo& quote=queueQuote.head();
+				*Instrument.pQuoteLog << quote.toXML() << "\n";
+				Instrument.pData->Quotes<< quote ;
+				queueQuote.removeFirst();
 			}
 			Instrument.Unlock();
 		}

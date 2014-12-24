@@ -19,7 +19,7 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 		if (size==0)
 			return;
 
-		//int err=query.prepare("INSERT INTO " + seccode+ "_deal (trdate,trtime,volume,price,trtype)  VALUES (?, ?, ?, ?, ?)");
+		int err=query.prepare("INSERT INTO " + seccode+ "_deal (trdate,trtime,volume,price,trtype)  VALUES (?, ?, ?, ?, ?)");
 
 		QVariantList listDate;
 		QVariantList listTime;
@@ -44,7 +44,7 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 		}
 		if (echo)
 			qDebug()<< "</" +seccode+ ">";
-		/*
+		
 		query.addBindValue(listDate);
 		query.addBindValue(listTime);
 		query.addBindValue(listVolume);
@@ -59,7 +59,7 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 			printf("\n");
 			QMessageBox::critical(0, QObject::tr("Database Error"), query.lastError().text());
 		}
-		*/
+		
 		//printf("ok! %d ticks inserted\n",size);
 
 	}

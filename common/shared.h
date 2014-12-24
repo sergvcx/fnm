@@ -7,8 +7,8 @@
 
 #include "TransaqConnector.h"
 
-#define LIMIT_TICKS  1024*1024		// must be power of two
-#define LIMIT_QOUTES 1024*1024		// must be power of two
+#define LIMIT_TICKS  8*1024*1024		// must be power of two
+#define LIMIT_QOUTES 8*1024*1024		// must be power of two
 
 
 
@@ -253,8 +253,9 @@ public:
 	void operator << (char* log){
 		*logStream	<< log;
 	}
-	void operator << (QString& log){
+	QTextStream& operator << (QString& log){
 		*logStream	<< log;
+		return *logStream;
 	}
 	void close(){
 		//logStream->close();
@@ -270,35 +271,11 @@ private:
 public:
 	C_XML_Logger* pQuoteLog;
 	C_XML_Logger* pTickLog;
-//	C_XML_Logger Quote
+
 	C_SharedMemoryInstrument* pData;
 	
-		void Open(){
-			
-		}
-	struct {	
-		void Log(){
+	
 
-		}
-		void Close(){
-
-		}
-
-	} QouteLogger;
-
-	void OpenQuoteXML(){
-		
-	}
-	void LogQuoteXML(){
-
-	}
-	void CloseQouteXML(){
-
-	}
-	/*
-	C_Instrument(const C_Insrument& Inst){
-
-	}*/
 	QString Name(){
 		QString name(pData->Info.seccode);
 		return name;
