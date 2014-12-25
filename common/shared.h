@@ -82,9 +82,10 @@ public:
 		}
 		
 
-		void UpdateCurrentQuotes(QList<S_Quote>& listBuyQuote, QList<S_Quote>& listSellQuote, int history=100)
+		bool UpdateCurrentQuotes(QList<S_Quote>& listBuyQuote, QList<S_Quote>& listSellQuote, int history=100)
 		{
 			S_Quote NewQuote;
+			bool isUpdated=false;
 			for(int i=MAX(0,size-history); i<size; i++){
 				C_EasyQuote& HistoryQuote=data[i&(LIMIT_QOUTES-1)];
 				if (HistoryQuote.sell){
@@ -95,6 +96,7 @@ public:
 						NewQuote.datetime_create=HistoryQuote.datetime;
 						NewQuote.datetime_update=HistoryQuote.datetime;
 						listSellQuote << NewQuote;
+						isUpdated=true;
 					}
 					else {
 						QMutableListIterator<S_Quote> Iter(listSellQuote);
@@ -104,6 +106,7 @@ public:
 							if (HistoryQuote.sell==-1){
 								if (HistoryQuote.price == CurQuote.price){
 									Iter.remove();
+									isUpdated=true;
 									break;
 								}
 							}
@@ -115,11 +118,13 @@ public:
 									NewQuote.datetime_update=HistoryQuote.datetime;
 									Iter.previous();
 									Iter.insert(NewQuote);
+									isUpdated=true;
 									break;
 								}
 								if (HistoryQuote.price == CurQuote.price){
 									CurQuote.quantity=HistoryQuote.sell;
 									CurQuote.datetime_update=HistoryQuote.datetime;
+									isUpdated=true;
 									break;
 								}
 								if (!Iter.hasNext()){
@@ -128,6 +133,7 @@ public:
 									NewQuote.datetime_create=HistoryQuote.datetime;
 									NewQuote.datetime_update=HistoryQuote.datetime;
 									listSellQuote.append(NewQuote);
+									isUpdated=true;
 									break;
 								}
 							}
@@ -142,6 +148,7 @@ public:
 						NewQuote.datetime_create=HistoryQuote.datetime;
 						NewQuote.datetime_update=HistoryQuote.datetime;
 						listBuyQuote << NewQuote;
+						isUpdated=true;
 					}
 					else {
 						QMutableListIterator<S_Quote> Iter(listBuyQuote);
@@ -152,6 +159,7 @@ public:
 							if (HistoryQuote.buy==-1){
 								if (HistoryQuote.price == CurQuote.price){
 									Iter.remove();
+									isUpdated=true;
 									break;
 								}
 							}
@@ -163,11 +171,13 @@ public:
 									NewQuote.datetime_update=HistoryQuote.datetime;
 									Iter.previous();
 									Iter.insert(NewQuote);
+									isUpdated=true;
 									break;
 								}
 								if (HistoryQuote.price == CurQuote.price){
 									CurQuote.quantity		=HistoryQuote.buy;
 									CurQuote.datetime_update=HistoryQuote.datetime;
+									isUpdated=true;
 									break;
 								}
 								if (!Iter.hasNext()){
@@ -176,6 +186,7 @@ public:
 									NewQuote.datetime_create=HistoryQuote.datetime;
 									NewQuote.datetime_update=HistoryQuote.datetime;
 									listBuyQuote.append(NewQuote);
+									isUpdated=true;
 									break;
 								}
 							}
@@ -183,9 +194,10 @@ public:
 					}
 				}
 			}
+			return isUpdated;
 		}
 
-		QString toXML(int history=100)
+		QString toXML(int decimals,int history=100)
 		{
 			QList<S_Quote> Sell;
 			QList<S_Quote> Buy;
@@ -202,10 +214,10 @@ public:
 				QString quantity;
 				QString create;
 				QString update;
-				price.setNum(Quote.price);
+				price.setNum(Quote.price,'g',decimals);
 				quantity.setNum(Quote.quantity);
-				create=Quote.datetime_create.toString("yyyy-MM-dd");
-				update=Quote.datetime_update.toString("hh:mm:ss");
+				create=Quote.datetime_create.toString("yyyy-MM-dd hh:mm:ss");
+				update=Quote.datetime_update.toString("yyyy-MM-dd hh:mm:ss");
 				XML+="	<sell price='"+price+"' volume='"+quantity+"' create='"+create+"' update='"+update+"'>\n";
 			}
 			for(int i=0; i<Buy.size(); i++){
@@ -214,10 +226,10 @@ public:
 				QString quantity;
 				QString create;
 				QString update;
-				price.setNum(Quote.price);
+				price.setNum(Quote.price,'g',decimals);
 				quantity.setNum(Quote.quantity);
-				create=Quote.datetime_create.toString("yyyy-MM-dd");
-				update=Quote.datetime_update.toString("hh:mm:ss");
+				create=Quote.datetime_create.toString("yyyy-MM-dd hh:mm:ss");
+				update=Quote.datetime_update.toString("yyyy-MM-dd hh:mm:ss");
 				XML+="	<buy price='"+price+"' volume='"+quantity+"' create='"+create+"' update='"+update+"'>\n";
 			}
 			XML+="</quotes>";
@@ -228,8 +240,8 @@ public:
 	
 };
 
-#define LOGGER_APPEND QIODevice::Append
-#define LOGGER_WRITE QIODevice::WriteOnly
+#define LOGGER_APPEND 1 //QIODevice::Append
+#define LOGGER_WRITE 2 //QIODevice::WriteOnly
 #define LOGGER_READWRITE QIODevice::ReadWrite
 #define LOGGER_TEXT QIODevice::Text
 class C_XML_Logger
@@ -237,23 +249,36 @@ class C_XML_Logger
 	QFile* logFile;
 	QTextStream* logStream;	
 public:
-	C_XML_Logger(QString filename  ){ //QIODevice::OpenModeFlag mode
+	C_XML_Logger(QString filename, int mode=LOGGER_WRITE  ){ //QIODevice::OpenModeFlag mode
+		logFile=0;
+		logStream=0;
 		logFile = new QFile(filename);
-		if(logFile->open(QIODevice::WriteOnly | QIODevice::Text)){
-			logStream = new QTextStream(logFile);
-		}
+		
+		if (mode==LOGGER_WRITE)
+			if(logFile->open(QIODevice::WriteOnly | QIODevice::Text)){
+				logStream = new QTextStream(logFile);
+			}
+		if (mode==LOGGER_APPEND)
+			if(logFile->open(QIODevice::Append | QIODevice::Text)){
+				logStream = new QTextStream(logFile);
+			}
+		_ASSERTE(logFile);
+		_ASSERTE(logStream);
 	}
 	void Header(){
 		*logStream<<"<?xml version='1.0' encoding='UTF-8'?>" <<"\n";
+		logStream->flush();
 	}
-	void Flush(){
-
+	void flush(){
+		logStream->flush();
 	}
 	//bool Reopen();
 	void operator << (char* log){
+		_ASSERTE(logStream);
 		*logStream	<< log;
 	}
 	QTextStream& operator << (QString& log){
+		_ASSERTE(logStream);
 		*logStream	<< log;
 		return *logStream;
 	}
@@ -272,6 +297,9 @@ public:
 	C_XML_Logger* pQuoteLog;
 	C_XML_Logger* pTickLog;
 
+	QList<S_Quote> listBuyQuote;
+	QList<S_Quote> listSellQuote;
+	QString strLastGlass;
 	C_SharedMemoryInstrument* pData;
 	
 	
@@ -284,8 +312,13 @@ public:
 	C_Instrument(){
 		tail=0;
 		pData=0;
+
 		tailLogQuote=0;
-		//FileQuote=0;
+		
+		pSharedMemory=0;
+		pQuoteLog=0;
+		pTickLog=0;
+
 	}
 	//C_Insrument& operator = (const C_Insrument& Inst){
 	//	this->pData=Inst.pData;

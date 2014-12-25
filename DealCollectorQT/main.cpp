@@ -146,12 +146,26 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 	for(int i=0; i<TransaqConnector.listActive.size();i++){
 		QString seccode=TransaqConnector.listActive.at(i);
 		C_Instrument Instrument;
+		Instrument.pQuoteLog=new C_XML_Logger(seccode+"_glass.xml",LOGGER_WRITE);
+		Instrument.pQuoteLog->Header();
+		Instrument.pQuoteLog->flush();
+
+		// MUST BE IN THE END !!!
 		bool ok=Instrument.Attach(seccode);
 		if (ok)
 			mapInstrument[seccode]=Instrument;
+		
 	}
 
-	 
+	//C_Instrument& Instrument=mapInstrument["AFLT"];
+	
+	//QString xml_glass=Instrument.pData->Quotes.toXML();
+	//qDebug() << xml_glass;
+// 	Instrument.pQuoteLog->Header();
+// 	*Instrument.pQuoteLog<<  "test"; 
+// 	*Instrument.pQuoteLog<<"sdsd" ;
+// 	*Instrument.pQuoteLog<<  "\n"; 
+// 	Instrument.pQuoteLog->close();
 
 	// C_Instrument Instrument;
 	 
@@ -166,10 +180,10 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 	//TransaqConnector.server_status();
 	//while (!isReadyToCommand)
 	//	Sleep(1000);
-// 	if (TransaqConnector.subscribe(TransaqConnector.listActive)){
-// 		TransaqConnector.disconnect();
-// 		return 1;
-// 	}
+	if (TransaqConnector.subscribe(TransaqConnector.listActive)){
+		TransaqConnector.disconnect();
+		return 1;
+	}
 	
 	//if (TransaqConnector.subscribe_ticks(QString("GMKN"))){
 	if (TransaqConnector.subscribe_ticks(TransaqConnector.listActive)){	 
@@ -195,12 +209,20 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 			S_EasyTicks& Ticks=Instrument.pData->Ticks;
 
 			int count= Ticks.size-Instrument.tail;
-			Ticks2Mysql( tick_query, seccode, Ticks.data+Instrument.tail,count, true);
+			//Ticks2Mysql( tick_query, seccode, Ticks.data+Instrument.tail,count, true);
 			Instrument.tail+=count;
 
-			QString xml_glass=Instrument.pData->Quotes.toXML();
-			qDebug() << xml_glass;
-			//}
+			//bool isUpdated=Instrument.pData->Quotes.UpdateCurrentQuotes(Instrument.listBuyQuote,Instrument.listSellQuote);
+			QString new_glass=Instrument.pData->Quotes.toXML(6);
+			if (Instrument.strLastGlass!=new_glass){
+				Instrument.strLastGlass= new_glass;
+				qDebug() << new_glass;
+				*Instrument.pQuoteLog<<new_glass << "\n";
+				Instrument.pQuoteLog->flush();
+			}
+
+			
+
 		}
 		
 		

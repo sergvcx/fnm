@@ -316,8 +316,9 @@ bool CALLBACK acceptor(BYTE *pData)
 			Instrument.Lock();
 			while (!queueTick.isEmpty()){
 				S_XML_Tick& tick=queueTick.head();
-				*Instrument.pTickLog<<tick.toXML() <<"\n";
-				Instrument.pData->Ticks << tick;
+				if ( Instrument.pTickLog)
+					*Instrument.pTickLog<<tick.toXML() <<"\n";
+ 				Instrument.pData->Ticks << tick;
 				queueTick.removeFirst();
 			}
 			Instrument.Unlock();
@@ -330,8 +331,9 @@ bool CALLBACK acceptor(BYTE *pData)
 			Instrument.Lock();
 			while (!queueQuote.isEmpty()){
 				S_XML_QuoteInfo& quote=queueQuote.head();
-				*Instrument.pQuoteLog << quote.toXML() << "\n";
-				Instrument.pData->Quotes<< quote ;
+				if ( Instrument.pQuoteLog)
+					*Instrument.pQuoteLog << quote.toXML() << "\n";
+ 				Instrument.pData->Quotes<< quote ;
 				queueQuote.removeFirst();
 			}
 			Instrument.Unlock();
@@ -661,8 +663,8 @@ bool CALLBACK acceptor(BYTE *pData)
 		Instrument.Create(seccode);
 		Instrument.pQuoteLog= new C_XML_Logger(seccode+"_quote.xml");
 		Instrument.pQuoteLog->Header();
-		Instrument.pTickLog= new C_XML_Logger(seccode+"_tick.xml");
-		Instrument.pTickLog->Header();
+		//Instrument.pTickLog= new C_XML_Logger(seccode+"_tick.xml");
+		//Instrument.pTickLog->Header();
 		bool ok;
 		
 		mapInstrument[seccode]=Instrument;
