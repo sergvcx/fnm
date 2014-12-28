@@ -8,9 +8,9 @@
 #include <QSharedMemory>
 #include <qtdEBUG>
 #include "main.h"
-//#include "shared.h"
-class C_SharedMemoryInstrument;
-class C_Instrument;
+#include "shared.h"
+//class C_SharedMemoryInstrument;
+//class C_Instrument;
 
 
 #define CONNECTOR_166PLUS // пример для версии библиотеки версии 1.66 (5.02) или выше
@@ -27,21 +27,7 @@ typedef BYTE* (WINAPI *typeSetLogLevel)(int level);
 typedef BYTE* (WINAPI *typeUninitialize)();
 #endif
 
-struct S_XML_Tick{
-	//QString secid;		// 4
-	QString board;		// TQBR
-	QString seccode;	// LKOH
-	QString tradeno;	// 2397108618
-	QString tradetime;	// 08.08.2014 09:59:59
-	QString price;		// 1928.3
-	QString quantity;	// 2
-	QString period;		// L
-	QString buysell;	// S
-	QString toXML(){
-		QString XML="<S_XML_Tick seccode='"+seccode+"' price='"+price+"' quantity='"+quantity+"' tradetime='"+tradetime+"' buysell='"+buysell+"' >";
-		return XML;
-	}
-};
+
 
 struct S_XML_SecInfo{
 	QString seccode;
@@ -52,24 +38,6 @@ struct S_XML_SecInfo{
 	QString minstep;
 	QString lotsize;
 	QString board;
-};
-
-struct S_XML_QuoteInfo {
-
-	QString secid;	// "внутренний код">
-	QString board;	// Идентификатор режима торгов по умолчанию 
-	QString seccode; // Код инструмента </seccode>
-	QString price;	// цена</price>
-	QString source; // Источник котировки (маркетмейкер)</source>
-	QString yield;	// доходность (актуально только для 	облигаций)</yield>
-	QString buy;	// количество бумаг к покупке</buy>
-	QString sell;	// количество бумаг к продаже</sell>
-
-	QString toXML(){
-		QString XML="<S_XML_QuoteInfo seccode='"+seccode+"' price='"+price+"' buy='"+buy+"' sell='"+sell+"'>";
-		return XML;
-	}
-	
 };
 
 struct S_XML_ServerStatus{
@@ -83,12 +51,9 @@ struct S_XML_ServerStatus{
 	//}
 };
 
-struct S_Quote {
-	int	  quantity;
-	float price;
-	QDateTime datetime_create;
-	QDateTime datetime_update;
-};
+
+
+
 struct  S_Security {
 	//QFile file;
 	S_XML_SecInfo SecInfo;
@@ -98,76 +63,8 @@ struct  S_Security {
 	QFile* xml_quotses;
 };
 	
-struct S_InstrumentInfo{
-	char	seccode[16];
-	char	shortname[16];
-	int		decimals;
-	char	active[16];
-	char	secid[16];
-	int		market;
-	double	minstep;
-	double	lotsize;
-	char	board[16];
-	
-	void operator = (S_XML_SecInfo& xml_secinfo){
-		bool ok;
-		strcpy(seccode,STR(xml_secinfo.seccode));
-		strcpy(shortname,STR(xml_secinfo.shortname));
-		decimals=xml_secinfo.decimals.toInt(&ok);		_ASSERTE(ok);
-		strcpy(active,STR(xml_secinfo.active));
-		strcpy(secid ,STR(xml_secinfo.secid));
-		minstep	 =xml_secinfo.minstep.toDouble(&ok);	_ASSERTE(ok);
-		lotsize	 =xml_secinfo.lotsize.toDouble(&ok);	_ASSERTE(ok);
-		strcpy(board,STR(xml_secinfo.board));
-	}
-};
-
-struct S_Tick{
-	float		price;
-	int			quantity;
-	int			type;
-	uint		datetime;
-
-	S_Tick(){
-		price=0;
-		quantity=0;
-		type=0;
-		
-	}
-	void SetSellType(){
-		type&=0xFF;
-		type|=(-1)<<8;
-	}
-	// Продажа (более низкая цена). На бирже выставлена заявка на покупку. Спрос
-	void SetBuyType(){
-		type&=0xFF;
-		type|=(1)<<8;
-	}
-
-	QString toXML(){
-		QDateTime dt=DateTime();
-		QString str_price;		str_price.setNum(price); 
-		QString str_quantity;	str_quantity.setNum(quantity); 
-		QString str_date;		str_date=dt.date().toString("yyyy-MM-dd");
-		QString str_time;		str_time=dt.time().toString("hh:mm:ss");
-		QString str_type;		str_type.setNum(type);
-		QString XML="<S_Tick price='"+str_price+"' volume='"+str_quantity+"' date='"+str_date+"' time='"+str_time+"' type='"+str_type+"' >";
-		return XML;
-	}
-	QDateTime DateTime(){
-		QDateTime dt;
-		dt.setTime_t(datetime);
-		return dt;
-	}
-};
 
 
-struct C_EasyQuote{
-	float		price;
-	int			buy;
-	int			sell;
-	QDateTime	datetime;
-};
 
 class C_TransaqConnector {
 	HMODULE hm;

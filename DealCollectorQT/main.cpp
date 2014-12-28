@@ -146,9 +146,9 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 	for(int i=0; i<TransaqConnector.listActive.size();i++){
 		QString seccode=TransaqConnector.listActive.at(i);
 		C_Instrument Instrument;
-	//	Instrument.pQuoteLog=new C_XML_Logger(seccode+"_glass.xml",LOGGER_WRITE);
-	//	Instrument.pQuoteLog->Header();
-	//	Instrument.pQuoteLog->flush();
+		Instrument.pQuoteLog=new C_XML_Logger(seccode+"_glass.xml",LOGGER_APPEND);
+		//Instrument.pQuoteLog->Header();
+		Instrument.pQuoteLog->flush();
 
 		// MUST BE IN THE END !!!
 		bool ok=Instrument.Attach(seccode);
@@ -189,7 +189,7 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 	if (TransaqConnector.subscribe_ticks(TransaqConnector.listActive)){	 
 		TransaqConnector.disconnect();
 		return 1;
-	 }
+	}
 	//if (!TransaqConnector.subscribe_ticks(TransaqConnector.listActive))
 	//	TransaqConnector.disconnect();
 
@@ -213,13 +213,14 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 			Instrument.tail+=count;
 
 			//bool isUpdated=Instrument.pData->Quotes.UpdateCurrentQuotes(Instrument.listBuyQuote,Instrument.listSellQuote);
-// 			QString new_glass=Instrument.pData->Quotes.toXML(6);
-// 			if (Instrument.strLastGlass!=new_glass){
-// 				Instrument.strLastGlass= new_glass;
-// 				qDebug() << new_glass;
-// 				*Instrument.pQuoteLog<<new_glass << "\n";
-// 				Instrument.pQuoteLog->flush();
-// 			}
+			QString new_glass=Instrument.pData->Quotes.toXML(6);
+			if (Instrument.pQuoteLog)
+			if (Instrument.strLastGlass!=new_glass){
+				Instrument.strLastGlass= new_glass;
+				qDebug() << new_glass;
+				//*Instrument.pQuoteLog<<new_glass << "\n";
+				//Instrument.pQuoteLog->flush();
+			}
 
 			
 

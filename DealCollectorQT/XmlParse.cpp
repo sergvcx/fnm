@@ -1,6 +1,7 @@
 #include "XmlParse.h"
 #include <iostream>
 #include "main.h"
+#include "shared.h"
 
 void ParseTick(QXmlStreamReader& xml, S_XML_Tick& tick ){
 	if(!(xml.isStartElement() && xml.name() == "tick")) {

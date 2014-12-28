@@ -2,20 +2,83 @@
 #define SHARED_DEFINED
 
 #include <QSharedMemory>
+#include <QFile>
+#include <QTextStream>
 
 #define  MAX_TICS 1024
 
-#include "TransaqConnector.h"
+//#include "TransaqConnector.h"
 
 #define LIMIT_TICKS  1024*1024		// must be power of two
 #define LIMIT_QOUTES 1024*1024		// must be power of two
 
 
+struct S_XML_Tick{
+	//QString secid;		// 4
+	QString board;		// TQBR
+	QString seccode;	// LKOH
+	QString tradeno;	// 2397108618
+	QString tradetime;	// 08.08.2014 09:59:59
+	QString price;		// 1928.3
+	QString quantity;	// 2
+	QString period;		// L
+	QString buysell;	// S
+	QString toXML(){
+		QString XML="<S_XML_Tick seccode='"+seccode+"' price='"+price+"' quantity='"+quantity+"' tradetime='"+tradetime+"' buysell='"+buysell+"' >";
+		return XML;
+	}
+};
+
+
+struct S_Tick{
+	float		price;
+	int			quantity;
+	int			type;
+	uint		datetime;
+
+	S_Tick(){
+		price=0;
+		quantity=0;
+		type=0;
+		
+	}
+	void SetSellType(){
+		type&=0xFF;
+		type|=(-1)<<8;
+	}
+	// Продажа (более низкая цена). На бирже выставлена заявка на покупку. Спрос
+	void SetBuyType(){
+		type&=0xFF;
+		type|=(1)<<8;
+	}
+
+	QString toXML(){
+		QDateTime dt=DateTime();
+		QString str_price;		str_price.setNum(price); 
+		QString str_quantity;	str_quantity.setNum(quantity); 
+		QString str_date;		str_date=dt.date().toString("yyyy-MM-dd");
+		QString str_time;		str_time=dt.time().toString("hh:mm:ss");
+		QString str_type;		str_type.setNum(type);
+		QString XML="<S_Tick price='"+str_price+"' volume='"+str_quantity+"' date='"+str_date+"' time='"+str_time+"' type='"+str_type+"' >";
+		return XML;
+	}
+	QDateTime DateTime(){
+		QDateTime dt;
+		dt.setTime_t(datetime);
+		return dt;
+	}
+};
+
 
 struct S_EasyTicks{
 	S_Tick	data[LIMIT_TICKS];
 	int		size;
-	
+	S_Tick& operator[] (int idx){
+		return data[idx&(LIMIT_QOUTES-1)];
+	}
+	S_Tick& Last(){
+		return data[(size-1)&(LIMIT_QOUTES-1)];
+	}
 	void Init(){
 		size=0;
 		S_Tick* tick=data;
@@ -55,6 +118,55 @@ struct S_EasyTicks{
 	}
 };
 
+
+struct S_InstrumentInfo{
+	char	seccode[16];
+	char	shortname[16];
+	int		decimals;
+	char	active[16];
+	char	secid[16];
+	int		market;
+	double	minstep;
+	double	lotsize;
+	char	board[16];
+	
+};
+
+
+struct C_EasyQuote{
+	float		price;
+	int			buy;
+	int			sell;
+	QDateTime	datetime;
+};
+
+
+
+struct S_XML_QuoteInfo {
+
+	QString secid;	// "внутренний код">
+	QString board;	// Идентификатор режима торгов по умолчанию 
+	QString seccode;// Код инструмента </seccode>
+	QString price;	// цена</price>
+	QString source; // Источник котировки (маркетмейкер)</source>
+	QString yield;	// доходность (актуально только для 	облигаций)</yield>
+	QString buy;	// количество бумаг к покупке</buy>
+	QString sell;	// количество бумаг к продаже</sell>
+
+	QString toXML(){
+		QString XML="<S_XML_QuoteInfo seccode='"+seccode+"' price='"+price+"' buy='"+buy+"' sell='"+sell+"'>";
+		return XML;
+	}
+
+};
+
+struct S_Quote {
+	int	  quantity;
+	float price;
+	QDateTime datetime_create;
+	QDateTime datetime_update;
+};
+
 class C_SharedMemoryInstrument {
 public:
 	
@@ -63,12 +175,14 @@ public:
 	void Init(){
 		Ticks.Init();
 	}
+	
 	struct S_EasyQuotes{
 		C_EasyQuote data[LIMIT_QOUTES];
 		int			size;
 		S_EasyQuotes(){
 			size=0;
 		}
+		
 		void operator << (S_XML_QuoteInfo& QuoteInfo){
 			bool ok;
 			C_EasyQuote& quote=data[size&(LIMIT_QOUTES-1)];
@@ -249,7 +363,7 @@ class C_XML_Logger
 	QFile* logFile;
 	QTextStream* logStream;	
 public:
-	C_XML_Logger(QString filename, int mode=LOGGER_WRITE  ){ //QIODevice::OpenModeFlag mode
+	C_XML_Logger(QString filename, int mode=LOGGER_APPEND  ){ //QIODevice::OpenModeFlag mode
 		logFile=0;
 		logStream=0;
 		logFile = new QFile(filename);

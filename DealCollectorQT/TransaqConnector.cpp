@@ -175,10 +175,22 @@ void UpdateSellQuote(S_QuoteInfo &QuoteInfo, QList<S_Quote>& listQuote){
 
 
 extern C_TransaqConnector TransaqConnector;
+bool copy(S_InstrumentInfo& info, S_XML_SecInfo& xml_secinfo){
+	bool ok;
+	strcpy(info.seccode,STR(xml_secinfo.seccode));
+	strcpy(info.shortname,STR(xml_secinfo.shortname));
+	info.decimals=xml_secinfo.decimals.toInt(&ok);		_ASSERTE(ok);
+	strcpy(info.active,STR(xml_secinfo.active));
+	strcpy(info.secid ,STR(xml_secinfo.secid));
+	info.minstep	 =xml_secinfo.minstep.toDouble(&ok);	_ASSERTE(ok);
+	info.lotsize	 =xml_secinfo.lotsize.toDouble(&ok);	_ASSERTE(ok);
+	strcpy(info.board,STR(xml_secinfo.board));
+	return ok;
+}
 bool CALLBACK acceptor(BYTE *pData)
 {
-	QMap<QString,QQueue<S_XML_Tick>> mapTick;
-	QMap<QString,QQueue<S_XML_QuoteInfo>> mapQuote;
+	QMap<QString,QQueue<S_XML_Tick> > mapTick;
+	QMap<QString,QQueue<S_XML_QuoteInfo> > mapQuote;
 	QMap<QString,S_XML_SecInfo> mapSecInfo;
 
 	TransaqConnector.isBusy=true;
@@ -213,7 +225,7 @@ bool CALLBACK acceptor(BYTE *pData)
 					else{
 						qDebug() << SecInfo.seccode ;
 						if (TransaqConnector.mapInstrument.contains(SecInfo.seccode)){
-							TransaqConnector.mapInstrument[SecInfo.seccode].pData->Info=SecInfo;
+							copy(TransaqConnector.mapInstrument[SecInfo.seccode].pData->Info,SecInfo);
 							//QString fname="xml_quote_"+SecInfo.seccode+".xml";
 							 //mapSecurity[SecInfo.seccode].xml_quote.open("dd");   //fname.toAscii().data());
 							 //xml_markets<<"<?xml version='1.0' encoding='UTF-8'?>";
@@ -318,6 +330,7 @@ bool CALLBACK acceptor(BYTE *pData)
 				S_XML_Tick& tick=queueTick.head();
 				if ( Instrument.pTickLog)
 					*Instrument.pTickLog<<tick.toXML() <<"\n";
+				
  				Instrument.pData->Ticks << tick;
 				queueTick.removeFirst();
 			}
