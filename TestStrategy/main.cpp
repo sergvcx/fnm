@@ -30,30 +30,75 @@ public:
 		return data[idx];
 	}
 };
+
+void Trade(QList<SOrder>& listSell, QList<SOrder>& listBuy, C_SubVector& vecDeals ){
+	QQueue<SDeal>	qSecondDeals;
+	QQueue<SDeal>	qBuyDeals;
+	QQueue<SDeal>	qSellDeals;
+
+	while (!qDeals.isEmpty()){
+		ExtractInSecondTicks(qDeals,qSecondDeals);
+		if (qSecondDeals[0].nTime<103000){
+			qSecondDeals.clear();
+			continue;
+		}
+		if (qSecondDeals[0].nTime>184000){
+			Close();
+			qSecondDeals.clear();
+			continue;
+		}
+		SplitBuySell(qSecondDeals,qBuyDeals,qSellDeals);
+		if (!qBuyDeals.isEmpty()){
+			LastBuyDeal=qBuyDeals.dequeue();
+			while (!qBuyDeals.isEmpty()){
+				if (LastBuyDeal.Price>qBuyDeals.last().Price)
+					LastBuyDeal=qBuyDeals.dequeue();
+				else 
+					qBuyDeals.dequeue();
+			}
+
+			while (!TrapNet.listBuy.isEmpty() && LastBuyDeal.Price<=TrapNet.listBuy.first().Price){
+				CompleteFirstOrder(TrapNet.listBuy,BUY);
+			}
+			while (!HotNet.listBuy.isEmpty() && LastBuyDeal.Price<=HotNet.listBuy.first().Price){
+				CompleteFirstOrder(HotNet.listBuy,BUY);
+			}
+			//qBuyDeals.clear();
+		}
+		if (!qSellDeals.isEmpty()){
+			LastSellDeal=qSellDeals.dequeue();
+			while (!qSellDeals.isEmpty()){
+				if (LastSellDeal.Price<qSellDeals.last().Price)
+					LastSellDeal=qSellDeals.dequeue();
+				else 
+					qSellDeals.dequeue();
+			}
+
+
+			while (!TrapNet.listSell.isEmpty() && LastSellDeal.Price>=TrapNet.listSell.first().Price){
+				CompleteFirstOrder(TrapNet.listSell,SELL);
+			}
+			while (!HotNet.listSell.isEmpty() && LastSellDeal.Price>=HotNet.listSell.first().Price){
+				CompleteFirstOrder(HotNet.listSell,SELL);
+			}
+			//qSellDeals.clear();
+		}
+		if (Counter==120)
+			int g=1;
+		if (Cash>100000)
+			int g=1;
+		//if (!qBuyDeals.isEmpty()){
+		//	LastBuyDeal=qBuyDeals.dequeue();
+		GetBuyQuote(qDeals,BuyQuote);
+		GetSellQuote(qDeals,SellQuote);
+		MakeOrders();
+	}
+}
+
  int main(int argc, char *argv[])
  {
 	 setlocale(LC_ALL, "Russian");
 
-
-/*
-	 C_Instrument Instrument;
-	 QString seccode="GMKN";
-
-	 bool ok=Instrument.Attach(seccode);
-	 if (!ok)
-		 return;
-		 
-	C_TradeMaster TradeMaster;
-	while(!Instrument.pData->Ticks.size){
-		Sleep(100);
-	}
-	TradeMaster.Init(Instrument.pData->Ticks.Last(),Instrument.pData->Ticks.Last()*2,0,0))
-	 while(){
-
-		Instrument.
-		
-	 }
-*/
 
 
 	
@@ -98,20 +143,20 @@ public:
 		Sleep(1000);
 	
 		
-		/*
+		
 		QList<SOrder> MySell;
 		QList<SOrder> MyBuy;
 
 
-		int   Stocks=Sell(MySell,TickPortion);
-		SOrd
-		float Cash  =Buy (MyBuy,TickPortion);
+		//int   Stocks=Sell(MySell,TickPortion);
+		//SOrder 
+		//float Cash  =Buy (MyBuy,TickPortion);
 
 
 
 
-		TradeMaster<<TickPortion;
-		*/
+		//TradeMaster<<TickPortion;
+		
 
 	}
 	//TradeMaster<<Deal;
