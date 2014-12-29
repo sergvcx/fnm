@@ -137,7 +137,7 @@ struct C_EasyQuote{
 	float		price;
 	int			buy;
 	int			sell;
-	QDateTime	datetime;
+	uint		datetime;
 };
 
 
@@ -191,7 +191,10 @@ public:
 			if (!ok) quote.buy  =0;
 			quote.sell     =QuoteInfo.sell.toInt(&ok);
 			if (!ok) quote.sell =0;
-			quote.datetime =QDateTime::currentDateTime();
+			QDateTime dt;
+			//dt.setTime_t(datetime);
+			dt=QDateTime::currentDateTime();
+			quote.datetime=dt.toTime_t();
 			size++;
 		}
 		
@@ -207,8 +210,8 @@ public:
 					if (listSellQuote.isEmpty() && HistoryQuote.sell>0 ){
 						NewQuote.price   =HistoryQuote.price;
 						NewQuote.quantity=HistoryQuote.sell;
-						NewQuote.datetime_create=HistoryQuote.datetime;
-						NewQuote.datetime_update=HistoryQuote.datetime;
+						NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+						NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 						listSellQuote << NewQuote;
 						isUpdated=true;
 					}
@@ -228,8 +231,8 @@ public:
 								if (HistoryQuote.price < CurQuote.price ){
 									NewQuote.price   =HistoryQuote.price;
 									NewQuote.quantity=HistoryQuote.sell;
-									NewQuote.datetime_create=HistoryQuote.datetime;
-									NewQuote.datetime_update=HistoryQuote.datetime;
+									NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+									NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 									Iter.previous();
 									Iter.insert(NewQuote);
 									isUpdated=true;
@@ -237,15 +240,15 @@ public:
 								}
 								if (HistoryQuote.price == CurQuote.price){
 									CurQuote.quantity=HistoryQuote.sell;
-									CurQuote.datetime_update=HistoryQuote.datetime;
+									CurQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 									isUpdated=true;
 									break;
 								}
 								if (!Iter.hasNext()){
 									NewQuote.price			=HistoryQuote.price;
 									NewQuote.quantity		=HistoryQuote.sell;
-									NewQuote.datetime_create=HistoryQuote.datetime;
-									NewQuote.datetime_update=HistoryQuote.datetime;
+									NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+									NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 									listSellQuote.append(NewQuote);
 									isUpdated=true;
 									break;
@@ -259,8 +262,8 @@ public:
 					if (listBuyQuote.isEmpty() && HistoryQuote.buy>0 ){
 						NewQuote.price   =HistoryQuote.price;
 						NewQuote.quantity=HistoryQuote.buy;
-						NewQuote.datetime_create=HistoryQuote.datetime;
-						NewQuote.datetime_update=HistoryQuote.datetime;
+						NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+						NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 						listBuyQuote << NewQuote;
 						isUpdated=true;
 					}
@@ -281,8 +284,8 @@ public:
 								if (HistoryQuote.price > CurQuote.price ){
 									NewQuote.price			=HistoryQuote.price;
 									NewQuote.quantity		=HistoryQuote.buy;
-									NewQuote.datetime_create=HistoryQuote.datetime;
-									NewQuote.datetime_update=HistoryQuote.datetime;
+									NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+									NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 									Iter.previous();
 									Iter.insert(NewQuote);
 									isUpdated=true;
@@ -290,15 +293,15 @@ public:
 								}
 								if (HistoryQuote.price == CurQuote.price){
 									CurQuote.quantity		=HistoryQuote.buy;
-									CurQuote.datetime_update=HistoryQuote.datetime;
+									CurQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 									isUpdated=true;
 									break;
 								}
 								if (!Iter.hasNext()){
 									NewQuote.price			=HistoryQuote.price;
 									NewQuote.quantity		=HistoryQuote.buy;
-									NewQuote.datetime_create=HistoryQuote.datetime;
-									NewQuote.datetime_update=HistoryQuote.datetime;
+									NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+									NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 									listBuyQuote.append(NewQuote);
 									isUpdated=true;
 									break;
@@ -416,6 +419,7 @@ public:
 	QString strLastGlass;
 	C_SharedMemoryInstrument* pData;
 	
+	uint min_datetime_filter;
 	
 
 	QString Name(){
@@ -426,12 +430,28 @@ public:
 	C_Instrument(){
 		tail=0;
 		pData=0;
-
+		min_datetime_filter=0;
 		tailLogQuote=0;
 		
 		pSharedMemory=0;
 		pQuoteLog=0;
 		pTickLog=0;
+
+	}
+	uint WhichDateTime(uint dt){
+		int idx=-1;
+		int i=0;
+		for(int i=0; i<pData->Ticks.size;i++){
+			if (pData->Ticks.data[i].datetime==dt){
+				break;
+			}
+		}
+		for(idx=i; idx<pData->Ticks.size; idx++){
+			if (pData->Ticks.data[i].datetime!=dt){
+				break;
+			}
+		}
+		return idx;
 
 	}
 	//C_Insrument& operator = (const C_Insrument& Inst){
@@ -467,7 +487,7 @@ public:
 		if (!pSharedMemory->attach()) 
 			return false;
 		pData=(C_SharedMemoryInstrument*)pSharedMemory->data();
-		return true;
+		return (pData!=0);
 	}
 
 

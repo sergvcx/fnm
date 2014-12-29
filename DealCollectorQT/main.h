@@ -208,6 +208,9 @@ struct SDeal{
 	void SetQDate(QDate& qDate){
 		nDate=qDate.year()*10000+qDate.month()*100+qDate.day();
 	}
+	QDate GetQDate(){
+		return QDate(nDate/10000,(nDate%10000)/100,nDate%100);
+	}
 
 	int TimeSecs(){
 		QTime	qTime0(10,00,00);

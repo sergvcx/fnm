@@ -11,7 +11,24 @@
 using namespace std;
 
 
-
+template<class T> class C_SubVector
+{
+public:
+	T*		data;
+	size_t	size;
+	C_SubVector(T* vec, size_t idxBegin,  size_t idxEnd){
+		data=vec+idxBegin;
+		size=idxEnd-idxBegin;
+	}
+	C_SubVector(QVector<T>& vec, size_t idxBegin,  size_t idxEnd)
+	{
+		data=&vec[idxBegin];
+		size=idxEnd-idxBegin;
+	}
+	T& operator[] (size_t idx){
+		return data[idx];
+	}
+};
  int main(int argc, char *argv[])
  {
 	 setlocale(LC_ALL, "Russian");
@@ -41,7 +58,7 @@ using namespace std;
 	
 	 QApplication app(argc, argv);
 
-	 MainWindow* mainWin=new MainWindow;
+	// MainWindow* mainWin=new MainWindow;
 	 //if (argc==2){
 	//	 if (strcmp(argv[1],"-auto")==0){
 	//		pThreadAllDeals->start();
@@ -53,9 +70,51 @@ using namespace std;
 
 	// OpenXML();
 
+	QString seccode="GMKN";
+	C_Instrument Instrument;
+	while(!Instrument.Attach(seccode)){
+		qDebug()<< "No connection to " + seccode;
+		//Sleep(1000);
+	}
 
 
-	 
+	//C_TradeMaster TradeMaster;
+
+	//TradeMaster.Init();
+
+
+	size_t idxBegin=Instrument.pData->Ticks.size;
+	while(1){
+		size_t idxEnd=Instrument.pData->Ticks.size;
+		C_SubVector<S_Tick> TickPortion(Instrument.pData->Ticks.data,idxBegin,idxEnd);
+		for(int i=0; i<TickPortion.size; i++){
+			S_Tick& Tick=TickPortion[i];
+			qDebug()<< Tick.toXML() ;//<< "\n";
+		}
+		idxBegin=idxEnd;
+
+	
+		qDebug() << Instrument.pData->Quotes.toXML(6);
+		/*
+		QList<SOrder> MySell;
+		QList<SOrder> MyBuy;
+
+
+		int   Stocks=Sell(MySell,TickPortion);
+		SOrd
+		float Cash  =Buy (MyBuy,TickPortion);
+
+
+
+
+		TradeMaster<<TickPortion;
+		*/
+
+	}
+	//TradeMaster<<Deal;
+
+
+	/* 
 
 	 //TransaqConnector.disconnect();
 	 //Sleep(1000);	
@@ -115,7 +174,7 @@ using namespace std;
 		//Sleep(1000);
 
 	}
-	
+	*/
 	
 	//Sleep(1000*60*60*8);
 

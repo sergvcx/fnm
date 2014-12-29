@@ -13,7 +13,7 @@ using namespace std;
 C_TransaqConnector TransaqConnector;
 
 
-void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, bool echo){
+void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, uint filter_datetime, bool echo){
 
 
 		if (size==0)
@@ -32,14 +32,17 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 		for (int i=0; i<size; i++,data++){
 			S_Tick& tick =*data;
 			
-			listDate	<< tick.DateTime().toString("yyyyMMdd");
-			listTime	<< tick.DateTime().toString("hhmmss");
-			listVolume	<< tick.quantity;
-			listPrice	<< tick.price;
-			listType	<< tick.type;
-
-			if (echo)
-				qDebug()<<"    " << tick.toXML() ;//<< "\n";
+			if (tick.datetime>filter_datetime){
+				listDate	<< tick.DateTime().toString("yyyyMMdd");
+				listTime	<< tick.DateTime().toString("hhmmss");
+				listVolume	<< tick.quantity;
+				listPrice	<< tick.price;
+				listType	<< tick.type;
+				if (echo)
+					qDebug()<<"    " << tick.toXML() ;//<< "\n";
+			}
+			
+			
 			
 		}
 		if (echo)
@@ -111,6 +114,8 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 
 	 
 
+	 
+
 	 //TransaqConnector.disconnect();
 	 //Sleep(1000);
 	 TransaqConnector <<  "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
@@ -134,9 +139,9 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 	qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
 	//TransaqConnector.server_status();
 	//TransaqConnector.isConnected();
-	 //TransaqConnector.connect();
-	 //TransaqConnector.isConnected();
-	 //while(!TransaqConnector.isConnected()){
+	//TransaqConnector.connect();
+	//TransaqConnector.isConnected();
+	//while(!TransaqConnector.isConnected()){
 	//	 printf("Transaq not connected\n");
 	//	 Sleep(1000);
 	// }
@@ -150,36 +155,47 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 		//Instrument.pQuoteLog->Header();
 		Instrument.pQuoteLog->flush();
 
-		// MUST BE IN THE END !!!
+		
+		
+		QSqlQuery query(pThreadAllDeals->db_trading);
+
+		//uint min_datetime_filter;
+		
+		QString Cmd="SELECT * FROM " + seccode+ "_deal ORDER BY id DESC LIMIT 1";
+
+		SDeal Deal;
+		query.exec(Cmd);
+		VALID(query);
+		int query_size=query.size();
+		if (query_size==1)
+			if (query.next()){
+				Deal.Parse(query);
+				QDateTime dt; 
+				dt.setDate(Deal.GetQDate());
+				dt.setTime(Deal.GetQTime());
+				qDebug() << dt;
+				Instrument.min_datetime_filter=dt.toTime_t();
+				
+			}
+			
+		
+
 		bool ok=Instrument.Attach(seccode);
-		if (ok)
-			mapInstrument[seccode]=Instrument;
+		if (ok){
+
+			//Instrument.tail=Instrument.WhichDateTime(min_datetime_filter);
+			//if (Instrument.tail==-1)
+			//	Instrument.tail=0;
+
+			mapInstrument[seccode]=Instrument; // MUST BE IN THE END !!!
+			
+			
+
+		}
 		
 	}
 
-	//C_Instrument& Instrument=mapInstrument["AFLT"];
 	
-	//QString xml_glass=Instrument.pData->Quotes.toXML();
-	//qDebug() << xml_glass;
-// 	Instrument.pQuoteLog->Header();
-// 	*Instrument.pQuoteLog<<  "test"; 
-// 	*Instrument.pQuoteLog<<"sdsd" ;
-// 	*Instrument.pQuoteLog<<  "\n"; 
-// 	Instrument.pQuoteLog->close();
-
-	// C_Instrument Instrument;
-	 
-
-	// int dec=Instrument.pData->Info.decimals;
-	
-
-	//Sleep(1000*10);
-	//TransaqConnector.subscribe(QString("GMKN"));
-	//TransaqConnector.server_status();
-	//Sleep(1000*20);
-	//TransaqConnector.server_status();
-	//while (!isReadyToCommand)
-	//	Sleep(1000);
 	if (TransaqConnector.subscribe(TransaqConnector.listActive)){
 		TransaqConnector.disconnect();
 		return 1;
@@ -209,7 +225,7 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 			S_EasyTicks& Ticks=Instrument.pData->Ticks;
 
 			int count= Ticks.size-Instrument.tail;
-			Ticks2Mysql( tick_query, seccode, Ticks.data+Instrument.tail,count, true);
+			Ticks2Mysql( tick_query, seccode, Ticks.data+Instrument.tail,count,Instrument.min_datetime_filter, true);
 			Instrument.tail+=count;
 
 			//bool isUpdated=Instrument.pData->Quotes.UpdateCurrentQuotes(Instrument.listBuyQuote,Instrument.listSellQuote);
@@ -218,8 +234,8 @@ void Ticks2Mysql( QSqlQuery& query, QString seccode, S_Tick* data, int size, boo
 			if (Instrument.strLastGlass!=new_glass){
 				Instrument.strLastGlass= new_glass;
 				qDebug() << new_glass;
-				//*Instrument.pQuoteLog<<new_glass << "\n";
-				//Instrument.pQuoteLog->flush();
+				*Instrument.pQuoteLog<<new_glass << "\n";
+				Instrument.pQuoteLog->flush();
 			}
 
 			
