@@ -31,7 +31,34 @@ public:
 	}
 };
 
-void Trade(QList<SOrder>& listSell, QList<SOrder>& listBuy, C_SubVector& vecDeals ){
+void Trade(QList<SOrder>& listSell, QList<SOrder>& listBuy, C_SubVector<S_Tick>& vecTicks, float &Cash, int& Stocks ){
+	
+	
+	float minSellPrice;
+	float maxSellPrice;
+	float minBuyPrice;
+	float maxBuyPrice;
+	if (listBuy.size()){
+		minBuyPrice=listBuy.
+	}
+	for(int i=0; i<vecTicks.size; i++){
+		S_Tick& tick=vecTicks[i];
+		if (tick.isSell()){
+			if (!listSell.size())
+				continue;
+			if (tick.price<listSell.first().Price)
+				continue;
+
+		}
+		else {
+
+		}
+		
+			
+
+	}
+	
+	
 	QQueue<SDeal>	qSecondDeals;
 	QQueue<SDeal>	qBuyDeals;
 	QQueue<SDeal>	qSellDeals;

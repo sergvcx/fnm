@@ -42,6 +42,12 @@ struct S_Tick{
 		type=0;
 		
 	}
+	bool isSell(){
+		return type<0;
+	}
+	bool isBuy(){
+		return type>=0;
+	}
 	void SetSellType(){
 		type&=0xFF;
 		type|=(-1)<<8;
