@@ -1,4 +1,5 @@
 #include "string.h"
+#include <windows.h>
 #include "MainWindow.h"
 #include <QApplication>
 
@@ -90,11 +91,13 @@ public:
 		for(int i=0; i<TickPortion.size; i++){
 			S_Tick& Tick=TickPortion[i];
 			qDebug()<< Tick.toXML() ;//<< "\n";
+			
 		}
 		idxBegin=idxEnd;
-
-	
 		qDebug() << Instrument.pData->Quotes.toXML(6);
+		Sleep(1000);
+	
+		
 		/*
 		QList<SOrder> MySell;
 		QList<SOrder> MyBuy;
