@@ -4,7 +4,7 @@
 #include <QSharedMemory>
 #include <QFile>
 #include <QTextStream>
-
+#include "xmllogger.h"
 #define  MAX_TICS 1024
 
 //#include "TransaqConnector.h"
@@ -363,53 +363,6 @@ public:
 	
 };
 
-#define LOGGER_APPEND 1 //QIODevice::Append
-#define LOGGER_WRITE 2 //QIODevice::WriteOnly
-#define LOGGER_READWRITE QIODevice::ReadWrite
-#define LOGGER_TEXT QIODevice::Text
-class C_XML_Logger
-{
-	QFile* logFile;
-	QTextStream* logStream;	
-public:
-	C_XML_Logger(QString filename, int mode=LOGGER_APPEND  ){ //QIODevice::OpenModeFlag mode
-		logFile=0;
-		logStream=0;
-		logFile = new QFile(filename);
-		
-		if (mode==LOGGER_WRITE)
-			if(logFile->open(QIODevice::WriteOnly | QIODevice::Text)){
-				logStream = new QTextStream(logFile);
-			}
-		if (mode==LOGGER_APPEND)
-			if(logFile->open(QIODevice::Append | QIODevice::Text)){
-				logStream = new QTextStream(logFile);
-			}
-		_ASSERTE(logFile);
-		_ASSERTE(logStream);
-	}
-	void Header(){
-		*logStream<<"<?xml version='1.0' encoding='UTF-8'?>" <<"\n";
-		logStream->flush();
-	}
-	void flush(){
-		logStream->flush();
-	}
-	//bool Reopen();
-	void operator << (char* log){
-		_ASSERTE(logStream);
-		*logStream	<< log;
-	}
-	QTextStream& operator << (QString& log){
-		_ASSERTE(logStream);
-		*logStream	<< log;
-		return *logStream;
-	}
-	void close(){
-		//logStream->close();
-		logFile->close();
-	}
-};
 
 class C_Instrument {
 private:
