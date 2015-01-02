@@ -11,7 +11,8 @@
 
 #define LIMIT_TICKS  1024*1024		// must be power of two
 #define LIMIT_QOUTES 1024*1024		// must be power of two
-
+#define LIMIT_GLASSES 32768*16
+#define GLASS_DEPTH 7
 
 struct S_XML_Tick{
 	//QString secid;		// 4
@@ -95,7 +96,14 @@ struct S_EasyTicks{
 			tick->datetime	=0;
 		}
 	}
-
+	uint NextSecondIndex(uint fromIndex){
+		S_Tick* pTick=data+fromIndex;
+		uint from_datetime=pTick->datetime;
+		for(uint i=fromIndex; i<size; i++, pTick++)
+			if (pTick->datetime>from_datetime)
+				return i;
+		return size;
+	}
 	void operator << (S_XML_Tick& Tick){
 		bool ok;
 		S_Tick& NewTick =data[ size   &(LIMIT_QOUTES-1)];
@@ -146,6 +154,22 @@ struct C_EasyQuote{
 	uint		datetime;
 };
 
+struct C_FixedGlass
+{
+public:
+	
+	struct
+	{
+		float price;
+		int quantity;
+	} sell[GLASS_DEPTH], buy[GLASS_DEPTH];
+	uint datetime;
+	uint date;
+	uint time;
+	short sell_depth;
+	short buy_depth;
+};
+
 
 
 struct S_XML_QuoteInfo {
@@ -173,15 +197,33 @@ struct S_Quote {
 	QDateTime datetime_update;
 };
 
+// void DiffGlass(QList<S_Quote>& listPrevBuyQuote, QList<S_Quote>& listPrevSellQuote, 
+// 			   QList<S_Quote>& listCurrBuyQuote, QList<S_Quote>& listCurrSellQuote)
+// {
+// 	
+// }
+
 class C_SharedMemoryInstrument {
 public:
 	
 	S_InstrumentInfo Info;
 	S_EasyTicks	Ticks;
+	//S_EasyQutes Quotes;
 	void Init(){
 		Ticks.Init();
 	}
-	
+	struct {
+		C_FixedGlass data[LIMIT_GLASSES];
+		uint size;
+		C_FixedGlass* FindDateTime(uint datetime, uint& fromIndex){
+			C_FixedGlass* pGlass=data+fromIndex;
+			for(; fromIndex<size; fromIndex++, pGlass++){
+				if (datetime>=pGlass->datetime)
+					return pGlass;
+			}
+			return 0;
+		}
+	} Glasses;
 	struct S_EasyQuotes{
 		C_EasyQuote data[LIMIT_QOUTES];
 		int			size;
@@ -203,7 +245,7 @@ public:
 			quote.datetime=dt.toTime_t();
 			size++;
 		}
-		
+
 
 		bool UpdateCurrentQuotes(QList<S_Quote>& listBuyQuote, QList<S_Quote>& listSellQuote, int history=100)
 		{

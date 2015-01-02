@@ -9,6 +9,7 @@
 
 #include <QTextCodec>
 #include <QTDebug>
+#include <QThread>
 using namespace std;
 
 
@@ -231,8 +232,25 @@ public:
 };
 
 
+class sqlimport
+{
+	
+public:
+	void run(); //The main thread process
+	QString outputFile;
+
+////private:
+	QFile outfile;
+	QTextStream outStream;
+};
+
  int main(int argc, char *argv[])
  {
+	//sqlimport ttt;
+	//ttt.
+
+	 int jj=sizeof(C_FixedGlass);
+	 C_XML_Logger2 loger("sssss");
 	 setlocale(LC_ALL, "Russian");
 	
 	 QApplication app(argc, argv);
@@ -297,6 +315,39 @@ public:
 
 	size_t idxBegin=Instrument.pData->Ticks.size;
 	
+	uint fromIndex=0;
+	for(int i=0; i<Instrument.pData->Ticks.size; i++){
+		size_t idxEnd=Instrument.pData->Ticks.NextSecondIndex(idxBegin);
+		C_SubVector<S_Tick> TickPortion(Instrument.pData->Ticks.data, idxBegin, idxEnd);
+		S1[0] << TickPortion;
+		QList<S_Quote> listBuyQuote;
+		QList<S_Quote> listSellQuote;
+
+		S_Quote BuyQuote; 
+		S_Quote SellQuote; 
+		C_FixedGlass* pGlass = Instrument.pData->Glasses.FindDateTime(TickPortion.data[0].datetime,fromIndex);
+		if (pGlass){
+			BuyQuote.price=pGlass->buy[0].price;
+			BuyQuote.quantity=pGlass->buy[0].quantity;
+			BuyQuote.datetime_create=QDateTime::fromTime_t(pGlass->datetime);
+
+			SellQuote.price=pGlass->sell[0].price;
+			SellQuote.quantity=pGlass->sell[0].quantity;
+			SellQuote.datetime_create=QDateTime::fromTime_t(pGlass->datetime);
+
+			qDebug()<< SellQuote.datetime_create;
+			qDebug()<< BuyQuote.datetime_create;
+			
+
+			listBuyQuote<< BuyQuote;
+			listSellQuote<<SellQuote;
+		}
+
+		S1[0].Update(listBuyQuote, listSellQuote);
+		
+
+		
+	}
 	
 	while(1){
 		size_t idxEnd=Instrument.pData->Ticks.size;
