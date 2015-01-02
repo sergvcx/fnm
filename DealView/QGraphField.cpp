@@ -48,7 +48,7 @@ QGraphField::QGraphField(QWidget *parent)
 
 void QGraphField::paintEvent(QPaintEvent * event)
 {
-	QMap<int,int> mapTime;
+	//QMap<int,int> mapTime;
 	QPainter painter(this);
 
 	QColor clrBrown(255,155,0);
@@ -76,7 +76,10 @@ void QGraphField::paintEvent(QPaintEvent * event)
 	
 	int x0,y0,x1,y1;
 	QRect VisibleRect=event->rect();
-	int LastIndex=vecDeal.size()-1;
+	//int LastIndex=vecDeal.size()-1;
+	S_EasyTicks& Ticks=pInstrument->pData->Ticks;
+
+	int LastIndex=Ticks.size-1;
 	VisibleRect.getCoords(&x0,&y0,&x1,&y1);
 
 	x0=pix2x(x0-100);
@@ -88,9 +91,11 @@ void QGraphField::paintEvent(QPaintEvent * event)
 	x1=MAX(1,x1);
 
 //	int nTime0=vecDeal[x0].nTime;
-	int nDate0=vecDeal[x0].nDate;
+//	int nDate0=vecDeal[x0].nDate;
+//	int nDate0=pInstrument->pData->Ticks[0].datetime;
 //	int nTime1=vecDeal[x1].nTime;
-	int nDate1=vecDeal[x1].nDate;
+
+//	int nDate1=vecDeal[x1].nDate;
 
 	//---------------- рисуем график сделок -----------------------------
 	painter.setPen(BlackPen);
@@ -99,16 +104,20 @@ void QGraphField::paintEvent(QPaintEvent * event)
 	for(int idx=x0+1; idx<=x1; idx++){
 
 		int x=x2pix(idx);
-		mapTime[vecDeal[idx].nTime]=x;
-		printf("%d %d\n",vecDeal[idx].nTime,x);
+		//mapTime[vecDeal[idx].nTime]=x;
+		//printf("%d %d\n",vecDeal[idx].nTime,x);
+		//printf("%d %d\n",Ticks[idx].nTime,x);
 
-		if (vecDeal[idx].nType&IN_SECOND){
+		//if (vecDeal[idx].nType&IN_SECOND){
+		if (Ticks[idx].type&IN_SECOND){
 			SwitchColor=-SwitchColor;
 			int idx0=idx;
 			int idx1=idx;
 			// Ищем последнюю сделку пролива
-			int nTime=vecDeal[idx].nTime;
-			for(;idx<=x1 && (vecDeal[idx].nTime==nTime) ; idx++){
+			//int nTime=vecDeal[idx].nTime;
+			int nTime=Ticks[idx].datetime;
+			//for(;idx<=x1 && (TicksvecDeal[idx].nTime==nTime) ; idx++){
+			for(;idx<=x1 && (Ticks[idx].datetime==nTime) ; idx++){
 				idx1=idx;
 			} 
 			idx=idx1;
@@ -133,31 +142,39 @@ void QGraphField::paintEvent(QPaintEvent * event)
 			for(idx=idx0; idx<=idx1; idx++){
 				
 				//if (idx0)
-				painter.drawLine(x2pix(idx-1),y2pix(vecDeal[idx-1].Price),x2pix(idx),y2pix(vecDeal[idx].Price));
+				//painter.drawLine(x2pix(idx-1),y2pix(vecDeal[idx-1].Price),x2pix(idx),y2pix(vecDeal[idx].Price));
+				painter.drawLine(x2pix(idx-1),y2pix(Ticks[idx-1].price),x2pix(idx),y2pix(Ticks[idx].price));
 
-				if (vecDeal[idx].IsSupply())
+				//if (vecDeal[idx].IsSupply())
+				if (Ticks[idx].isSell())
 					painter.setBrush(GreenBrush);
-				else if (vecDeal[idx].IsDemand())
+				//else if (vecDeal[idx].IsDemand())
+				else if (Ticks[idx].isBuy())
 					painter.setBrush(RedBrush);
 				else 
 					painter.setBrush(WhiteBrush);
 
 
-				painter.drawRect(x2pix(idx)-1,y2pix(vecDeal[idx].Price)-1,3,3);
+				//painter.drawRect(x2pix(idx)-1,y2pix(vecDeal[idx].Price)-1,3,3);
+				painter.drawRect(x2pix(idx)-1,y2pix(Ticks[idx].price)-1,3,3);
 			}
 			idx=idx1;
 		}
 		// Если одиночная сделка
 		else {
 			if (idx)
-				painter.drawLine(x2pix(idx-1),y2pix(vecDeal[idx-1].Price),x2pix(idx),y2pix(vecDeal[idx].Price));
-			if (vecDeal[idx].IsSupply())
+				//painter.drawLine(x2pix(idx-1),y2pix(vecDeal[idx-1].Price),x2pix(idx),y2pix(vecDeal[idx].Price));
+				painter.drawLine(x2pix(idx-1),y2pix(Ticks[idx-1].price),x2pix(idx),y2pix(Ticks[idx].price));
+			//if (vecDeal[idx].IsSupply())
+			if (Ticks[idx].isSell())
 				painter.setBrush(GreenBrush);
-			else if (vecDeal[idx].IsDemand())
+			//else if (vecDeal[idx].IsDemand())
+			else if (Ticks[idx].isBuy())
 				painter.setBrush(RedBrush);
 			else 
 				painter.setBrush(WhiteBrush);
-			painter.drawRect(x2pix(idx)-1,y2pix(vecDeal[idx].Price)-1,3,3);
+			//painter.drawRect(x2pix(idx)-1,y2pix(vecDeal[idx].Price)-1,3,3);
+			painter.drawRect(x2pix(idx)-1,y2pix(Ticks[idx].price)-1,3,3);
 
 		}
 
@@ -166,6 +183,7 @@ void QGraphField::paintEvent(QPaintEvent * event)
 	
 	// ============== рисуем график заявок ====================
 	//printf("%d--\n\n\n",0);
+	/*
 	if (bViewRequestFlag && vecRequest.size()>0){
 		QMap<int, SRequest> mapRequest;
 		
@@ -244,9 +262,9 @@ void QGraphField::paintEvent(QPaintEvent * event)
 		
 		}
 	}
-
+*/
 	// -------------- рисуем свои сделки -------------
-	
+	/*
 	if (bViewRequestFlag && vecTrade.size()>0){
 
 
@@ -285,12 +303,14 @@ void QGraphField::paintEvent(QPaintEvent * event)
 			}
 		}
 	}
-
+*/
 	// -------------- рисуем границу дней ---------------------
 	painter.setPen(DayPen);
 	for(int idx=x0; idx<x1; idx++){
-		if (vecDeal[idx].nDate!=vecDeal[idx-1].nDate){
+		//if (vecDeal[idx].nDate!=vecDeal[idx-1].nDate){
+		if (Ticks[idx].datetime-Ticks[idx-1].datetime>10*60*60){
 			painter.drawLine(x2pix(idx),0,x2pix(idx),WinHeight);
+			
 		}
 	}
 	
@@ -335,10 +355,13 @@ void QGraphField::paintEvent(QPaintEvent * event)
 int QGraphField::Rescale(){
 	minY= 1000000;	
 	maxY=0;
-	int DataSize=vecDeal.size();
+	S_EasyTicks& Ticks=pInstrument->pData->Ticks;
+	//int DataSize=vecDeal.size();
+	int DataSize=Ticks.size;
 	
 	for(int i=0; i<DataSize; i++){
-		float val=vecDeal[i].Price;
+		//float val=vecDeal[i].Price;
+		float val=Ticks[i].price;
 		if (val>maxY)
 			maxY=val;
 		else if (val<minY)
@@ -369,7 +392,7 @@ int QGraphField::Rescale(){
 
 
 
-void GetStat(QVector<SDeal>& vecDeal, SStatistic &Stat){
+void GetStat(S_EasyTicks& vecDeal, SStatistic &Stat){
 	//if (Stat.idx0>=Stat.idx1 || Stat.idx1>=vecDeal.size() || Stat.idx1>=vecDeal.size()){
 		Stat.PriceDif=0;
 		Stat.PriceMax=0;
@@ -382,18 +405,18 @@ void GetStat(QVector<SDeal>& vecDeal, SStatistic &Stat){
 		Stat.PriceMin=100000;
 		Stat.PriceMax=0;
 		Stat.VolumeSum=0;
-		int size=vecDeal.size();
-		_ASSERTE(Stat.idx0<vecDeal.size());
-		_ASSERTE(Stat.idx1<vecDeal.size());
+		int size=vecDeal.size;
+		_ASSERTE(Stat.idx0<vecDeal.size);
+		_ASSERTE(Stat.idx1<vecDeal.size);
 		for(int idx=Stat.idx0; idx<=Stat.idx1; idx++){
-			double Price=vecDeal[idx].Price;
-			int Volume=vecDeal[idx].nVolume;
+			double Price=vecDeal[idx].price;
+			int Volume=vecDeal[idx].quantity;
 			Stat.PriceMax=MAX(Price,Stat.PriceMax);
 			Stat.PriceMin=MIN(Price,Stat.PriceMin);
 			Stat.VolumeSum+=Volume;
-			if (vecDeal[idx].IsSupply())
+			if (vecDeal[idx].isSell())
 				Stat.VolumeSup+=Volume;
-			else if (vecDeal[idx].IsDemand())
+			else if (vecDeal[idx].isBuy())
 				Stat.VolumeDem+=Volume;
 		}
 		Stat.PriceDif=Stat.PriceMax-Stat.PriceMin;
@@ -405,7 +428,9 @@ void GetStat(QVector<SDeal>& vecDeal, SStatistic &Stat){
 void QGraphField::mousePressEvent(QMouseEvent *event){
 	QPoint Point=event->pos();
 //	int button	=event->button();
-	int idx=MIN(vecDeal.size()-1,pix2x(Point.x()));
+	S_EasyTicks& Ticks=pInstrument->pData->Ticks;
+	//int idx=MIN(vecDeal.size()-1,pix2x(Point.x()));
+	int idx=MIN(Ticks.size-1,pix2x(Point.x()));
 	switch(event->button()){
 		case Qt::LeftButton :
 				
@@ -413,10 +438,11 @@ void QGraphField::mousePressEvent(QMouseEvent *event){
 				if (Statistic.idx0>=Statistic.idx1){
 					Statistic.idx1=Statistic.idx0;
 				}
-				WatchDialog->labelDate0->setNum(vecDeal[idx].nDate);
-				WatchDialog->labelTime0->setNum(vecDeal[idx].nTime);
+				//WatchDialog->labelDate0->setNum(Ticks[idx].nDate);
+				WatchDialog->labelDate0->setText(Ticks[idx].TextDate());
+				WatchDialog->labelTime0->setText(Ticks[idx].TextTime());
 				
-				GetStat(vecDeal,Statistic);
+				GetStat(Ticks,Statistic);
 				WatchDialog->labelPriceMax->setNum(Statistic.PriceMax);
 				WatchDialog->labelPriceMin->setNum(Statistic.PriceMin);
 				WatchDialog->labelPriceDif->setNum(Statistic.PriceDif*100/((Statistic.PriceMax+Statistic.PriceMin)/2));
@@ -428,10 +454,10 @@ void QGraphField::mousePressEvent(QMouseEvent *event){
 	//			update();
 			break;
 		case Qt::RightButton:
-				WatchDialog->labelDate1->setNum(vecDeal[idx].nDate);
-				WatchDialog->labelTime1->setNum(vecDeal[idx].nTime);
+				WatchDialog->labelDate1->setText(Ticks[idx].TextDate());
+				WatchDialog->labelTime1->setText(Ticks[idx].TextTime());
 				Statistic.idx1=idx;
-				GetStat(vecDeal,Statistic);
+				GetStat(Ticks,Statistic);
 				WatchDialog->labelPriceMax->setNum(Statistic.PriceMax);
 				WatchDialog->labelPriceMin->setNum(Statistic.PriceMin);
 				WatchDialog->labelPriceDif->setNum(Statistic.PriceDif*100/((Statistic.PriceMax+Statistic.PriceMin)/2));
@@ -453,14 +479,14 @@ void QGraphField::mousePressEvent(QMouseEvent *event){
 }
 void QGraphField::mouseMoveEvent(QMouseEvent *event){
 	QPoint Point=event->pos();
-	
-	int idx=MIN(vecDeal.size()-1,pix2x(Point.x()));
+	S_EasyTicks& Ticks=pInstrument->pData->Ticks;
+	int idx=MIN(Ticks.size-1,pix2x(Point.x()));
 	double MousePrice=pix2y(Point.y());
-	double Price=vecDeal[idx].Price;
+	double Price=Ticks[idx].price;
 	((MainWindow*)mainWin)->labelIndex->setNum(idx);
-	((MainWindow*)mainWin)->labelDate->setText(date2str(vecDeal[idx].nDate));
-	((MainWindow*)mainWin)->labelTime->setText(time2str(vecDeal[idx].nTime));
-	((MainWindow*)mainWin)->labelVolume->setNum(vecDeal[idx].nVolume);
+	((MainWindow*)mainWin)->labelDate->setText(Ticks[idx].TextDate());
+	((MainWindow*)mainWin)->labelTime->setText(Ticks[idx].TextTime());
+	((MainWindow*)mainWin)->labelVolume->setNum(Ticks[idx].quantity);
 	((MainWindow*)mainWin)->labelPrice->setNum(Price);
 	((MainWindow*)mainWin)->labelPriceMouse->setText(QString::number(MousePrice)+":"+QString::number((MousePrice-Price)*100/Price)+"%");
 
@@ -496,8 +522,8 @@ extern QScrollArea* extScrollArea;
 void QGraphField::ZoomInX(){
 	double factor=sqrt(2.0);
 	MX*=factor;
-	setMinimumSize(vecDeal.size()*MX,WinHeight);
-	setMaximumSize(vecDeal.size()*MX,WinHeight);
+	setMinimumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+	setMaximumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
 	QScrollBar* sb = extScrollArea->horizontalScrollBar();
 	sb->setValue(int(sb->value()*factor+sb->pageStep()/2*(factor-1)));
 	update();
@@ -505,8 +531,8 @@ void QGraphField::ZoomInX(){
 void QGraphField::ZoomOutX(){
 	double factor=1/sqrt(2.0);
 	MX*=factor;
-	setMinimumSize(vecDeal.size()*MX,WinHeight);
-	setMaximumSize(vecDeal.size()*MX,WinHeight);
+	setMinimumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+	setMaximumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
 	QScrollBar* sb = extScrollArea->horizontalScrollBar();
 	sb->setValue(int(sb->value()*factor+sb->pageStep()/2*(factor-1)));
 	update();
@@ -515,8 +541,8 @@ void QGraphField::ZoomInY(){
 	double factor=sqrt(2.0);
 	MY*=factor;
 	WinHeight*=factor;
-	setMinimumSize(vecDeal.size()*MX,WinHeight);
-	setMaximumSize(vecDeal.size()*MX,WinHeight);
+	setMinimumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+	setMaximumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
 	QScrollBar* sb = extScrollArea->verticalScrollBar();
 	sb->setValue(int(sb->value()*factor+sb->pageStep()/2*(factor-1)));
 	update();
@@ -525,8 +551,8 @@ void QGraphField::ZoomOutY(){
 	double factor=1/sqrt(2.0);
 	MY*=factor;
 	WinHeight*=factor;
-	setMinimumSize(vecDeal.size()*MX,WinHeight);
-	setMaximumSize(vecDeal.size()*MX,WinHeight);
+	setMinimumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+	setMaximumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
 	QScrollBar* sb = extScrollArea->verticalScrollBar();
 	sb->setValue(int(sb->value()*factor+sb->pageStep()/2*(factor-1)));
 	update();
@@ -563,8 +589,8 @@ void QGraphField::GoToEnd(){
 void QGraphField::Histo(){
 
 	CHistoDialog* HistoDialog=new CHistoDialog;
-	HistoDialog->Calculate(vecDeal,Statistic.idx0, Statistic.idx1);
-	HistoDialog->show();
+	//HistoDialog->Calculate(vecDeal,Statistic.idx0, Statistic.idx1);
+	//HistoDialog->show();
 }
 
 

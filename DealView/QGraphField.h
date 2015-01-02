@@ -12,7 +12,7 @@
 #include <QRect>
 #include <QPaintEvent>
 #include "ui_WatchDialog.h"
-
+#include "shared.h"
 extern QSqlDatabase db_trading;
 
 
@@ -152,9 +152,9 @@ public:
 	int		x2pix(int x);
 	int		y2pix(double y);
 
+	C_Instrument* pInstrument;
 	
-	
-	QVector<SDeal>		vecDeal; 
+	//QVector<SDeal>		vecDeal; 
 //	QVector<SDealPeriod> vec1SecDeal;
 //	QVector<SDealPeriod> vec5SecDeal;
 //	QVector<SDealPeriod> vec15SecDeal;

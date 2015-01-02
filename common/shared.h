@@ -59,6 +59,7 @@ struct S_Tick{
 		type|=(1)<<8;
 	}
 
+	
 	QString toXML(){
 		QDateTime dt=DateTime();
 		QString str_price;		str_price.setNum(price); 
@@ -68,6 +69,20 @@ struct S_Tick{
 		QString str_type;		str_type.setNum(type);
 		QString XML="<S_Tick price='"+str_price+"' volume='"+str_quantity+"' date='"+str_date+"' time='"+str_time+"' type='"+str_type+"' >";
 		return XML;
+	}
+	QString TextDate(){
+		QDateTime dt;
+		dt.setTime_t(datetime);
+		QString str_date;		
+		str_date=dt.date().toString("yyyy-MM-dd");
+		return str_date;
+	}
+	QString TextTime(){
+		QDateTime dt;
+		dt.setTime_t(datetime);
+		QString str_time;
+		str_time=dt.time().toString("hh:mm:ss");
+		return str_time;
 	}
 	QDateTime DateTime(){
 		QDateTime dt;
@@ -79,7 +94,7 @@ struct S_Tick{
 
 struct S_EasyTicks{
 	S_Tick	data[LIMIT_TICKS];
-	int		size;
+	size_t	size;
 	S_Tick& operator[] (int idx){
 		return data[idx&(LIMIT_QOUTES-1)];
 	}
@@ -96,13 +111,20 @@ struct S_EasyTicks{
 			tick->datetime	=0;
 		}
 	}
-	uint NextSecondIndex(uint fromIndex){
+	uint NextSecondIndex(uint fromIndex)
+	{
 		S_Tick* pTick=data+fromIndex;
 		uint from_datetime=pTick->datetime;
 		for(uint i=fromIndex; i<size; i++, pTick++)
 			if (pTick->datetime>from_datetime)
 				return i;
 		return size;
+	}
+	
+	void operator << (S_Tick& Tick)
+	{
+		data[ size   &(LIMIT_QOUTES-1)]=Tick;
+		size++;
 	}
 	void operator << (S_XML_Tick& Tick){
 		bool ok;
@@ -211,6 +233,8 @@ public:
 	//S_EasyQutes Quotes;
 	void Init(){
 		Ticks.Init();
+		Glasses.Init();
+		Quotes.Init();
 	}
 	struct {
 		C_FixedGlass data[LIMIT_GLASSES];
@@ -223,6 +247,9 @@ public:
 			}
 			return 0;
 		}
+		void Init(){
+			size=0;
+		}
 	} Glasses;
 	struct S_EasyQuotes{
 		C_EasyQuote data[LIMIT_QOUTES];
@@ -230,7 +257,9 @@ public:
 		S_EasyQuotes(){
 			size=0;
 		}
-		
+		void Init(){
+			size=0;
+		}
 		void operator << (S_XML_QuoteInfo& QuoteInfo){
 			bool ok;
 			C_EasyQuote& quote=data[size&(LIMIT_QOUTES-1)];
@@ -421,7 +450,9 @@ public:
 	C_SharedMemoryInstrument* pData;
 	
 	uint min_datetime_filter;
-	
+	uint tail;
+	uint tailLogQuote;
+
 
 	QString Name(){
 		QString name(pData->Info.seccode);
@@ -461,9 +492,7 @@ public:
 	//	return *this;
 	//}
 	
-	unsigned tail;
-	unsigned tailLogQuote;
-
+	
 	bool Create(QString seccode){
 		pSharedMemory=new QSharedMemory(seccode);
 		//if (!pSharedMemory)
@@ -483,16 +512,25 @@ public:
 
 	bool Attach(QString seccode){
 		pSharedMemory=new QSharedMemory(seccode);
-		if (!pSharedMemory)
+		if (!pSharedMemory){
+			_ASSERTE(false);
 			return false;
-		if (!pSharedMemory->attach()) 
+		}
+		if (!pSharedMemory->attach()) {
+			_ASSERTE(false);
 			return false;
+		}
 		pData=(C_SharedMemoryInstrument*)pSharedMemory->data();
 		return (pData!=0);
 	}
 
 
-
+	void Init()
+	{
+		if (pSharedMemory->isAttached()){
+			pData->Init();
+		}	
+	}
 	
 	
 	void Lock(){

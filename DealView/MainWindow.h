@@ -11,6 +11,7 @@
 #include <QTimeEdit>
 #include <QComboBox>
 #include "QGraphField.h"
+#include "shared.h"
 /*
 class CConsole : public QTableWidget
 {
@@ -46,6 +47,7 @@ public:
 	QLabel *labelVolume;
 	QLabel *labelPriceMouse;
 
+	C_Instrument Instrument;
 	void ReadRequest();
 	void ReadDeal();
 	void ReadMyDeals();

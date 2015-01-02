@@ -234,6 +234,9 @@ struct SDeal{
 	QTime GetQTime(){
 		return QTime(nTime/10000,(nTime%10000)/100,nTime%100);
 	}
+	QDate GetQDate(){
+		return QDate(nDate/10000,(nDate%10000)/100,nDate%100);
+	}
 	void SetQTime(QTime& qTime){
 		nTime=qTime.hour()*10000+qTime.minute()*100+qTime.second();
 	}

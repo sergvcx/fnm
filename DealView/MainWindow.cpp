@@ -27,6 +27,7 @@ MainWindow::MainWindow()
 	qScrollArea = new QScrollArea;
 	extScrollArea=qScrollArea ;
 	qGraphField = new QGraphField(qScrollArea);
+	qGraphField->pInstrument=&Instrument;
 	qGraphField->mainWin=this;
 	
 	
@@ -436,7 +437,7 @@ void MainWindow::ReadRequest(){
 
 void MainWindow::ReadDeal(){
 	//QDateTime DateTime0, QDateTime DateTime1, QString StockCode
-	qGraphField->vecDeal.resize(0);
+	//qGraphField->vecDeal.resize(0);
 
 	int nDate0=intDate(DateTime0);
 	int nDate1=intDate(DateTime1);
@@ -456,16 +457,30 @@ void MainWindow::ReadDeal(){
 
 	query.exec(cmd);
 	VALID(query);
-
+	
+	Instrument.Create(StockCode);
+	Instrument.Init();
 	SDeal Deal;
+	S_Tick Tick;
 	for(int i=0; query.next(); i++){
 		Deal.nDate  =query.value(1).toInt();
 		Deal.nTime  =query.value(2).toInt();
 		Deal.nVolume=query.value(3).toInt();
 		Deal.Price  =query.value(4).toDouble();
 		Deal.nType  =query.value(5).toInt();
-		qGraphField->vecDeal << Deal;
+		
+		QDateTime dt;
+		dt.setDate(Deal.GetQDate());
+		dt.setTime(Deal.GetQTime());
+		Tick.datetime=dt.toTime_t();
+		Tick.quantity=Deal.nVolume;
+		Tick.price   =Deal.Price;
+		Tick.type	 =Deal.nType;
+		//qGraphField->vecDeal << Deal;
+
+		Instrument.pData->Ticks<< Tick;
 	}
+
 
 
 }
