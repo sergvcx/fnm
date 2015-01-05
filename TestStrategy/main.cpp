@@ -190,6 +190,32 @@ public:
 		//	*logger<< "<cash='" << Cash <<"' stocks= '"<< Stocks <<"'>");
 		
 	}
+	virtual void Update(float SpreadMin, float SpreadMax)
+	{
+		_ASSERTE(SpreadMax>SpreadMin);
+		FilterSell(listSell,SpreadMax*(1+SellDelta.Near), SpreadMax*(1+SellDelta.Far),Stocks);
+		FilterBuy( listBuy, SpreadMin*(1-BuyDelta.Near),  SpreadMin*(1-BuyDelta.Far),Cash);
+
+		if (listBuy.isEmpty() && listSell.isEmpty()){
+			if (Stocks){
+				SOrder NewSell;
+				NewSell.Price=SpreadMax*(1+SellDelta.Near + 1+SellDelta.Far)/2;
+				NewSell.Volume=1;
+				listSell << NewSell;
+				Stocks-=NewSell.Volume;
+
+			}
+			else {
+				SOrder NewBuy;
+				NewBuy.Price=SpreadMin*(1-BuyDelta.Near+1-BuyDelta.Far)/2;
+				NewBuy.Volume=1;
+				listBuy << NewBuy;
+				Cash-=NewBuy.Price*NewBuy.Volume;
+			}
+		}
+	}
+
+
 	virtual void Update(QList<S_Quote>& listBuyQuote, QList<S_Quote>& listSellQuote)
 	{
 		if (listSellQuote.isEmpty() || listBuyQuote.isEmpty()) // if glass is empty
@@ -271,7 +297,7 @@ public:
 	C_Instrument Instrument;
 	while(!Instrument.Attach(seccode)){
 		qDebug()<< "No connection to " + seccode;
-		//Sleep(1000);
+		Sleep(1000);
 	}
 
 
@@ -313,20 +339,21 @@ public:
 
 	
 
-	size_t idxBegin=Instrument.pData->Ticks.size;
+	size_t idxBegin=0;//Instrument.pData->Ticks.size;
 	
 	uint fromIndex=0;
-	for(int i=0; i<Instrument.pData->Ticks.size; i++){
+	while(idxBegin<Instrument.pData->Ticks.size){
 		size_t idxEnd=Instrument.pData->Ticks.NextSecondIndex(idxBegin);
 		C_SubVector<S_Tick> TickPortion(Instrument.pData->Ticks.data, idxBegin, idxEnd);
+		idxBegin=idxEnd;
 		S1[0] << TickPortion;
-		QList<S_Quote> listBuyQuote;
-		QList<S_Quote> listSellQuote;
+		//QList<S_Quote> listBuyQuote;
+		//QList<S_Quote> listSellQuote;
 
 		S_Quote BuyQuote; 
 		S_Quote SellQuote; 
-		C_FixedGlass* pGlass = Instrument.pData->Glasses.FindDateTime(TickPortion.data[0].datetime,fromIndex);
-		if (pGlass){
+		C_FixedGlass* pGlass = Instrument.pData->Glasses.FindBefore(TickPortion.data[0].datetime,30,fromIndex);
+		/*if (pGlass){
 			BuyQuote.price=pGlass->buy[0].price;
 			BuyQuote.quantity=pGlass->buy[0].quantity;
 			BuyQuote.datetime_create=QDateTime::fromTime_t(pGlass->datetime);
@@ -341,9 +368,9 @@ public:
 
 			listBuyQuote<< BuyQuote;
 			listSellQuote<<SellQuote;
-		}
-
-		S1[0].Update(listBuyQuote, listSellQuote);
+		}*/
+		if (pGlass)
+			S1[0].Update(pGlass->buy[0].price,pGlass->sell[0].price);
 		
 
 		

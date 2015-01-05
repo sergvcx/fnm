@@ -246,23 +246,13 @@ bool CALLBACK acceptor(BYTE *pData)
 			xml.readNext();
 			while (!(xml.isEndElement() && xml.name()=="quotes" )){
 				if (xml.isStartElement() && xml.name() == "quote"){					
-					S_XML_QuoteInfo QuoteInfo;
-					ParseQuote(xml,QuoteInfo);
+					S_XML_QuoteInfo xml_quote;
+					xml_quote.datetime=QDateTime::currentDateTime().toTime_t();
+					xml_quote.datetime-=TransaqConnector.servtime_difference;
+					ParseQuote(xml,xml_quote);
 					
-					mapQuote[QuoteInfo.seccode].enqueue(QuoteInfo);
-					//TransaqConnector.queueQuote<<QuoteInfo;
-					/*
-					if (QuoteInfo.seccode!=""){
-						QMap<QString,S_Security>::iterator itSec=mapSecurity.find(QuoteInfo.seccode);
-						if (itSec!=mapSecurity.end()){
-							//UpdateBuyQuote (QuoteInfo,itSec->listBuyQuote);
-							//UpdateSellQuote(QuoteInfo,itSec->listSellQuote);
-						}
-						else 
-							std::cerr << "WARNING: mapSecurity not found " << STR(QuoteInfo.seccode) <<std::endl;
-					} else 
-						std::cerr<< "ERROR: Empty seccode" <<std::endl;
-					*/
+					mapQuote[xml_quote.seccode].enqueue(xml_quote);
+					
 				}
 				xml.readNext();
 			}
@@ -294,7 +284,7 @@ bool CALLBACK acceptor(BYTE *pData)
 			}
 			//std::cout<<"-ticks finished"; fflush(stdout);
 			
-			//pThreadAllDeals->Parse(TickQueue);
+			
 		}
 		//--------------------- server_status ----------------------------------------
 		if (xml.isStartElement() && xml.name() == "server_status"){
@@ -320,33 +310,35 @@ bool CALLBACK acceptor(BYTE *pData)
 		}
 
 	}
-
+	//------- разгребаем тики ---------
 	foreach ( QString seccode, mapTick.keys()){
 		if (TransaqConnector.mapInstrument.contains(seccode)){
 			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
 			QQueue<S_XML_Tick>& queueTick=mapTick[seccode];
 			Instrument.Lock();
 			while (!queueTick.isEmpty()){
-				S_XML_Tick& tick=queueTick.head();
-				if ( Instrument.pTickLog)
-					*Instrument.pTickLog<<tick.toXML() <<"\n";
+				S_XML_Tick& xml_tick=queueTick.head();
+				//if ( Instrument.pTickLog)
+				//	*Instrument.pTickLog<<tick.toXML() <<"\n";
 				
- 				Instrument.pData->Ticks << tick;
+ 				Instrument.pData->Ticks << xml_tick;
 				queueTick.removeFirst();
 			}
 			Instrument.Unlock();
 		}
 	}
+	//------- разгребаем стаканы ---------------
 	foreach ( QString seccode, mapQuote.keys()){
 		if (TransaqConnector.mapInstrument.contains(seccode)){
 			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
 			QQueue<S_XML_QuoteInfo>& queueQuote=mapQuote[seccode];
 			Instrument.Lock();
 			while (!queueQuote.isEmpty()){
-				S_XML_QuoteInfo& quote=queueQuote.head();
+				S_XML_QuoteInfo& xml_quote=queueQuote.head();
+				
 				if ( Instrument.pQuoteLog)
-					*Instrument.pQuoteLog << quote.toXML() << "\n";
- 				Instrument.pData->Quotes<< quote ;
+					*Instrument.pQuoteLog << xml_quote.toXML() << "\n";
+ 				Instrument.pData->Quotes<< xml_quote ;
 				queueQuote.removeFirst();
 			}
 			Instrument.Unlock();
@@ -366,6 +358,7 @@ bool CALLBACK acceptor(BYTE *pData)
 	//============ init ===========================================
 	C_TransaqConnector::C_TransaqConnector(){
 		isBusy=false;
+		servtime_difference=0;
 		error[0]=0;
 		hm  = LoadLibraryA("txmlconnector.dll");
 		if (hm) {
@@ -535,6 +528,47 @@ bool CALLBACK acceptor(BYTE *pData)
 		}
 		return 0;
 	}
+	//============ get_servtime_difference ===========================================
+	int C_TransaqConnector::get_servtime_difference()
+	{
+		try {
+			std::cout<<"Sending 'get_servtime_difference' ..."<<std::endl;
+			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='get_servtime_difference'/>"));
+			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+			QString  en = codec->toUnicode((char*)ss); 
+			qDebug() << en+"\n"; 
+
+			QString success;
+			QString diff;
+			QXmlStreamReader xml(en);
+			while (!xml.atEnd() && !xml.hasError()){
+				xml.readNext();
+				if (xml.isStartDocument())
+					continue;
+
+				if (xml.isStartElement() && xml.name() == "result"){
+			 
+					
+					QXmlStreamAttributes attributes = xml.attributes();
+					if (attributes.hasAttribute("success"))
+						success = attributes.value("success").toString();
+
+					if (attributes.hasAttribute("diff"))
+						diff = attributes.value("diff").toString();
+				}
+			}
+			if (success=="true")
+				servtime_difference=diff.toInt();
+
+			FreeMemory(ss);
+		}
+		catch (std::runtime_error& e) {
+			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+			UnloadLibrary(hm);
+			return 1;
+		}
+		return 0;
+	}
 	//============ subscribe (quotes only) ===========================================
 	int C_TransaqConnector::subscribe(QList<QString>& SeccodeList)
 	{
@@ -674,11 +708,11 @@ bool CALLBACK acceptor(BYTE *pData)
 		listActive << seccode;
 		C_Instrument Instrument;
 		Instrument.Create(seccode);
-		Instrument.pQuoteLog= new C_XML_Logger(seccode+"_quote.xml");
-		Instrument.pQuoteLog->Header();
+		//Instrument.pQuoteLog= new C_XML_Logger(seccode+"_quote.xml");
+		//Instrument.pQuoteLog->Header();
 		//Instrument.pTickLog= new C_XML_Logger(seccode+"_tick.xml");
 		//Instrument.pTickLog->Header();
-		bool ok;
+		//bool ok;
 		
 		mapInstrument[seccode]=Instrument;
 		

@@ -209,7 +209,7 @@ int CThreadAllDeals::ReadPortfolio(){
 	// если нет баз данных то создаем... deal и trd
 	while (!queInstrument.isEmpty()){
 		if (mapPortfolio[queInstrument.head()]->Status>0){
-			pDBManager->TradingCreate_deal(queInstrument.head()); 
+//			pDBManager->TradingCreate_deal(queInstrument.head()); 
 			pDBManager->TradingCreate_trd(queInstrument.head()); 
 		}
 		queInstrument.dequeue();

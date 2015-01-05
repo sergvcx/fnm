@@ -113,6 +113,7 @@ int ParseQuote(QXmlStreamReader& xml,S_XML_QuoteInfo& QuoteInfo){
 		return 1;
 	}
 
+	
 	QXmlStreamAttributes attributes = xml.attributes();
 	if (attributes.hasAttribute("secid"))
 		QuoteInfo.secid = attributes.value("secid").toString();

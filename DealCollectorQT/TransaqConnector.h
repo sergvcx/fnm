@@ -78,6 +78,7 @@ class C_TransaqConnector {
 	typeSendCommand  SendCommand;
 	
 public:
+	int servtime_difference;
 	bool isBusy;
 	S_XML_ServerStatus ServerStatus;
 
@@ -92,6 +93,7 @@ public:
 	int subscribe(QList<QString>& SeccodeList);
 	int get_securities();
 	int change_pass();
+	int get_servtime_difference();
 
 	C_TransaqConnector& operator << (QString seccode);
 	//C_TransaqConnector& operator << (QList<QString>& list);

@@ -6,15 +6,15 @@
 #include <QLabel>
 #include <QStatusBar>
 
-CThreadAllDeals* pThreadAllDeals;
+//CThreadAllDeals* pThreadAllDeals;
 MainWindow::MainWindow()
 {
 	SPortfolioErr p,g;
 	SPortfolioErr& f=p;
 	//p=g;
 	pDBManager		= new CDBManager;
-	pThreadAllDeals	= new CThreadAllDeals;
-	pThreadAllDeals->pDBManager=pDBManager;
+	//pThreadAllDeals	= new CThreadAllDeals;
+	//pThreadAllDeals->pDBManager=pDBManager;
 	
 
 	Timer = new QTimer(this);
@@ -93,13 +93,13 @@ void MainWindow::createActions(){
 	
 	//connect(actStartAllDeals, SIGNAL(triggered()), this, SLOT(newFile()));
 	//connect(actStartAllDeals, SIGNAL(triggered()), this, SLOT(StartAllDeals()));
-	connect(actStartAllDeals,	SIGNAL(triggered()), pThreadAllDeals, SLOT(start()));
-	connect(actStopAllDeals,	SIGNAL(triggered()), pThreadAllDeals, SLOT(stop()));
-	connect(actEmptyAllDeals,	SIGNAL(triggered()), pDBManager, SLOT(QuikDropAndCreateAllDeals()));
-	connect(actCreateFinInst,	SIGNAL(triggered()), pDBManager, SLOT(QuikDropAndCreateFinInst()));
+	//connect(actStartAllDeals,	SIGNAL(triggered()), pThreadAllDeals, SLOT(start()));
+	//connect(actStopAllDeals,	SIGNAL(triggered()), pThreadAllDeals, SLOT(stop()));
+	//connect(actEmptyAllDeals,	SIGNAL(triggered()), pDBManager, SLOT(QuikDropAndCreateAllDeals()));
+	//connect(actCreateFinInst,	SIGNAL(triggered()), pDBManager, SLOT(QuikDropAndCreateFinInst()));
 	
 	
-	connect(actCheckTables,		SIGNAL(triggered()), pDBManager, SLOT(CheckTables()));
+	//connect(actCheckTables,		SIGNAL(triggered()), pDBManager, SLOT(CheckTables()));
 	connect(actDropTradings,	SIGNAL(triggered()), pDBManager, SLOT(TradingDropAll()));
 	connect(actCreateFromPortfolio,	SIGNAL(triggered()), pDBManager, SLOT(TradingCreateAllFrom_portfolio()));
 	connect(actCleanPortfolio,	SIGNAL(triggered()), pDBManager, SLOT(TradingClean_portfolio()));
@@ -113,7 +113,7 @@ void MainWindow::createActions(){
 	connect(actAlterAll,		SIGNAL(triggered()), pDBManager, SLOT(TradingAlterAll()));
 	connect(actDeleteTradingDealToday,		SIGNAL(triggered()), pDBManager, SLOT(TradingDeleteDealsToday()));
 
-	connect(actUpdateAllInSecond,SIGNAL(triggered()), pDBManager, SLOT(TradingUpdateAllInSecond()));
+//	connect(actUpdateAllInSecond,SIGNAL(triggered()), pDBManager, SLOT(TradingUpdateAllInSecond()));
 	
 
 
@@ -123,11 +123,11 @@ void MainWindow::createActions(){
 	connect(actAbout, SIGNAL(triggered()), this, SLOT(about()));
 
 	connect(Timer, SIGNAL(timeout()), Monitor, SLOT(updateMonitor()));
-	connect(StartStopTimer, SIGNAL(timeout()), pThreadAllDeals, SLOT(onTimer()));
-	connect(SMSTimer, SIGNAL(timeout()), pThreadAllDeals, SLOT(onSMSTimer()));
-	connect(actCreateQuikRequest, SIGNAL(triggered()), pDBManager, SLOT(QuikCreate_request()));
-	connect(actCreateQuikTrade  , SIGNAL(triggered()), pDBManager, SLOT(QuikCreate_trade()));
-	connect(actCreateQuikCurrent, SIGNAL(triggered()), pDBManager, SLOT(QuikCreate_current()));
+//	connect(StartStopTimer, SIGNAL(timeout()), pThreadAllDeals, SLOT(onTimer()));
+//	connect(SMSTimer, SIGNAL(timeout()), pThreadAllDeals, SLOT(onSMSTimer()));
+// 	connect(actCreateQuikRequest, SIGNAL(triggered()), pDBManager, SLOT(QuikCreate_request()));
+// 	connect(actCreateQuikTrade  , SIGNAL(triggered()), pDBManager, SLOT(QuikCreate_trade()));
+// 	connect(actCreateQuikCurrent, SIGNAL(triggered()), pDBManager, SLOT(QuikCreate_current()));
 	
 
 	StartStopTimer->start(1000);
@@ -183,7 +183,7 @@ void MainWindow::newFile(){
 int g=1;
 }
 void MainWindow::StartAllDeals(){
-	pThreadAllDeals->start();
+//	pThreadAllDeals->start();
 }
 
 

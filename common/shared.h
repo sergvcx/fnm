@@ -9,10 +9,22 @@
 
 //#include "TransaqConnector.h"
 
-#define LIMIT_TICKS  1024*1024		// must be power of two
-#define LIMIT_QOUTES 1024*1024		// must be power of two
-#define LIMIT_GLASSES 32768*16
+#define LIMIT_TICKS  1024*256		// must be power of two
+#define LIMIT_QOUTES 1024*256		// must be power of two
+#define LIMIT_GLASSES 32768*8
 #define GLASS_DEPTH 7
+
+inline QString DateTime2Text(QDateTime& dt)
+{
+	return dt.toString("yyyy-MM-dd hh:mm:ss");
+}
+
+inline QDateTime Text2DateTime(QString& date_time)
+{
+	return QDateTime::fromString(date_time,"yyyy-MM-dd hh:mm:ss");
+}
+
+
 
 struct S_XML_Tick{
 	//QString secid;		// 4
@@ -25,7 +37,7 @@ struct S_XML_Tick{
 	QString period;		// L
 	QString buysell;	// S
 	QString toXML(){
-		QString XML="<S_XML_Tick seccode='"+seccode+"' price='"+price+"' quantity='"+quantity+"' tradetime='"+tradetime+"' buysell='"+buysell+"' >";
+		QString XML="<S_XML_Tick seccode='"+seccode+"' price='"+price+"' quantity='"+quantity+"' tradetime='"+tradetime+"' buysell='"+buysell+"' />";
 		return XML;
 	}
 };
@@ -36,6 +48,7 @@ struct S_Tick{
 	int			quantity;
 	int			type;
 	uint		datetime;
+	//C_FixedGlass* pGlass;
 
 	S_Tick(){
 		price=0;
@@ -67,7 +80,7 @@ struct S_Tick{
 		QString str_date;		str_date=dt.date().toString("yyyy-MM-dd");
 		QString str_time;		str_time=dt.time().toString("hh:mm:ss");
 		QString str_type;		str_type.setNum(type);
-		QString XML="<S_Tick price='"+str_price+"' volume='"+str_quantity+"' date='"+str_date+"' time='"+str_time+"' type='"+str_type+"' >";
+		QString XML="<S_Tick price='"+str_price+"' volume='"+str_quantity+"' date='"+str_date+"' time='"+str_time+"' type='"+str_type+"' />";
 		return XML;
 	}
 	QString TextDate(){
@@ -170,10 +183,10 @@ struct S_InstrumentInfo{
 
 
 struct C_EasyQuote{
+	uint		datetime;
 	float		price;
 	int			buy;
 	int			sell;
-	uint		datetime;
 };
 
 struct C_FixedGlass
@@ -204,9 +217,10 @@ struct S_XML_QuoteInfo {
 	QString yield;	// доходность (актуально только для 	облигаций)</yield>
 	QString buy;	// количество бумаг к покупке</buy>
 	QString sell;	// количество бумаг к продаже</sell>
+	uint	datetime;
 
 	QString toXML(){
-		QString XML="<S_XML_QuoteInfo seccode='"+seccode+"' price='"+price+"' buy='"+buy+"' sell='"+sell+"'>";
+		QString XML="<S_XML_QuoteInfo seccode='"+seccode+"' price='"+price+"' buy='"+buy+"' sell='"+sell+"'/>";
 		return XML;
 	}
 
@@ -229,6 +243,7 @@ class C_SharedMemoryInstrument {
 public:
 	
 	S_InstrumentInfo Info;
+	
 	S_EasyTicks	Ticks;
 	//S_EasyQutes Quotes;
 	void Init(){
@@ -239,18 +254,39 @@ public:
 	struct {
 		C_FixedGlass data[LIMIT_GLASSES];
 		uint size;
-		C_FixedGlass* FindDateTime(uint datetime, uint& fromIndex){
+		C_FixedGlass* FindInInterval(uint datetime,uint interval, uint& fromIndex){
+			uint saveIndex=fromIndex;
 			C_FixedGlass* pGlass=data+fromIndex;
 			for(; fromIndex<size; fromIndex++, pGlass++){
-				if (datetime>=pGlass->datetime)
-					return pGlass;
+				if (datetime<=pGlass->datetime)
+					if (pGlass->datetime-datetime<=interval)
+						return pGlass;
 			}
+			fromIndex=saveIndex;
+			return 0;
+		}
+		C_FixedGlass* FindBefore(uint datetime, uint interval, uint& fromIndex){
+			fromIndex=MAX(1,fromIndex);
+			uint saveIndex=fromIndex;
+			C_FixedGlass* pGlass=data+fromIndex;
+			for(; fromIndex<size; fromIndex++, pGlass++){
+				if (datetime<pGlass->datetime){
+					if (pGlass->datetime-datetime<interval){
+						pGlass--;
+						fromIndex--;
+						//_ASSERTE(fromIndex>=0);
+						return pGlass;
+					}
+				}
+			}
+			fromIndex=saveIndex;
 			return 0;
 		}
 		void Init(){
 			size=0;
 		}
 	} Glasses;
+
 	struct S_EasyQuotes{
 		C_EasyQuote data[LIMIT_QOUTES];
 		int			size;
@@ -270,8 +306,9 @@ public:
 			if (!ok) quote.sell =0;
 			QDateTime dt;
 			//dt.setTime_t(datetime);
-			dt=QDateTime::currentDateTime();
-			quote.datetime=dt.toTime_t();
+			//dt=QDateTime::currentDateTime();
+			//quote.datetime=dt.toTime_t();
+			quote.datetime=QuoteInfo.datetime;
 			size++;
 		}
 
@@ -410,8 +447,10 @@ public:
 				QString update;
 				price.setNum(Quote.price,'g',decimals);
 				quantity.setNum(Quote.quantity);
-				create=Quote.datetime_create.toString("yyyy-MM-dd hh:mm:ss");
-				update=Quote.datetime_update.toString("yyyy-MM-dd hh:mm:ss");
+				//create=Quote.datetime_create.toString("yyyy-MM-dd hh:mm:ss");
+				//update=Quote.datetime_update.toString("yyyy-MM-dd hh:mm:ss");
+				create=DateTime2Text(Quote.datetime_create);
+				update=DateTime2Text(Quote.datetime_update);
 				XML+="	<sell price='"+price+"' volume='"+quantity+"' create='"+create+"' update='"+update+"'>\n";
 			}
 			for(int i=0; i<Buy.size(); i++){
@@ -422,9 +461,11 @@ public:
 				QString update;
 				price.setNum(Quote.price,'g',decimals);
 				quantity.setNum(Quote.quantity);
-				create=Quote.datetime_create.toString("yyyy-MM-dd hh:mm:ss");
-				update=Quote.datetime_update.toString("yyyy-MM-dd hh:mm:ss");
-				XML+="	<buy price='"+price+"' volume='"+quantity+"' create='"+create+"' update='"+update+"'>\n";
+				//create=Quote.datetime_create.toString("yyyy-MM-dd hh:mm:ss");
+				//update=Quote.datetime_update.toString("yyyy-MM-dd hh:mm:ss");
+				create=DateTime2Text(Quote.datetime_create);
+				update=DateTime2Text(Quote.datetime_update);
+				XML+="	<buy price='"+price+"' volume='"+quantity+"' create='"+create+"' update='"+update+"'/>\n";
 			}
 			XML+="</quotes>";
 			return XML;
@@ -451,6 +492,7 @@ public:
 	
 	uint min_datetime_filter;
 	uint tail;
+	uint tailQoute;
 	uint tailLogQuote;
 
 
@@ -463,6 +505,7 @@ public:
 		tail=0;
 		pData=0;
 		min_datetime_filter=0;
+		tailQoute=0;
 		tailLogQuote=0;
 		
 		pSharedMemory=0;
@@ -513,11 +556,11 @@ public:
 	bool Attach(QString seccode){
 		pSharedMemory=new QSharedMemory(seccode);
 		if (!pSharedMemory){
-			_ASSERTE(false);
+			//_ASSERTE(false);
 			return false;
 		}
 		if (!pSharedMemory->attach()) {
-			_ASSERTE(false);
+			//_ASSERTE(false);
 			return false;
 		}
 		pData=(C_SharedMemoryInstrument*)pSharedMemory->data();

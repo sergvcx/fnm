@@ -4,6 +4,9 @@
 #include <QStatusBar>
 #include <QMenuBar>
 #include <QToolBar>
+#include <QXmlStreamReader>
+#include <QDebug>
+#include <QStack>
 QScrollArea* extScrollArea;
 MainWindow::MainWindow()
 {
@@ -28,6 +31,7 @@ MainWindow::MainWindow()
 	extScrollArea=qScrollArea ;
 	qGraphField = new QGraphField(qScrollArea);
 	qGraphField->pInstrument=&Instrument;
+	int s=sizeof (C_SharedMemoryInstrument);
 	qGraphField->mainWin=this;
 	
 	
@@ -436,6 +440,9 @@ void MainWindow::ReadRequest(){
 }
 
 void MainWindow::ReadDeal(){
+
+	Instrument.Create(StockCode);
+	Instrument.Init();
 	//QDateTime DateTime0, QDateTime DateTime1, QString StockCode
 	//qGraphField->vecDeal.resize(0);
 
@@ -458,8 +465,7 @@ void MainWindow::ReadDeal(){
 	query.exec(cmd);
 	VALID(query);
 	
-	Instrument.Create(StockCode);
-	Instrument.Init();
+
 	SDeal Deal;
 	S_Tick Tick;
 	for(int i=0; query.next(); i++){
@@ -480,9 +486,85 @@ void MainWindow::ReadDeal(){
 
 		Instrument.pData->Ticks<< Tick;
 	}
+	
+	//---------------------------------
+	QFile xml_file("../DealCollectorQT/"+StockCode+"_glass.xml");
+	//QFile xml_file("test.xml");
+	bool ok=xml_file.open(QIODevice::ReadOnly| QIODevice::Text);
+	_ASSERTE(ok);
+	//QTextStream in(&xml);
+	QXmlStreamReader xml(&xml_file);//(char*)pData); 
 
+	//S_XML_Quote Quote;
+	while ( !xml.atEnd() && !xml.hasError()){
+		xml.readNext();
+		if (xml.isStartDocument())
+			continue;
 
+		qDebug() << xml.name();
+		if (xml.isStartElement() && xml.name() == "glasses"){
+			while (!(xml.isEndElement() && xml.name()=="glasses" )){
+				if (xml.isStartElement() && xml.name() == "quotes"){
+					QStack<float> StackPrice;
+					QStack<int> StackVolume;
+					QQueue<float> BuyPrice;
+					QQueue<int> BuyVolume;
+					uint maxdt=0;
+					while (!(xml.isEndElement() && xml.name()=="quotes" )){
+						if (xml.isStartElement() && xml.name() == "sell"){
+							
+							QXmlStreamAttributes attributes = xml.attributes();
+							if (attributes.hasAttribute("price"))
+								StackPrice.push(attributes.value("price").toString().toFloat());
+							if (attributes.hasAttribute("volume"))
+								StackVolume.push(attributes.value("volume").toString().toInt());
+							if (attributes.hasAttribute("update")){
+								uint dt=Text2DateTime(attributes.value("update").toString()).toTime_t();
+								maxdt=MAX(maxdt,dt);
+							}
+							//	QString create = attributes.value("create").toString();
+							
+						} 
+						
+						if (xml.isStartElement() && xml.name() == "buy"){
+							QXmlStreamAttributes attributes = xml.attributes();
+							if (attributes.hasAttribute("price"))
+								BuyPrice << attributes.value("price").toString().toFloat();
+							if (attributes.hasAttribute("volume"))
+								BuyVolume << attributes.value("volume").toString().toInt();
+							if (attributes.hasAttribute("update")){
+								uint dt=Text2DateTime(attributes.value("update").toString()).toTime_t();
+								maxdt=MAX(maxdt,dt);
+							}
+						} 
+						xml.readNext();
+						//qDebug() << xml.name();
+					}
+					if (maxdt){
+						uint& idxLastGlass =Instrument.pData->Glasses.size;
+						C_FixedGlass& Glass=Instrument.pData->Glasses.data[idxLastGlass];
+						int i;
+						for(i=0; i<MIN(StackPrice.size(),GLASS_DEPTH);i++){
+							Glass.sell[i].price=StackPrice.pop();
+							Glass.sell[i].quantity=StackVolume.pop();
+						}
+						Glass.sell_depth=i;
 
+						for(i=0; i<MIN(BuyPrice.size(),GLASS_DEPTH);i++){
+							Glass.buy[i].price=BuyPrice.dequeue();
+							Glass.buy[i].quantity=BuyVolume.dequeue();
+						}
+						Glass.buy_depth=i;
+						Glass.datetime=maxdt+56;
+						idxLastGlass++;
+					}
+				}
+				xml.readNext();
+				//qDebug() << xml.name();
+			}
+			//std::cout<<"-security finished" ; fflush(stdout);
+		}
+	}
 }
 /*
 //--------------------------------------------
