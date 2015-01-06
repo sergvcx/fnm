@@ -3,6 +3,132 @@
 #include "main.h"
 #include "shared.h"
 
+bool ParseResult(QString& result, QString& success_value, QString att_key, QString& att_value)
+{
+	QXmlStreamReader xml(result);
+	while (!xml.atEnd() && !xml.hasError()){
+		xml.readNext();
+	
+		if (xml.isStartDocument())
+			continue;
+
+		if (xml.isStartElement() && xml.name() == "result"){
+
+			QXmlStreamAttributes attributes = xml.attributes();
+			if (attributes.hasAttribute("success"))
+				success_value = attributes.value("success").toString();
+
+			if (attributes.hasAttribute(att_key))
+				att_value = attributes.value(att_key).toString();
+		}
+	}
+	_ASSERTE(!xml.hasError());
+	return (success_value=="true");
+}
+
+int ParseOrder(QXmlStreamReader& xml,S_XML_OrderInfo& order){
+	
+	if(!(xml.isStartElement() && xml.name() == "order")) {
+		return 0;
+	}
+
+	xml.readNext();
+	//printf(STR(xml.name().toString()));
+	while(!(xml.isEndElement() && xml.name() == "order")) {
+		if(xml.isStartElement()) {
+
+			QXmlStreamAttributes attributes = xml.attributes();
+			if (attributes.hasAttribute("transactionid"))
+				order.transactionid = attributes.value("transactionid").toString();
+
+			if(xml.name() == "orderno") {
+				order.orderno= xml.readElementText();
+				continue;
+			}
+
+			if(xml.name() == "secid") {
+				order.secid= xml.readElementText();
+				continue;
+			}
+
+			if(xml.name() == "board") {
+				order.board= xml.readElementText();
+				continue;
+			}
+
+			if(xml.name() == "seccode") {
+				order.seccode= xml.readElementText();
+				continue;
+			}
+
+			if(xml.name() == "client") {
+				order.client= xml.readElementText();
+				continue;
+			}
+
+			if(xml.name() == "status") {
+				order.status= xml.readElementText();
+				continue;
+			}
+		
+			if(xml.name() == "buysell") {
+				order.buysell= xml.readElementText();
+				continue;
+			}
+
+			if(xml.name() == "brokerref") {
+				order.brokerref= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "status") {
+				order.status= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "time") {
+				order.time= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "value") {
+				order.value= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "accruedint") {
+				order.accruedint= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "settlecode") {
+				order.settlecode= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "balance") {
+				order.balance= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "price") {
+				order.price= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "quantity") {
+				order.quantity= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "result") {
+				order.result= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "status") {
+				order.status= xml.readElementText();
+				continue;
+			}
+		}
+		// ...and next... 
+		xml.readNext();
+		//printf(STR(xml.name().toString()));
+	}
+	
+
+	return 1;
+}
 void ParseTick(QXmlStreamReader& xml, S_XML_Tick& tick ){
 	if(!(xml.isStartElement() && xml.name() == "tick")) {
 		return;

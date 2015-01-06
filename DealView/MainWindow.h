@@ -51,8 +51,10 @@ public:
 	void ReadRequest();
 	void ReadDeal();
 	void ReadMyDeals();
+	
 public slots:
 	void Draw();
+	void Attach();
 	void StartAllDeals();
 	void about();
 	void updateStatusBar();
@@ -88,6 +90,7 @@ private:
 	QAction *actCreatePortfolio;
 	QAction *actAbout;
 	QAction *actDraw;
+	QAction *actAttach;
 	QAction *actZoomInX;
 	QAction *actZoomOutX;
 	QAction *actZoomInY;

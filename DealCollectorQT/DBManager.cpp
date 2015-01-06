@@ -1305,3 +1305,51 @@ void Quotes2Mysql( QSqlQuery& query, QString seccode, S_EasyQuotes& quotes, uint
 	//printf("ok! %d ticks inserted\n",size);
 
 }
+
+
+uint sql_read_ticks(QSqlDatabase& db, QString StockCode, QDateTime& fromDT, QDateTime& toDT, S_EasyTicks& ticks)
+{
+	QSqlQuery query(db);
+
+
+	//QDateTime DateTime0; DateTime0.setTime_t(fromDT);
+	//QDateTime DateTime1; DateTime1.setTime_t(fromDT);
+
+	int nDate0=intDate(fromDT);
+	int nDate1=intDate(toDT);
+	int nTime0=intTime(fromDT);
+	int nTime1=intTime(toDT);
+
+	char cmd[200];
+	if (nDate0==nDate1)
+		sprintf(cmd,"SELECT * FROM %s_deal WHERE trdate=%d AND trtime>=%d AND trtime<=%d",STR(StockCode),nDate0,nTime0,nTime1);
+	if (nDate0<nDate1)
+		sprintf(cmd,"SELECT * FROM %s_deal WHERE trdate>=%d AND trdate<=%d",STR(StockCode),nDate0,nDate1);
+
+	
+	query.exec(cmd);
+	VALID(query);
+	
+
+	SDeal Deal;
+	S_Tick Tick;
+	int i;
+	for(i=0; query.next(); i++){
+		Deal.nDate  =query.value(1).toInt();
+		Deal.nTime  =query.value(2).toInt();
+		Deal.nVolume=query.value(3).toInt();
+		Deal.Price  =query.value(4).toDouble();
+		Deal.nType  =query.value(5).toInt();
+		
+		QDateTime dt;
+		dt.setDate(Deal.GetQDate());
+		dt.setTime(Deal.GetQTime());
+		Tick.datetime=dt.toTime_t();
+		Tick.quantity=Deal.nVolume;
+		Tick.price   =Deal.Price;
+		Tick.type	 =Deal.nType;
+		
+		ticks<< Tick;
+	}
+	return i;
+}

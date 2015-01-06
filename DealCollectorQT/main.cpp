@@ -76,26 +76,22 @@ QSqlDatabase db_trading;
 	//sql_drop_tables(db_trading,TransaqConnector.listActive,"_quote");
 	//sql_drop_tables(db_trading,TransaqConnector.listActive,"_trd");
 
-	if (TransaqConnector.isConnected()){
-		qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
-	}
-	else 
-		TransaqConnector.connect();
-	
-	
 
-//	pThreadAllDeals->ReadPortfolio();
-
-	while(!TransaqConnector.isConnected()){
+	TransaqConnector.connect();
+	while (!TransaqConnector.isConnected()){
 		qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
-		Sleep(500);
+		Sleep(1000);
+		//TransaqConnector.connect();
 	}
 	
 	qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
 
 	TransaqConnector.get_servtime_difference();
-	if (TransaqConnector.servtime_difference!=0) 
-		return -1;
+	//if (TransaqConnector.servtime_difference!=0) 
+	//	return -1;
+
+	//TransaqConnector.neworder("SBER",58.40,1,"S","");
+	//while (1)
 	Sleep(1000);
 
 	 

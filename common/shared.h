@@ -14,6 +14,7 @@
 #define LIMIT_GLASSES 32768*8
 #define GLASS_DEPTH 7
 
+
 inline QString DateTime2Text(QDateTime& dt)
 {
 	return dt.toString("yyyy-MM-dd hh:mm:ss");
@@ -132,6 +133,10 @@ struct S_EasyTicks{
 				return i;
 		}
 		return size;
+	}
+	uint FindAfter(QString dt, uint fromIndex=0)
+	{
+		return FindAfter(Text2DateTime(dt).toTime_t(),fromIndex);
 	}
 	uint NextSecondIndex(uint fromIndex)
 	{
@@ -585,6 +590,14 @@ public:
 		}
 		pData=(C_SharedMemoryInstrument*)pSharedMemory->data();
 		return (pData!=0);
+	}
+
+	bool Detach(QString seccode){
+		if (pSharedMemory)
+			if (pSharedMemory->isAttached())
+				return pSharedMemory->detach();
+		
+		return true;
 	}
 
 

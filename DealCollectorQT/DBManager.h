@@ -77,6 +77,8 @@ void sql_close_database(QSqlDatabase& db_trading);
 uint sql_get_last_datetime_from_seccode_deal(QSqlDatabase& db, QString seccode);
 bool sql_drop_table(QSqlDatabase& db, QString Table );
 bool sql_drop_tables(QSqlDatabase& db, QList<QString>& listTable, QString suffix );
+bool sql_read_ticks(QSqlDatabase& db, QDateTime& fromDT, QDateTime& toDT, S_EasyTicks& ticks);
+bool sql_read_quotes();
 
 
 void Ticks2Mysql ( QSqlQuery& query, QString seccode, S_EasyTicks& ticks,   uint fromIndex, uint count, unsigned afterDateTime);

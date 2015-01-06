@@ -124,6 +124,7 @@ void CloseXML(){
 	xml_quotes.close();
 	warnings.close();
 }
+
 /*
 void UpdateBuyQuote(S_QuoteInfo &QuoteInfo, QList<S_Quote>& listQuote){
 	bool ok;
@@ -253,6 +254,22 @@ bool CALLBACK acceptor(BYTE *pData)
 					
 					mapQuote[xml_quote.seccode].enqueue(xml_quote);
 					
+				}
+				xml.readNext();
+			}
+			std::cout<<"-security finished" ; fflush(stdout);
+			
+		}
+		//-------------------------------------------------------------
+		if (xml.isStartElement() && xml.name() == "orders"){
+			xml_quotes << pData << std::endl;
+			
+			std::cout<<"-order";
+			xml.readNext();
+			while (!(xml.isEndElement() && xml.name()=="orders" )){
+				if (xml.isStartElement() && xml.name() == "order"){					
+					S_XML_OrderInfo xml_order;
+					ParseOrder(xml,xml_order);
 				}
 				xml.readNext();
 			}
@@ -540,23 +557,25 @@ bool CALLBACK acceptor(BYTE *pData)
 
 			QString success;
 			QString diff;
-			QXmlStreamReader xml(en);
-			while (!xml.atEnd() && !xml.hasError()){
-				xml.readNext();
-				if (xml.isStartDocument())
-					continue;
-
-				if (xml.isStartElement() && xml.name() == "result"){
-			 
-					
-					QXmlStreamAttributes attributes = xml.attributes();
-					if (attributes.hasAttribute("success"))
-						success = attributes.value("success").toString();
-
-					if (attributes.hasAttribute("diff"))
-						diff = attributes.value("diff").toString();
-				}
-			}
+			bool ok=ParseResult(en,success,"diff",diff);
+			_ASSERTE(ok);
+// 			QXmlStreamReader xml(en);
+// 			while (!xml.atEnd() && !xml.hasError()){
+// 				xml.readNext();
+// 				if (xml.isStartDocument())
+// 					continue;
+// 
+// 				if (xml.isStartElement() && xml.name() == "result"){
+// 			 
+// 					
+// 					QXmlStreamAttributes attributes = xml.attributes();
+// 					if (attributes.hasAttribute("success"))
+// 						success = attributes.value("success").toString();
+// 
+// 					if (attributes.hasAttribute("diff"))
+// 						diff = attributes.value("diff").toString();
+// 				}
+// 			}
 			if (success=="true")
 				servtime_difference=diff.toInt();
 
@@ -665,6 +684,51 @@ bool CALLBACK acceptor(BYTE *pData)
 			qDebug() << en+"\n"; 
 
 			FreeMemory(ss);
+		}
+		catch (std::runtime_error& e) {
+			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+			UnloadLibrary(hm);
+			return 1;
+		}
+		return 0;
+	}
+	//============ neworder =====================================================
+	int C_TransaqConnector::neworder(QString seccode,float price, uint quantity, QString buysell, QString brokerref)
+	{
+		try {
+			std::cout<<"Sending 'neworder' command..."<<std::endl;
+
+			if (!TransaqConnector.mapInstrument.contains(seccode)){
+				std::cerr<< "ERROR: TransaqConnector does not contains" << STR(seccode) << std::endl;
+				return 1;
+			}
+			QString Cmd;
+			Cmd ="<command id='neworder'>";
+			Cmd+=	"<security>";
+			Cmd+=		"<board> TQBR </board>";
+			Cmd+=		"<seccode>"+seccode+"</seccode>";
+			Cmd+=	"</security>";
+			Cmd+=	"<client>" CLIENT_ID "</client>";
+			Cmd+=	"<price>"+QString::number(price)+"</price>";
+			Cmd+=	"<quantity>"+QString::number(quantity)+"</quantity>";
+			Cmd+=	"<buysell>"+buysell+"</buysell>";
+			Cmd+=	"<brokerref>"+brokerref+"</brokerref>";
+			Cmd+="</command>";
+
+			printf(STR(Cmd));
+			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
+			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+			QString  en = codec->toUnicode((char*)ss); 
+			qDebug() << en+"\n"; 
+
+			FreeMemory(ss);
+			QString success;
+			QString transactionid;
+			if (ParseResult(en,success,"transactionid",transactionid)){
+				return transactionid.toInt();
+			}
+			
+			
 		}
 		catch (std::runtime_error& e) {
 			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;

@@ -8,10 +8,14 @@ CONFIG += plugin QT
 CONFIG += qt console
 INCLUDEPATH += $(MYSQL)\include
 INCLUDEPATH += ..\common
+SOURCES     += ..\common\dbmanager.cpp
+
 QT += sql
 DEFINES += _CRT_SECURE_NO_DEPRECATE
 HEADERS += ..\common\main.h
 HEADERS += ..\common\DealContainer.h
+HEADERS += ..\common\dbmanager.h
+HEADERS += ..\common\shared.h
 
 
 

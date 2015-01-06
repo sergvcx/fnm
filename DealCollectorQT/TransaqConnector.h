@@ -40,6 +40,27 @@ struct S_XML_SecInfo{
 	QString board;
 };
 
+struct S_XML_OrderInfo{
+	QString transactionid;
+	QString orderno;
+	QString secid;
+	QString board;
+	QString seccode;
+	QString client;
+	QString status;
+	QString buysell;
+	QString brokerref;
+	QString time;
+	QString value; // объем заявки в копейках
+	QString accruedint;
+	QString settlecode;
+	QString balance; //Неудовлетворенный остаток объема заявки в лотах (контрактах)
+	QString price;
+	QString quantity;
+	QString result; //сообщение биржи в случае отказа выставить  заявку
+
+};
+
 struct S_XML_ServerStatus{
 	QString id ;
 	QString connected;
@@ -94,6 +115,7 @@ public:
 	int get_securities();
 	int change_pass();
 	int get_servtime_difference();
+	int neworder(QString seccode,float price, uint quantity, QString buysell, QString brokerref);
 
 	C_TransaqConnector& operator << (QString seccode);
 	//C_TransaqConnector& operator << (QList<QString>& list);
