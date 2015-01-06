@@ -78,7 +78,7 @@ class C_TransaqConnector {
 	typeSendCommand  SendCommand;
 	
 public:
-	int servtime_difference;
+	int servtime_difference;	// время сервера - время на компьютере (+ на эту величину нужно корректировать )
 	bool isBusy;
 	S_XML_ServerStatus ServerStatus;
 

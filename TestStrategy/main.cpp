@@ -32,52 +32,68 @@ public:
 	}
 };
 
-bool Trade(QList<SOrder>& listBuy, QList<SOrder>& listSell,  C_SubVector<S_Tick>& vecTicks, float &Cash, int& Stocks, float Commision )
+bool Trade(QList<SOrder>& listTryBuy, QList<SOrder>& listTrySell,  C_SubVector<S_Tick>& vecTicks, QList<SOrder>& listHitBuy, QList<SOrder>& listHitSell)
 {
-	bool isTransactionHappened=false;
+	bool hit=false;
 	for(uint i=0; i<vecTicks.size; i++){
 		S_Tick& tick=vecTicks[i];
 		if (tick.isSell()){
-			while(!listSell.isEmpty() && tick.price>=listSell.first().Price){
-				const SOrder& My=listSell.first();
-				Cash+=My.Price*My.Volume*(1-Commision);
-				listSell.removeFirst();
-				isTransactionHappened=true;
+			while(!listTrySell.isEmpty()){
+				SOrder& my=listTrySell.first();
+				if (tick.price<my.Price-0.001)
+					break;
+				my.datetime=tick.datetime;
+				listHitSell<<my;
+				listTrySell.removeFirst();
+				hit=true;
 			}
 		}
 		else {
-			while(!listBuy.isEmpty() && tick.price<=listBuy.first().Price){
-				const SOrder& My=listBuy.first();
-				Cash-=My.Price*My.Volume*Commision;
-				Stocks+=My.Volume;
-				listBuy.removeFirst();
-				isTransactionHappened=true;
+			while(!listTryBuy.isEmpty()){
+				SOrder& my=listTryBuy.first();
+				if (my.Price<tick.price-0.001)
+					break;
+				listHitBuy<<my;
+				listTryBuy.removeFirst();
+				hit=true;
 			}
 		}
 	}
-	return isTransactionHappened;
+	return hit;
 }
-void FilterSell(QList<SOrder>& listSell, float NearThreshold, float FarThreshold, int& Stocks)
+void FilterSell(QList<SOrder>& listTrySell, float minThreshold, float maxThreshold, int& Stocks)
 {
-	while (!listSell.isEmpty() && NearThreshold>listSell.first().Price){
-		Stocks+=listSell.first().Volume;
-		listSell.removeFirst();
+	while (!listTrySell.isEmpty()){
+		SOrder& out=listTrySell.first();
+		if (minThreshold>out.Price+0.0001){
+			Stocks+=out.Volume;
+			listTrySell.removeFirst();
+		}
 	}
-	while (!listSell.isEmpty() && FarThreshold<listSell.last().Price){
-		Stocks+=listSell.first().Volume;
-		listSell.removeLast();
+	while (!listTrySell.isEmpty()){
+		SOrder& out=listTrySell.last();
+		if (maxThreshold<out.Price-0.0001){
+			Stocks+=out.Volume;
+			listTrySell.removeLast();
+		}
 	}
 }
 
-void FilterBuy(QList<SOrder>& listBuy, float NearThreshold, float FarThreshold, float &Cash)
+void FilterBuy(QList<SOrder>& listTryBuy, float minThreshold, float maxThreshold, float &Cash)
 {
-	while (!listBuy.isEmpty() && NearThreshold<listBuy.first().Price){
-		Cash+=listBuy.first().Volume*listBuy.first().Price;
-		listBuy.removeFirst();
+	while (!listTryBuy.isEmpty()){
+		SOrder& out=listTryBuy.first();
+		if (maxThreshold<out.Price-0.0001){
+			Cash+=out.Volume*out.Price;
+			listTryBuy.removeFirst();
+		}
 	}
-	while (!listBuy.isEmpty() && FarThreshold>listBuy.last().Price){
-		Cash+=listBuy.first().Volume*listBuy.first().Price;
-		listBuy.removeLast();
+	while (!listTryBuy.isEmpty()){
+		SOrder& out=listTryBuy.last();
+		if (minThreshold>out.Price+0.0001){
+			Cash+=out.Volume*out.Price;
+			listTryBuy.removeLast();
+		}
 	}
 }
 
@@ -124,8 +140,9 @@ class C_Strategy{
 		//	if (logger)
 		//		*logger->logStream<< str;
 		//}
-		virtual void operator << (C_SubVector<S_Tick>& vecTick){
+		virtual bool operator << (C_SubVector<S_Tick>& vecTick){
 
+			return false;
 		}
 		virtual void Update(QList<S_Quote>& listBuyQuote, QList<S_Quote>& listSellQuote){
 
@@ -151,100 +168,119 @@ template <class T> struct S_MinMax {
 		max=Max;
 	}
 };
-
-template <class T> struct S_NearFar {
-	T Near;
-	T Far;
-	S_NearFar(){
-		//Near=0;
-		//Far=0;
-	}
-	S_NearFar(T _Near, T _Far){
-		Near=_Near;
-		Far=_Far;
-	}
-	void init(T _Near, T _Far){
-		Near=_Near;
-		Far=_Far;
-	}
-};
+// 
+// template <class T> struct S_NearFar {
+// 	T Near;
+// 	T Far;
+// 	S_NearFar(){
+// 		//Near=0;
+// 		//Far=0;
+// 	}
+// 	S_NearFar(T _Near, T _Far){
+// 		Near=_Near;
+// 		Far=_Far;
+// 	}
+// 	void init(T _Near, T _Far){
+// 		Near=_Near;
+// 		Far=_Far;
+// 	}
+// };
 
 
 class C_S1_Strategy:public C_Strategy{
 public:
 	QList<SOrder> listBuy;
 	QList<SOrder> listSell;
-	
-	S_NearFar<float> BuyDelta;
-	S_NearFar<float> SellDelta;
+	C_XML_Logger* pLogger;
+	S_MinMax<float> BuyDelta;
+	S_MinMax<float> SellDelta;
+	uint Count;
 
 	C_S1_Strategy():C_Strategy(){
-		SellDelta.Far =(1+0.5/100);
-		SellDelta.Near=(1+0.1/100);
-		BuyDelta.Near =(1-0.1/100);
-		BuyDelta.Far  =(1-0.5/100);
+		pLogger=0;
+		Count=0;
+// 		SellDelta.Far =(1+0.5/100);
+// 		SellDelta.Near=(1+0.1/100);
+// 		BuyDelta.Near =(1-0.1/100);
+// 		BuyDelta.Far  =(1-0.5/100);
+	}
+	C_S1_Strategy(QString logname, float sellmax, float sellmin, float buymax, float buymin){
+		pLogger=new C_XML_Logger(logname,LOGGER_WRITE);
+		pLogger->Header();
+		*pLogger<< "<strategy>\n";
+		*pLogger << QString::number(sellmax) <<"\n"<<  QString::number(sellmin) <<"\n"<< QString::number(buymax) <<"\n"<< QString::number(buymin)<<"\n";
+		pLogger->flush();
+	}
+	~C_S1_Strategy(){
+		*pLogger<< "</strategy>\n";
+		pLogger->flush();
+		delete pLogger;
 	}
 
-	void operator << (C_SubVector<S_Tick>& vecTick){
-		if (Trade(listBuy,listSell,vecTick,Cash,Stocks,Commision));
-		//	*logger<< "<cash='" << Cash <<"' stocks= '"<< Stocks <<"'>");
-		
+	bool operator << (C_SubVector<S_Tick>& vecTick){
+		QList<SOrder> listHitBuy;
+		QList<SOrder> listHitSell;
+		bool hit=Trade(listBuy,listSell,vecTick,listHitBuy,listHitSell);//Cash,Stocks,Commision);
+		while (!listHitBuy.isEmpty()){
+			SOrder& hit=listHitBuy.first();
+			Cash-=hit.Price*hit.Volume*Commision;
+			Stocks+=hit.Volume;
+			Count++;
+			if (pLogger){
+				*pLogger << "<hit type='B' cnt='" <<Count<< "' datetime='" <<hit.datetime << "' cash='" <<Cash<< "' stocks='" <<Stocks<< "' price='" <<hit.Price<< "' quantity='"<<hit.Volume<< "' />\n";
+			}
+			listHitBuy.removeFirst();
+		}
+		while (!listHitSell.isEmpty()){
+			SOrder& hit=listHitSell.first();
+			Cash+=hit.Price*hit.Volume*(1-Commision);
+			Count++;
+			if (pLogger){
+				*pLogger << "<hit type='S' cnt='" <<Count<< "' datetime='" <<hit.datetime << "' cash='" <<Cash<< "' stocks='" <<Stocks<< "' price='" <<hit.Price<< "' quantity='"<<hit.Volume<< "' />\n";
+			}
+			listHitBuy.removeFirst();
+		}
+		return hit;
 	}
-	virtual void Update(float SpreadMin, float SpreadMax)
+
+	virtual void Update(float SpreadMin, float SpreadMax, uint datetime)
 	{
 		_ASSERTE(SpreadMax>SpreadMin);
-		FilterSell(listSell,SpreadMax*(1+SellDelta.Near), SpreadMax*(1+SellDelta.Far),Stocks);
-		FilterBuy( listBuy, SpreadMin*(1-BuyDelta.Near),  SpreadMin*(1-BuyDelta.Far),Cash);
+		FilterSell(listSell,SpreadMax*SellDelta.min, SpreadMax*SellDelta.max,Stocks);
+		FilterBuy( listBuy, SpreadMin*BuyDelta.min,  SpreadMin*BuyDelta.max, Cash);
 
 		if (listBuy.isEmpty() && listSell.isEmpty()){
 			if (Stocks){
 				SOrder NewSell;
-				NewSell.Price=SpreadMax*(1+SellDelta.Near + 1+SellDelta.Far)/2;
+				NewSell.Price=SpreadMax*(SellDelta.min + SellDelta.max)/2;
 				NewSell.Volume=1;
+				NewSell.datetime=datetime;
+
 				listSell << NewSell;
 				Stocks-=NewSell.Volume;
-
+				if (pLogger)
+					*pLogger << "<try type='S' datetime='" <<NewSell.datetime << "' cash='" <<Cash<< "' stocks='" <<Stocks<< "' price='" <<NewSell.Price<< "' quantity='"<<NewSell.Volume<< "' />\n";
 			}
 			else {
 				SOrder NewBuy;
-				NewBuy.Price=SpreadMin*(1-BuyDelta.Near+1-BuyDelta.Far)/2;
+				NewBuy.Price=SpreadMin*(BuyDelta.min+BuyDelta.max)/2;
 				NewBuy.Volume=1;
+				NewBuy.datetime=datetime;
 				listBuy << NewBuy;
 				Cash-=NewBuy.Price*NewBuy.Volume;
+				if (pLogger)
+					*pLogger << "<try type='B' datetime='" <<NewBuy.datetime << "' cash='" <<Cash<< "' stocks='" <<Stocks<< "' price='" <<NewBuy.Price<< "' quantity='"<<NewBuy.Volume<< "' />\n";
 			}
 		}
 	}
 
 
-	virtual void Update(QList<S_Quote>& listBuyQuote, QList<S_Quote>& listSellQuote)
+	virtual void Update(QList<S_Quote>& listBuyQuote, QList<S_Quote>& listSellQuote, uint datetime)
 	{
 		if (listSellQuote.isEmpty() || listBuyQuote.isEmpty()) // if glass is empty
 			return;
 	
-		S_MinMax<float> Spread;
-		Spread.max=listSellQuote.first().price;
-		Spread.min=listBuyQuote.first().price;
-		_ASSERTE(Spread.max>Spread.min);
-		FilterSell(listSell,Spread.max*(1+SellDelta.Near), Spread.max*(1+SellDelta.Far),Stocks);
-		FilterBuy( listBuy, Spread.min*(1-BuyDelta.Near),  Spread.min*(1-BuyDelta.Far),Cash);
-		
-		if (listBuy.isEmpty() && listSell.isEmpty()){
-			if (Stocks){
-				SOrder NewSell;
-				NewSell.Price=Spread.max*(1+SellDelta.Near + 1+SellDelta.Far)/2;
-				NewSell.Volume=1;
-				listSell << NewSell;
-				Stocks-=NewSell.Volume;
-
-			}
-			else {
-				SOrder NewBuy;
-				NewBuy.Price=Spread.min*(1-BuyDelta.Near+1-BuyDelta.Far)/2;
-				NewBuy.Volume=1;
-				listBuy << NewBuy;
-				Cash-=NewBuy.Price*NewBuy.Volume;
-			}
-		}
+		Update(listBuyQuote.first().price, listSellQuote.first().price, datetime);
 		
 	}
 	float Profit(float ClosePrice){
@@ -270,28 +306,35 @@ public:
 	QTextStream outStream;
 };
 
+
+struct S_TestMatrix {
+	C_S1_Strategy* st[10][10];
+	S_TestMatrix(QString seccode){
+		for(int i=0; i<10; i++){
+			for(int j=0; j<10; j++){
+				st[i][j]=new C_S1_Strategy(seccode+QString::number(i)+QString::number(j)+".xml",
+					1+i*i*0.02/100,
+					1+i*i*0.01/100,
+					1-j*j*0.01/100,
+					1-j*j*0.02/100);
+			}
+		}
+	}
+	~S_TestMatrix(){
+		for(int i=0; i<10; i++){
+			for(int j=0; j<10; j++){
+				delete st[i][j];
+			}
+		}
+	}
+};
  int main(int argc, char *argv[])
  {
-	//sqlimport ttt;
-	//ttt.
-
-	 int jj=sizeof(C_FixedGlass);
-	 C_XML_Logger2 loger("sssss");
+	
 	 setlocale(LC_ALL, "Russian");
 	
 	 QApplication app(argc, argv);
 
-	// MainWindow* mainWin=new MainWindow;
-	 //if (argc==2){
-	//	 if (strcmp(argv[1],"-auto")==0){
-	//		pThreadAllDeals->start();
-	//	 }
-	 //}
-
-	//  mainWin->show();
-	// return app.exec();
-
-	// OpenXML();
 
 	QString seccode="GMKN";
 	C_Instrument Instrument;
@@ -304,212 +347,108 @@ public:
 	//C_TradeMaster TradeMaster;
 
 	//TradeMaster.Init();
-	C_S1_Strategy S1[10];
-	C_S1_Strategy B1[10];
-
-	S1[0].SellDelta.init(0,0);
-	S1[0].BuyDelta .init(0.01/100,0.012/100);
-
-	S1[1].SellDelta.init(0,0);
-	S1[1].BuyDelta .init(0.2/100,0.4/100);
-
-	S1[2].SellDelta.init(0,0);
-	S1[2].BuyDelta .init(0.3/100,0.6/100);
-
-	S1[3].SellDelta.init(0,0);
-	S1[3].BuyDelta .init(0.4/100,0.8/100);
-
-	S1[4].SellDelta.init(0,0);
-	S1[4].BuyDelta .init(0.5/100,1.0/100);
-
-	S1[5].SellDelta.init(0,0.1/100);
-	S1[5].BuyDelta .init(0.1/100,0.2/100);
-
-	S1[6].SellDelta.init(0,0.1/100);
-	S1[6].BuyDelta .init(0.2/100,0.4/100);
-
-	S1[7].SellDelta.init(0,0.1/100);
-	S1[7].BuyDelta .init(0.3/100,0.6/100);
-
-	S1[8].SellDelta.init(0,0.1/100);
-	S1[8].BuyDelta .init(0.4/100,0.8/100);
-
-	S1[9].SellDelta.init(0,0.1/100);
-	S1[9].BuyDelta .init(0.5/100,1.0/100);
-
+	//C_S1_Strategy S("my.xml");
+	//S.pLogger->flush();
+	//S_TestMatrix("my");
+	//return 1;
+	//C_S1_Strategy S1[10];
 	
+		//[10];
+	//C_S1_Strategy B1[10];
+
+
+	//S_TestMatrix *S[10];
+	
+	 //QList<QString> listMy; 
+	 
+	// listMy <<  "GMKN"  <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" ;
+	//	 				<< "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"   <<"MTSS"  
+	//	 				<<"ROSN"  <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
+
+
+	//for(int i=0; i<listMyactive.size())
+	//S_TestMatrix t1("AFLT");
+	 S_TestMatrix S1("GMKN");
+	// S_TestMatrix S2("AFLT");
 
 	size_t idxBegin=0;//Instrument.pData->Ticks.size;
-	
-	uint fromIndex=0;
-	while(idxBegin<Instrument.pData->Ticks.size){
-		size_t idxEnd=Instrument.pData->Ticks.NextSecondIndex(idxBegin);
-		C_SubVector<S_Tick> TickPortion(Instrument.pData->Ticks.data, idxBegin, idxEnd);
-		idxBegin=idxEnd;
-		S1[0] << TickPortion;
-		//QList<S_Quote> listBuyQuote;
-		//QList<S_Quote> listSellQuote;
 
-		S_Quote BuyQuote; 
-		S_Quote SellQuote; 
-		C_FixedGlass* pGlass = Instrument.pData->Glasses.FindBefore(TickPortion.data[0].datetime,30,fromIndex);
-		/*if (pGlass){
-			BuyQuote.price=pGlass->buy[0].price;
-			BuyQuote.quantity=pGlass->buy[0].quantity;
-			BuyQuote.datetime_create=QDateTime::fromTime_t(pGlass->datetime);
-
-			SellQuote.price=pGlass->sell[0].price;
-			SellQuote.quantity=pGlass->sell[0].quantity;
-			SellQuote.datetime_create=QDateTime::fromTime_t(pGlass->datetime);
-
-			qDebug()<< SellQuote.datetime_create;
-			qDebug()<< BuyQuote.datetime_create;
-			
-
-			listBuyQuote<< BuyQuote;
-			listSellQuote<<SellQuote;
-		}*/
-		if (pGlass)
-			S1[0].Update(pGlass->buy[0].price,pGlass->sell[0].price);
-		
-
-		
-	}
-	
+	//for(int i=0; i<10; i++){
+	//	S1[i].pLogger=new C_XML_Logger("s1_"+QString::number(i)+".xml");
+	//}
 	while(1){
 		size_t idxEnd=Instrument.pData->Ticks.size;
 		C_SubVector<S_Tick> TickPortion(Instrument.pData->Ticks.data,idxBegin,idxEnd);
 		
 		idxBegin=idxEnd;
 	
-		Sleep(1000);
+	
 
 		QList<S_Quote> listBuyQuote;
 		QList<S_Quote> listSellQuote;
 		Instrument.pData->Quotes.UpdateCurrentQuotes(listBuyQuote,listSellQuote);
-		//qDebug() << Instrument.pData->Quotes.toXML(6);
 		
-	
-		for(int i=0; i<1; i++){
-			
-			S1[i] << TickPortion;
-			//qDebug()<< "<glass buy='"  + QString::number(listBuyQuote.first().price) +  "' sell= '" + QString::number(listSellQuote.first().price) + "'>" ;
-			/*
-			for(int i=0; i<TickPortion.size; i++){
-				S_Tick& Tick=TickPortion[i];
-				qDebug()<< Tick.toXML() ;//<< "\n";
+		qDebug() << Instrument.pData->Quotes.toXML(6);
+		for(int i=0; i<10; i++){
+			for(int j=0; j<10; j++){
 
-			}*/
+				S1.st[i][j]->Update(listBuyQuote,listSellQuote,0);
+				if (TickPortion.size)
+					*S1.st[i][j] << TickPortion;
 
-			float price=0;
-			
-			if (!S1[i].listBuy.isEmpty()){
-				price=S1[i].listBuy.first().Price;
-				qDebug()<< "<buy cash='"  + QString::number(S1[i].Cash) +  "' stocks= '" + QString::number(S1[i].Stocks) + "' price='" + QString::number(price) +  "'>" ;
+				if (S1.st[i][j]->pLogger)
+					S1.st[i][j]->pLogger->flush();
 			}
-			else if (!S1[i].listSell.isEmpty()){
-				price=S1[i].listSell.first().Price;
-				qDebug()<< "<sell cash='"  + QString::number(S1[i].Cash) +  "' stocks= '" + QString::number(S1[i].Stocks) + "' price='" + QString::number(price) +  "'>" ;
-			}
-			else 
-				qDebug()<< "<idle cash='"  + QString::number(S1[i].Cash) +  "' stocks= '" + QString::number(S1[i].Stocks)  +  "'>" ;
-
-
-			
-
-			S1[i].Update(listBuyQuote,listSellQuote);
-
-			//QString C=QString::number(S1[i].Cash) ;
-			
-			
-			
-			//*S1[i].logger S1[i].logger->flush();
 		}
-		//for(int i=0; i<10; i++){
-		//	B1[i] << TickPortion;
-		//	B1[i].Update(listBuyQuote,listSellQuote);
-		//}
+		Sleep(1000);
 
-		
-		
-		//int   Stocks=Sell(MySell,TickPortion);
-		//SOrder 
-		//float Cash  =Buy (MyBuy,TickPortion);
-
-
-
-
-		//TradeMaster<<TickPortion;
-		
 
 	}
-	//TradeMaster<<Deal;
 
-
-	/* 
-
-	 //TransaqConnector.disconnect();
-	 //Sleep(1000);	
-	 QList<QString> listActive ; 
-	 listActive  <<  "GMKN" <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
-		 				<< "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"  <<"IRAO"  <<"MTSS"  
-		 				<<"ROSN"  <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
-
-	
-
-	 
-	QMap<QString,C_Instrument> mapInstrument;
-	for(int i=0; i<listActive.size();i++){
-		QString seccode=listActive.at(i);
-		C_Instrument Instrument;
-	//	Instrument.pQuoteLog=new C_XML_Logger(seccode+"_glass.xml",LOGGER_WRITE);
-	//	Instrument.pQuoteLog->Header();
-	//	Instrument.pQuoteLog->flush();
-
-		// MUST BE IN THE END !!!
-		bool ok=Instrument.Attach(seccode);
-		if (ok)
-			mapInstrument[seccode]=Instrument;
-		
-	}
-
-	
-
-
-	while (1){
-		//Instrument.pData->Quotes.UpdateCurrentQuotes()
-		
-		//qDebug() << xml_glass;
-		
-		
-		foreach(QString seccode , mapInstrument.keys()){
-			C_Instrument& Instrument=mapInstrument[seccode];
-			S_EasyTicks& Ticks=Instrument.pData->Ticks;
-
-			int count= Ticks.size-Instrument.tail;
-			Instrument.tail+=count;
-
-			//bool isUpdated=Instrument.pData->Quotes.UpdateCurrentQuotes(Instrument.listBuyQuote,Instrument.listSellQuote);
-// 			QString new_glass=Instrument.pData->Quotes.toXML(6);
-// 			if (Instrument.strLastGlass!=new_glass){
-// 				Instrument.strLastGlass= new_glass;
-// 				qDebug() << new_glass;
-// 				*Instrument.pQuoteLog<<new_glass << "\n";
-// 				Instrument.pQuoteLog->flush();
-// 			}
-
-			
-
-		}
-		
-		
-		//Sleep(1000);
-
-	}
-	*/
-	
-	//Sleep(1000*60*60*8);
 
 	 return 1;
 	 
  }
+
+
+ 
+	
+// 
+// 	size_t idxBegin=0;//Instrument.pData->Ticks.size;
+// 	
+// 	uint fromIndex=0;
+// 	while(idxBegin<Instrument.pData->Ticks.size){
+// 		
+// 		size_t idxEnd=Instrument.pData->Ticks.NextSecondIndex(idxBegin);
+// 		C_SubVector<S_Tick> TickPortion(Instrument.pData->Ticks.data, idxBegin, idxEnd);
+// 		idxBegin=idxEnd;
+// 		S1[0] << TickPortion;
+// 		//QList<S_Quote> listBuyQuote;
+// 		//QList<S_Quote> listSellQuote;
+// 
+// 		S_Quote BuyQuote; 
+// 		S_Quote SellQuote; 
+// 		C_FixedGlass* pGlass = Instrument.pData->Glasses.FindBefore(TickPortion.data[0].datetime,30,fromIndex);
+// 		/*if (pGlass){
+// 			BuyQuote.price=pGlass->buy[0].price;
+// 			BuyQuote.quantity=pGlass->buy[0].quantity;
+// 			BuyQuote.datetime_create=QDateTime::fromTime_t(pGlass->datetime);
+// 
+// 			SellQuote.price=pGlass->sell[0].price;
+// 			SellQuote.quantity=pGlass->sell[0].quantity;
+// 			SellQuote.datetime_create=QDateTime::fromTime_t(pGlass->datetime);
+// 
+// 			qDebug()<< SellQuote.datetime_create;
+// 			qDebug()<< BuyQuote.datetime_create;
+// 			
+// 
+// 			listBuyQuote<< BuyQuote;
+// 			listSellQuote<<SellQuote;
+// 		}*/
+// 		
+// 		if (Instrument.)
+// 			S1[0].Update(pGlass->buy[0].price,pGlass->sell[0].price);
+// 		
+// 
+// 		
+// 	}

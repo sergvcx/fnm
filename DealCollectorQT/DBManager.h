@@ -1,6 +1,6 @@
 #pragma once
 #include "main.h"
-
+#include "shared.h"
 #define DELETE_TABLE 0xFF
 #define ACTIVE_TABLE 1
 
@@ -75,3 +75,9 @@ void sql_create_seccode_quote(QSqlDatabase& db_trading, QString seccode);
 bool sql_open_database(QString db_name, QSqlDatabase& db_trading);
 void sql_close_database(QSqlDatabase& db_trading);
 uint sql_get_last_datetime_from_seccode_deal(QSqlDatabase& db, QString seccode);
+bool sql_drop_table(QSqlDatabase& db, QString Table );
+bool sql_drop_tables(QSqlDatabase& db, QList<QString>& listTable, QString suffix );
+
+
+void Ticks2Mysql ( QSqlQuery& query, QString seccode, S_EasyTicks& ticks,   uint fromIndex, uint count, unsigned afterDateTime);
+void Quotes2Mysql( QSqlQuery& query, QString seccode, S_EasyQuotes& quotes, uint fromIndex, uint count, bool echo);

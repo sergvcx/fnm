@@ -248,7 +248,7 @@ bool CALLBACK acceptor(BYTE *pData)
 				if (xml.isStartElement() && xml.name() == "quote"){					
 					S_XML_QuoteInfo xml_quote;
 					xml_quote.datetime=QDateTime::currentDateTime().toTime_t();
-					xml_quote.datetime-=TransaqConnector.servtime_difference;
+					xml_quote.datetime+=TransaqConnector.servtime_difference;
 					ParseQuote(xml,xml_quote);
 					
 					mapQuote[xml_quote.seccode].enqueue(xml_quote);
@@ -336,8 +336,8 @@ bool CALLBACK acceptor(BYTE *pData)
 			while (!queueQuote.isEmpty()){
 				S_XML_QuoteInfo& xml_quote=queueQuote.head();
 				
-				if ( Instrument.pQuoteLog)
-					*Instrument.pQuoteLog << xml_quote.toXML() << "\n";
+				if ( Instrument.QuoteInfo.pQuoteLog)
+					*Instrument.QuoteInfo.pQuoteLog << xml_quote.toXML() << "\n";
  				Instrument.pData->Quotes<< xml_quote ;
 				queueQuote.removeFirst();
 			}

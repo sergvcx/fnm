@@ -24,6 +24,34 @@ void sql_close_database(QSqlDatabase& db_trading)
 		db_trading.close();
 	}
 }
+
+bool sql_drop_table(QSqlDatabase& db, QString Table ){
+	QSqlQuery query(db);
+	if (Table.contains("-")){
+		Table.replace("-","_");
+	}
+	QString Cmd="DROP TABLE IF EXISTS " + Table;
+	//--------------- drop -------------------------
+	printf (STR(Cmd));
+	query.exec(Cmd);
+	if (!query.isActive()){
+		printf (" - ERROR!\n");
+		QMessageBox::critical(0, QObject::tr("Database drop Error"), query.lastError().text());
+		return false;
+	}
+	else 
+		printf (" - OK \n");
+	return true;
+}
+
+bool sql_drop_tables(QSqlDatabase& db, QList<QString>& listTable, QString suffix ){
+	for(int i=0; i<listTable.size(); i++){
+		if (!sql_drop_table(db, listTable[i]+suffix))
+			return false;
+	}
+	return true;
+}
+
 //uint sql_get_max_id(QSqlDatabase& db_trading)
 
 CDBManager::CDBManager(QWidget *parent): QWidget(parent){
@@ -115,25 +143,10 @@ void CDBManager::EmptyAllDeals(){
 }*/
 
 
-void DropTable(QSqlDatabase& db, QString Table ){
-	QSqlQuery query(db);
-	if (Table.contains("-")){
-		Table.replace("-","_");
-	}
-	QString Cmd="DROP TABLE IF EXISTS " + Table;
-	//--------------- drop -------------------------
-	printf (STR(Cmd));
-	query.exec(Cmd);
-	if (!query.isActive()){
-		printf (" - ERROR!\n");
-		QMessageBox::critical(0, QObject::tr("Database drop Error"), query.lastError().text());
-	}
-	else 
-		printf (" - OK \n");
-}
+
 
 void CDBManager::TradingDrop_portfolio(){
-	DropTable(db_trading,"_portfolio");
+	sql_drop_table(db_trading,"_portfolio");
 }
 void CDBManager::TradingCreate_portfolio(){
 	QSqlQuery query(db_trading);
@@ -143,7 +156,7 @@ void CDBManager::TradingCreate_portfolio(){
 
 
 // void CDBManager::QuikDrop_alldeals(){
-// 	DropTable(db_quik,"alldeals");
+// 	sql_drop_table(db_quik,"alldeals");
 // }
 
 // void CDBManager::QuikCreate_current(){
@@ -217,7 +230,7 @@ void CDBManager::TradingCreate_portfolio(){
 // }
 
 // void CDBManager::QuikDropFinInst(){
-// 	DropTable(db_quik,"FININST");
+// 	sql_drop_table(db_quik,"FININST");
 // }
 // void CDBManager::QuikCreateFinInst(){
 // 	QSqlQuery query(db_quik);
@@ -241,7 +254,7 @@ void CDBManager::TradingCreate_portfolio(){
 // 
 // 
 // void CDBManager::QuikDropRates(QString InstrumentCode){
-// 	DropTable(db_quik,"rates_");
+// 	sql_drop_table(db_quik,"rates_");
 // }
 // void CDBManager::QuikCreateRates(QString InstrumentCode){
 // 	QSqlQuery query(db_quik);
@@ -288,7 +301,7 @@ void CDBManager::QuikUpdateRates(){
 	}
 }*/
 //void CDBManager::TradingDrop_deal(QString StockCode){
-//	DropTable(db_trading,StockCode);
+//	sql_drop_table(db_trading,StockCode);
 //}
 
 
@@ -390,7 +403,7 @@ void CDBManager::TradingDropAll_trd(){
 
 	while (!queInstrument.isEmpty()){
 		//if (queInstrument.head().contains("_trd")){
-		DropTable(db_trading,queInstrument.head()+"_trd");
+		sql_drop_table(db_trading,queInstrument.head()+"_trd");
 		//}
 		queInstrument.dequeue();
 	}
@@ -415,7 +428,7 @@ void CDBManager::TradingDropAll_req(){
 	}
 
 	while (!queInstrument.isEmpty()){
-		DropTable(db_trading,queInstrument.head()+"_req");
+		sql_drop_table(db_trading,queInstrument.head()+"_req");
 		queInstrument.dequeue();
 	}
 }
@@ -1191,3 +1204,104 @@ uint sql_get_last_datetime_from_seccode_deal(QSqlDatabase& db, QString seccode)
 	return last_dt;
 }
 
+
+
+void Ticks2Mysql ( QSqlQuery& query, QString seccode, S_EasyTicks& ticks,   uint fromIndex, uint count, unsigned afterDateTime)
+{
+	if (count==0)
+		return;
+
+	int err=query.prepare("INSERT INTO " + seccode+ "_deal (trdate,trtime,volume,price,trtype)  VALUES (?, ?, ?, ?, ?)");
+
+	QVariantList listDate;
+	QVariantList listTime;
+	QVariantList listVolume;
+	QVariantList listPrice;
+	QVariantList listType;
+
+	//if (echo)
+	//	qDebug()<< "<" +seccode+ ">";
+
+	S_Tick* pTick = &ticks.data[fromIndex];
+	for (int i=0; i<count; i++,pTick++){
+		if (pTick->datetime>afterDateTime){
+			listDate	<< pTick->DateTime().toString("yyyyMMdd");
+			listTime	<< pTick->DateTime().toString("hhmmss");
+			listVolume	<< pTick->quantity;
+			listPrice	<< pTick->price;
+			listType	<< pTick->type;
+		}
+		//if (echo)
+		//	qDebug()<<"    " << tick.toXML() ;//<< "\n";
+	
+	}
+	//if (echo)
+	//	qDebug()<< "</" +seccode+ ">";
+
+	query.addBindValue(listDate);
+	query.addBindValue(listTime);
+	query.addBindValue(listVolume);
+	query.addBindValue(listPrice);
+	query.addBindValue(listType);
+
+	printf("execBatch...");
+	if (!query.execBatch()){
+		printf(ASCII( query.lastQuery()));
+		printf("\n");
+		printf(ASCII( query.lastError().text()));
+		printf("\n");
+		QMessageBox::critical(0, QObject::tr("Database Error"), query.lastError().text());
+	}
+
+	//printf("ok! %d ticks inserted\n",size);
+
+}
+
+void Quotes2Mysql( QSqlQuery& query, QString seccode, S_EasyQuotes& quotes, uint fromIndex, uint count, bool echo)
+{
+
+
+	if (count==0)
+		return;
+
+	int err=query.prepare("INSERT INTO " + seccode+ "_quote (datetime,price,buy,sell)  VALUES (?, ?, ?, ?)");
+
+	QVariantList listDatetime;
+	QVariantList listSell;
+	QVariantList listBuy;
+	QVariantList listPrice;
+
+
+	if (echo)
+		qDebug()<< "<" +seccode+ ">";
+	for (uint i=fromIndex; i<fromIndex+count; i++){
+		C_EasyQuote& quote =quotes[i];
+
+		listDatetime<< quote.datetime;
+		listPrice	<< quote.price;
+		listBuy  	<< quote.buy;
+		listSell	<< quote.sell;
+		//if (echo)
+		//	qDebug()<<"    " << tick.toXML() ;//<< "\n";
+		//}
+	}
+	if (echo)
+		qDebug()<< "</" +seccode+ ">";
+
+	query.addBindValue(listDatetime);
+	query.addBindValue(listPrice);
+	query.addBindValue(listBuy);
+	query.addBindValue(listSell);
+
+	//printf("execBatch...");
+	if (!query.execBatch()){
+		printf(ASCII( query.lastQuery()));
+		printf("\n");
+		printf(ASCII( query.lastError().text()));
+		printf("\n");
+		QMessageBox::critical(0, QObject::tr("Database Error"), query.lastError().text());
+	}
+
+	//printf("ok! %d ticks inserted\n",size);
+
+}
