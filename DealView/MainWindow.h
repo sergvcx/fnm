@@ -55,7 +55,7 @@ public:
 public slots:
 	void Draw();
 	void Attach();
-	void StartAllDeals();
+	//void StartAllDeals();
 	void about();
 	void updateStatusBar();
 	void SelectStock(int Item);

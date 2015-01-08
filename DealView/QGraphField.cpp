@@ -11,6 +11,7 @@
 #include <QMessageBox>
 #include <QSQLError>
 #include <QSQLQuery>
+#include <QDebug>
 
 //#include "Classifier.h"
 //#include "Trader.h"
@@ -96,7 +97,7 @@ void QGraphField::paintEvent(QPaintEvent * event)
 //	int nTime1=vecDeal[x1].nTime;
 
 //	int nDate1=vecDeal[x1].nDate;
-
+	
 	//---------------- рисуем график сделок -----------------------------
 	painter.setPen(BlackPen);
 	int SwitchColor=5;
@@ -180,7 +181,22 @@ void QGraphField::paintEvent(QPaintEvent * event)
 
 		
 	}
-	
+	//------------------ draw glass ------------
+	S_Glass& Glass=pInstrument->Glass;
+	painter.setPen(RedPen);
+	for(int i=0; i<Glass.listSell.size(); i++){
+		int x0=x2pix(Statistic.idx0);
+		float price   =Glass.listSell[i].price;
+		float quantity=Glass.listSell[i].quantity;
+		painter.drawLine(x0,y2pix(price),x0+quantity,y2pix(price));
+	}
+	painter.setPen(GreenPen);
+	for(int i=0; i<Glass.listBuy.size(); i++){
+		int x0=x2pix(Statistic.idx0);
+		float price   =Glass.listBuy[i].price;
+		float quantity=Glass.listBuy[i].quantity;
+		painter.drawLine(x0,y2pix(price),x0+quantity,y2pix(price));
+	}
 	// ============== рисуем график заявок ====================
 	//printf("%d--\n\n\n",0);
 	/*
@@ -341,12 +357,8 @@ void QGraphField::paintEvent(QPaintEvent * event)
 
 	painter.setPen(BlackPen);
 
-
-	for(int i=0; i<100; i++){
-
-		painter.drawLine(0,0,100,i);
-	}
-
+	
+	
 }
 
 
@@ -451,6 +463,21 @@ void QGraphField::mousePressEvent(QMouseEvent *event){
 				WatchDialog->labelVolumeDem->setNum(Statistic.VolumeDem);
 				WatchDialog->labelDensitySup->setNum(Statistic.DensitySup);
 				WatchDialog->labelDensityDem->setNum(Statistic.DensityDem);
+
+
+				
+				if (pInstrument->pData->Quotes.size){
+					
+					S_Glass& Glass=pInstrument->Glass;
+					uint index;
+					uint dt=Ticks.data[idx].datetime;
+					if (dt)
+						if (pInstrument->pData->Quotes.FindBefore(Ticks.data[idx].datetime, Glass.toIndex, index)){
+							QDateTime dt; dt.setTime_t(Ticks.data[idx].datetime);
+							pInstrument->pData->Quotes.UpdateGlass(Glass,index,200);
+						}
+				}
+
 	//			update();
 			break;
 		case Qt::RightButton:
@@ -489,7 +516,6 @@ void QGraphField::mouseMoveEvent(QMouseEvent *event){
 	((MainWindow*)mainWin)->labelVolume->setNum(Ticks[idx].quantity);
 	((MainWindow*)mainWin)->labelPrice->setNum(Price);
 	((MainWindow*)mainWin)->labelPriceMouse->setText(QString::number(MousePrice)+":"+QString::number((MousePrice-Price)*100/Price)+"%");
-
 
 	
 }

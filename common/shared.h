@@ -5,16 +5,21 @@
 #include <QFile>
 #include <QTextStream>
 #include "xmllogger.h"
-#define  MAX_TICS 1024
+//#define  MAX_TICS 1024
 
 //#include "TransaqConnector.h"
 
 #define LIMIT_TICKS  1024*256		// must be power of two
-#define LIMIT_QOUTES 1024*256		// must be power of two
+#define LIMIT_QOUTES 1024*256*4		// must be power of two
 #define LIMIT_GLASSES 32768*8
 #define GLASS_DEPTH 7
 
-
+inline QString DateTime2Text(uint datetime)
+{
+	QDateTime dt; 
+	dt.setTime_t(datetime);
+	return dt.toString("yyyy-MM-dd hh:mm:ss");
+}
 inline QString DateTime2Text(QDateTime& dt)
 {
 	return dt.toString("yyyy-MM-dd hh:mm:ss");
@@ -243,10 +248,24 @@ struct S_XML_QuoteInfo {
 struct S_Quote {
 	int	  quantity;
 	float price;
-	QDateTime datetime_create;
-	QDateTime datetime_update;
+	//QDateTime datetime_create;
+	//QDateTime datetime_update;
 };
 
+struct S_Glass
+{
+	QList<S_Quote> listBuy;
+	QList<S_Quote> listSell;
+	uint fromIndex;
+	uint toIndex;
+	uint datetime;
+	//uint fromDateTime;
+	//uint toDateTime;
+	S_Glass(){
+		fromIndex=0;
+		toIndex=0;
+	}
+};
 // void DiffGlass(QList<S_Quote>& listPrevBuyQuote, QList<S_Quote>& listPrevSellQuote, 
 // 			   QList<S_Quote>& listCurrBuyQuote, QList<S_Quote>& listCurrSellQuote)
 // {
@@ -291,8 +310,8 @@ struct S_EasyQuotes{
 				if (listSellQuote.isEmpty() && HistoryQuote.sell>0 ){
 					NewQuote.price   =HistoryQuote.price;
 					NewQuote.quantity=HistoryQuote.sell;
-					NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
-					NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+					//NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+					//NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 					listSellQuote << NewQuote;
 					isUpdated=true;
 				}
@@ -312,8 +331,8 @@ struct S_EasyQuotes{
 							if (HistoryQuote.price < CurQuote.price ){
 								NewQuote.price   =HistoryQuote.price;
 								NewQuote.quantity=HistoryQuote.sell;
-								NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
-								NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+								//NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+								//NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 								Iter.previous();
 								Iter.insert(NewQuote);
 								isUpdated=true;
@@ -321,15 +340,15 @@ struct S_EasyQuotes{
 							}
 							if (HistoryQuote.price == CurQuote.price){
 								CurQuote.quantity=HistoryQuote.sell;
-								CurQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+								//CurQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 								isUpdated=true;
 								break;
 							}
 							if (!Iter.hasNext()){
 								NewQuote.price			=HistoryQuote.price;
 								NewQuote.quantity		=HistoryQuote.sell;
-								NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
-								NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+								//NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+								//NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 								listSellQuote.append(NewQuote);
 								isUpdated=true;
 								break;
@@ -343,8 +362,8 @@ struct S_EasyQuotes{
 				if (listBuyQuote.isEmpty() && HistoryQuote.buy>0 ){
 					NewQuote.price   =HistoryQuote.price;
 					NewQuote.quantity=HistoryQuote.buy;
-					NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
-					NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+					//NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+					//NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 					listBuyQuote << NewQuote;
 					isUpdated=true;
 				}
@@ -365,8 +384,8 @@ struct S_EasyQuotes{
 							if (HistoryQuote.price > CurQuote.price ){
 								NewQuote.price			=HistoryQuote.price;
 								NewQuote.quantity		=HistoryQuote.buy;
-								NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
-								NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+								//NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+								//NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 								Iter.previous();
 								Iter.insert(NewQuote);
 								isUpdated=true;
@@ -374,16 +393,153 @@ struct S_EasyQuotes{
 							}
 							if (HistoryQuote.price == CurQuote.price){
 								CurQuote.quantity		=HistoryQuote.buy;
-								CurQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+								//CurQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 								isUpdated=true;
 								break;
 							}
 							if (!Iter.hasNext()){
 								NewQuote.price			=HistoryQuote.price;
 								NewQuote.quantity		=HistoryQuote.buy;
-								NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
-								NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+								//NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+								//NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
 								listBuyQuote.append(NewQuote);
+								isUpdated=true;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+		return isUpdated;
+	}
+
+	bool UpdateGlass(S_Glass& Glass, uint toIndex, int history=100)
+	{
+		_ASSERTE(toIndex>=0);
+		_ASSERTE(toIndex<size);
+		uint fromIndex;
+		Glass.datetime=data[toIndex].datetime;
+		if (Glass.fromIndex <= toIndex-history && toIndex-history<= Glass.toIndex && Glass.toIndex<=toIndex){
+			fromIndex=Glass.toIndex;
+			Glass.toIndex=toIndex;
+			
+		}
+		else {
+			Glass.listBuy.clear();
+			Glass.listSell.clear();
+			fromIndex      =MAX(0,toIndex-history);
+			Glass.fromIndex=MAX(0,toIndex-history);
+			Glass.toIndex=toIndex;
+			//Glass.fromDateTime
+			//Glass.toDateTime=data[toIndex].datetime;
+		}
+
+		
+		S_Quote NewQuote;
+		bool isUpdated=false;
+		
+		for(int i=fromIndex; i<=Glass.toIndex; i++){
+			C_EasyQuote& HistoryQuote=data[i&(LIMIT_QOUTES-1)];
+			if (HistoryQuote.sell){
+				//------------ if history quote is sell ---------
+				if (Glass.listSell.isEmpty() && HistoryQuote.sell>0 ){
+					NewQuote.price   =HistoryQuote.price;
+					NewQuote.quantity=HistoryQuote.sell;
+					//NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+					//NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+					Glass.listSell << NewQuote;
+					isUpdated=true;
+				}
+				else {
+					QMutableListIterator<S_Quote> Iter(Glass.listSell);
+					Iter.toFront();
+					while (Iter.hasNext()) {
+						S_Quote& CurQuote=Iter.next();
+						if (HistoryQuote.sell==-1){
+							if (HistoryQuote.price == CurQuote.price){
+								Iter.remove();
+								isUpdated=true;
+								break;
+							}
+						}
+						else {
+							if (HistoryQuote.price < CurQuote.price ){
+								NewQuote.price   =HistoryQuote.price;
+								NewQuote.quantity=HistoryQuote.sell;
+								//NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+								//NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+								Iter.previous();
+								Iter.insert(NewQuote);
+								isUpdated=true;
+								break;
+							}
+							if (HistoryQuote.price == CurQuote.price){
+								CurQuote.quantity=HistoryQuote.sell;
+								//CurQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+								isUpdated=true;
+								break;
+							}
+							if (!Iter.hasNext()){
+								NewQuote.price			=HistoryQuote.price;
+								NewQuote.quantity		=HistoryQuote.sell;
+								//NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+								//NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+								Glass.listSell.append(NewQuote);
+								isUpdated=true;
+								break;
+							}
+						}
+					}
+				}
+			}
+			//------------ if history quote is buy ---------
+			else {
+				if (Glass.listBuy.isEmpty() && HistoryQuote.buy>0 ){
+					NewQuote.price   =HistoryQuote.price;
+					NewQuote.quantity=HistoryQuote.buy;
+					//NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+					//NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+					Glass.listBuy << NewQuote;
+					Glass.fromIndex=i;
+					isUpdated=true;
+				}
+				else {
+					QMutableListIterator<S_Quote> Iter(Glass.listBuy);
+
+					Iter.toFront();
+					while (Iter.hasNext()) {
+						S_Quote& CurQuote=Iter.next();
+						if (HistoryQuote.buy==-1){
+							if (HistoryQuote.price == CurQuote.price){
+								Iter.remove();
+								isUpdated=true;
+								break;
+							}
+						}
+						else {
+							if (HistoryQuote.price > CurQuote.price ){
+								NewQuote.price			=HistoryQuote.price;
+								NewQuote.quantity		=HistoryQuote.buy;
+								//NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+								//NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+								Iter.previous();
+								Iter.insert(NewQuote);
+								isUpdated=true;
+								break;
+							}
+							if (HistoryQuote.price == CurQuote.price){
+								CurQuote.quantity		=HistoryQuote.buy;
+								//CurQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+								isUpdated=true;
+								break;
+							}
+							if (!Iter.hasNext()){
+								NewQuote.price			=HistoryQuote.price;
+								NewQuote.quantity		=HistoryQuote.buy;
+								//NewQuote.datetime_create.setTime_t(HistoryQuote.datetime);
+								//NewQuote.datetime_update.setTime_t(HistoryQuote.datetime);
+								Glass.listBuy.append(NewQuote);
 								isUpdated=true;
 								break;
 							}
@@ -416,9 +572,10 @@ struct S_EasyQuotes{
 			quantity.setNum(Quote.quantity);
 			//create=Quote.datetime_create.toString("yyyy-MM-dd hh:mm:ss");
 			//update=Quote.datetime_update.toString("yyyy-MM-dd hh:mm:ss");
-			create=DateTime2Text(Quote.datetime_create);
-			update=DateTime2Text(Quote.datetime_update);
-			XML+="	<sell price='"+price+"' volume='"+quantity+"' create='"+create+"' update='"+update+"'>\n";
+			//create=DateTime2Text(Quote.datetime_create);
+			//update=DateTime2Text(Quote.datetime_update);
+			//XML+="	<sell price='"+price+"' volume='"+quantity+"' create='"+create+"' update='"+update+"'>\n";
+			XML+="	<sell price='"+price+"' volume='"+quantity+"'>\n";
 		}
 		for(int i=0; i<Buy.size(); i++){
 			S_Quote& Quote=Buy[i];
@@ -430,13 +587,49 @@ struct S_EasyQuotes{
 			quantity.setNum(Quote.quantity);
 			//create=Quote.datetime_create.toString("yyyy-MM-dd hh:mm:ss");
 			//update=Quote.datetime_update.toString("yyyy-MM-dd hh:mm:ss");
-			create=DateTime2Text(Quote.datetime_create);
-			update=DateTime2Text(Quote.datetime_update);
-			XML+="	<buy price='"+price+"' volume='"+quantity+"' create='"+create+"' update='"+update+"'/>\n";
+			//create=DateTime2Text(Quote.datetime_create);
+			//update=DateTime2Text(Quote.datetime_update);
+			//XML+="	<buy price='"+price+"' volume='"+quantity+"' create='"+create+"' update='"+update+"'/>\n";
+			XML+="	<buy price='"+price+"' volume='"+quantity+"'/>\n";
 		}
 		XML+="</quotes>";
 		return XML;
 	}
+	// return 0 if not found and -1 in find_index
+
+	C_EasyQuote* FindBefore(uint datetime, uint from_index, uint& find_index){
+		
+		if (size==0)
+			return 0;
+		_ASSERTE(from_index>=0);
+		_ASSERTE(from_index<size);
+		find_index=from_index;
+		C_EasyQuote* pQuote=data+find_index;
+		if (pQuote->datetime < datetime){  // found . forward search of last bedore
+			pQuote++;
+			find_index++;
+			for(; find_index<size; find_index++,pQuote++){
+				if (datetime <= pQuote->datetime) // overcross with found. Stop
+					break; 
+			}
+			find_index--;
+			pQuote--;
+			return pQuote;
+		}
+		// backward search
+		else { // (datetime<=pQuote->datetime)  backward search
+			find_index--;
+			pQuote--;
+			while ((int)find_index>=0){
+				if (pQuote->datetime < datetime) // found .stop
+					return pQuote;
+				find_index--;
+				pQuote--;
+			}
+		}
+		return 0;
+	}
+
 } ;
 class C_SharedMemoryInstrument {
 public:
@@ -518,7 +711,16 @@ public:
 		C_XML_Logger* pQuoteLog;
 		S_EasyQuotes* pQuotes;
 	} QuoteInfo;
-	
+
+	S_Glass Glass;
+
+	bool UpdateGlass(uint toIndex=0, int history=100){
+		if (pData->Quotes.size==0)
+			return false;
+		if (toIndex==0)
+			toIndex=pData->Quotes.size-1;
+		return pData->Quotes.UpdateGlass(Glass,toIndex,history);
+	}
 
 	QString Name(){
 		QString name(pData->Info.seccode);
@@ -592,7 +794,7 @@ public:
 		return (pData!=0);
 	}
 
-	bool Detach(QString seccode){
+	bool Detach(){
 		if (pSharedMemory)
 			if (pSharedMemory->isAttached())
 				return pSharedMemory->detach();

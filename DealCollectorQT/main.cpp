@@ -69,8 +69,10 @@ QSqlDatabase db_trading;
 	 
 	 TransaqConnector <<  "GMKN" 
 		 <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
-		 				<< "ODVA" <<"PLZL" <<"SVAV"  <<"NMTP"  <<"VTBR"  <<"MGNT"  <<"YNDX"  <<"NVTK"  <<"MTLRP"  <<"MSNG"   <<"MTSS"  
-		 				<<"ROSN"  <<"RTKM" <<"RTKMP" <<"HYDR" <<"NLMK" <<"CHMF" <<"URKA";
+		 				    <<"VTBR"     
+	  << "ODVA" <<"PLZL"<<"SVAV"<<"MGNT" <<"MSNG"   <<"MTSS"  <<"MTLRP"  <<"NLMK" <<"NMTP"  <<"NVTK" <<"ROSN"
+		 				  <<"RTKM" <<"RTKMP" <<"HYDR"  <<"CHMF" <<"URKA" <<"YNDX";
+//TransaqConnector <<  "VTBR" ;
 
 	sql_open_database("trading",db_trading);
 	//sql_drop_tables(db_trading,TransaqConnector.listActive,"_quote");
@@ -102,26 +104,13 @@ QSqlDatabase db_trading;
 		sql_create_seccode_deal(db_trading,seccode);
 		sql_create_seccode_quote(db_trading,seccode);
 		C_Instrument Instrument;
-		//Instrument.pQuoteLog=new C_XML_Logger(seccode+"_glass.xml",LOGGER_APPEND);
-		//Instrument.pQuoteLog->Header();
-		//Instrument.pQuoteLog->flush();
-
-		
 		
 		Instrument.TickInfo.lastDateTimeInDB=sql_get_last_datetime_from_seccode_deal(db_trading, seccode);
 		//Instrument.TickInfo.tail=Instrument.pData->Ticks.FindAfter(lastDateTime);
 
 		bool ok=Instrument.Attach(seccode);
 		if (ok){
-
-			//Instrument.tail=Instrument.WhichDateTime(min_datetime_filter);
-			//if (Instrument.tail==-1)
-			//	Instrument.tail=0;
-
 			mapInstrument[seccode]=Instrument; // MUST BE IN THE END !!!
-			
-			
-
 		}
 		
 	}
@@ -170,18 +159,6 @@ QSqlDatabase db_trading;
 			Instrument.QuoteInfo.tail+=count;
 			
 			
-			//bool isUpdated=Instrument.pData->Quotes.UpdateCurrentQuotes(Instrument.listBuyQuote,Instrument.listSellQuote);
-// 			QString new_glass=Instrument.pData->Quotes.toXML(6);
-// 			if (Instrument.pQuoteLog)
-// 			if (Instrument.strLastGlass!=new_glass){
-// 				Instrument.strLastGlass= new_glass;
-// 				qDebug() << new_glass;
-// 				*Instrument.pQuoteLog<<new_glass << "\n";
-// 				Instrument.pQuoteLog->flush();
-// 			}
-// 
-// 			
-
 		}
 		
 		
@@ -189,8 +166,7 @@ QSqlDatabase db_trading;
 		db_trading.commit();
 	}
 	
-	
-	//Sleep(1000*60*60*8);
+
 
 	TransaqConnector.disconnect();
 	//Instrument.pSharedMemory->detach();

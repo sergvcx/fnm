@@ -61,15 +61,15 @@ void MainWindow::createActions(){
 	newAction->setStatusTip(tr("Create a new spreadsheet file"));
 	connect(newAction, SIGNAL(triggered()), this, SLOT(newFile()));
 
-	actStartAllDeals	= new QAction(tr("&Start all deals"), this);
-	actStartAllDeals->setStatusTip(tr("Start all deals"));
-	actStopAllDeals		= new QAction(tr("&Stop all deals"), this);
-	actStopAllDeals->setStatusTip(tr("Stop All Deals"));
-	actEmptyAllDeals	= new QAction(tr("&Empty mylefco.AllDeals table"), this);
-	actCheckTables		= new QAction(tr("&Check all Tables"), this);
-	actDropTradings		= new QAction(tr("&DropTradings"), this);
-	actStopAllDeals->setStatusTip(tr("Drop all trading.tables except _portfolio"));
-	actCreatePortfolio	= new QAction(tr("&CreatePortfolio"), this);
+// 	actStartAllDeals	= new QAction(tr("&Start all deals"), this);
+// 	actStartAllDeals->setStatusTip(tr("Start all deals"));
+// 	actStopAllDeals		= new QAction(tr("&Stop all deals"), this);
+// 	actStopAllDeals->setStatusTip(tr("Stop All Deals"));
+// 	actEmptyAllDeals	= new QAction(tr("&Empty mylefco.AllDeals table"), this);
+// 	actCheckTables		= new QAction(tr("&Check all Tables"), this);
+// 	actDropTradings		= new QAction(tr("&DropTradings"), this);
+// 	actStopAllDeals->setStatusTip(tr("Drop all trading.tables except _portfolio"));
+// 	actCreatePortfolio	= new QAction(tr("&CreatePortfolio"), this);
 	actHisto			= new QAction(tr("&Histogram"), this);
 	connect(actHisto, SIGNAL(triggered()), qGraphField, SLOT(Histo()));
 
@@ -131,13 +131,13 @@ void MainWindow::createMenus(){
 	fileMenu->addSeparator();
 	//fileMenu->addAction(exitAction);
 	fileMenu = menuBar()->addMenu(tr("&Tool"));
-	fileMenu->addAction(actStartAllDeals);
-	fileMenu->addAction(actStopAllDeals);
-	fileMenu->addSeparator();
-	fileMenu->addAction(actCheckTables		);
-	fileMenu->addAction(actEmptyAllDeals	);
-	fileMenu->addAction(actDropTradings		);
-	fileMenu->addAction(actCreatePortfolio	);
+// 	fileMenu->addAction(actStartAllDeals);
+// 	fileMenu->addAction(actStopAllDeals);
+// 	fileMenu->addSeparator();
+// 	fileMenu->addAction(actCheckTables		);
+// 	fileMenu->addAction(actEmptyAllDeals	);
+// 	fileMenu->addAction(actDropTradings		);
+// 	fileMenu->addAction(actCreatePortfolio	);
 	fileMenu = menuBar()->addMenu(tr("&View"));
 	fileMenu->addAction(actViewOfferFlag	);
 	fileMenu->addAction(actViewTradeFlag	);
@@ -167,13 +167,20 @@ void MainWindow::createToolBars(){
 	QStringList qStockList;
 
 //	char name[100];
-	Portfolios.empty();
-	for(int i=0; i<Portfolios.size();i++)
-	{
-		QString qItem=Portfolios[i]->StockCode + "	:" + RUS(Portfolios[i]->StockName);
-		qStockList<<qItem;
+	//Portfolios.empty();
+	//for(int i=0; i<Portfolios.size();i++)
+	//{
+	//	QString qItem=Portfolios[i]->StockCode + "	:" + RUS(Portfolios[i]->StockName);
+	//	qStockList<<qItem;
+	//}
+
+	QStringList listTables;
+	sql_show_tables(db_trading, "_deal", listTables);
+
+	for(int i=0; i<listTables.size();i++){
+		listTables[i].remove("_deal");
 	}
-	qStockComboBox->addItems(qStockList);
+	qStockComboBox->addItems(listTables);
 	qStockComboBox->setCurrentIndex(0);
 	//qStockComboBox->SelectStock(0);
 
@@ -182,7 +189,7 @@ void MainWindow::createToolBars(){
 
 
 	toolBar = addToolBar(tr("&Main"));
-	toolBar->addAction(actStartAllDeals);
+	//toolBar->addAction(actStartAllDeals);
 	toolBar->addWidget(qStockComboBox);
 	toolBar->addWidget(qDateTimeEdit0);
 	toolBar->addWidget(qDateTimeEdit1);
@@ -262,9 +269,6 @@ void MainWindow::closeEvent(QCloseEvent *event){
 
 }*/
 
-void MainWindow::StartAllDeals(){
-	//qThreadAllDeals->start();
-}
 
 
 
@@ -307,9 +311,13 @@ void MainWindow::ReadProfile(){
 
 void MainWindow::SelectStock(int Item)
 {
+	
 	//int CurrentStockIdx=Item;
-	StockCode = Portfolios[Item]->StockCode;
-	QString StockName = Portfolios[Item]->StockName;
+	QStringList listTables;
+	sql_show_tables(db_trading, "_deal", listTables);
+
+	StockCode = listTables[Item].remove("_deal");
+	//QString StockName = Portfolios[Item]->StockName;
 	QString cmd="SELECT * FROM "+StockCode+"_deal LIMIT 1";
 	QSqlQuery query(db_trading);
 	QDateTime MinimumDateTime;
@@ -366,7 +374,7 @@ void MainWindow::Draw(){
 }
 void MainWindow::Attach(){
 	static QString PrevStockCode;
-	Instrument.Detach(PrevStockCode);
+	Instrument.Detach();
 	Instrument.Attach(StockCode);
 	PrevStockCode=StockCode;
 	qGraphField->Rescale();
@@ -456,12 +464,17 @@ void MainWindow::ReadRequest(){
 
 void MainWindow::ReadDeal(){
 
+
+	//if (Instrument.Info.)
+	//Instrument.Detach(StockCode );
+	Instrument.Detach();
 	Instrument.Create(StockCode);
 	Instrument.Init();
 	//QDateTime DateTime0, QDateTime DateTime1, QString StockCode
 	//qGraphField->vecDeal.resize(0);
 
-	sql_read_ticks(db_trading, StockCode, DateTime0, DateTime1, Instrument.pData->Ticks);
+	sql_read_ticks (db_trading, StockCode, DateTime0, DateTime1, Instrument.pData->Ticks);
+	sql_read_quotes(db_trading, StockCode, DateTime0, DateTime1, Instrument.pData->Quotes);
 
 // 	int nDate0=intDate(DateTime0);
 // 	int nDate1=intDate(DateTime1);

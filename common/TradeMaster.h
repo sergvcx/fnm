@@ -14,6 +14,7 @@ struct SOrder{
 	int		Date;			// дата подачи заявки (по компьютеру)
 	int		Status;		// стаус заявки
 	uint	datetime;
+	uint	id;
 	//int		nTransID;		// идентификатор заявки
 	//QQueue<SDeal> queDeal;	// сделки которые совершились по данной заявке
 };
