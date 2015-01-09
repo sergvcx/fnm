@@ -97,26 +97,67 @@ inline QString date2str(int date){
 #define FIRST_IN_SECOND 2
 #define LAST_IN_SECOND 4
 
-/*
-struct PPP{
-	QMutex mute;
 
-};*/
 #define EMPTY 0
-/*
-class C_Tick{
+
+template<class T> class C_SubVector
+{
 public:
-	//QString secid;		// 4
-	QString board;		// TQBR
-	QString seccode;	// LKOH
-	QString tradeno;	// 2397108618
-	QString tradetime;	// 08.08.2014 09:59:59
-	QString price;		// 1928.3
-	QString quantity;	// 2
-	QString period;		// L
-	QString buysell;	// S
+	T*		data;
+	size_t	size;
+	size_t  index;
+	C_SubVector(T* vec, size_t idxBegin,  size_t idxEnd){
+		data=vec+idxBegin;
+		size=idxEnd-idxBegin;
+		index=idxBegin;
+	}
+	C_SubVector(QVector<T>& vec, size_t idxBegin,  size_t idxEnd)
+	{
+		data=&vec[idxBegin];
+		size=idxEnd-idxBegin;
+		index=idxBegin;
+	}
+	T& operator[] (size_t idx){
+		return data[idx];
+	}
 };
-*/
+
+
+template <class T> struct S_MinMax {
+	T min;
+	T max;
+	S_MinMax(){
+		min=0;
+		max=0;
+	}
+	S_MinMax(T Min, T Max){
+		min=Min;
+		max=Max;
+	}
+	void init(T Min, T Max){
+		min=Min;
+		max=Max;
+	}
+};
+
+// 
+// template <class T> struct S_NearFar {
+// 	T Near;
+// 	T Far;
+// 	S_NearFar(){
+// 		//Near=0;
+// 		//Far=0;
+// 	}
+// 	S_NearFar(T _Near, T _Far){
+// 		Near=_Near;
+// 		Far=_Far;
+// 	}
+// 	void init(T _Near, T _Far){
+// 		Near=_Near;
+// 		Far=_Far;
+// 	}
+// };
+
 
 class C_Tick{
 public:
@@ -458,6 +499,23 @@ struct SGlass{
 
 };
 
+struct SOrder{
+	float	Price;			// цена
+	int		Volume;		// колво акций(лотов)
+	int		Time;			// время подачи заявки (по компьютеру)
+	int		Date;			// дата подачи заявки (по компьютеру)
+	int		Status;		// стаус заявки
+	uint	datetime;
+	uint	id;
+	//int		nTransID;		// идентификатор заявки
+	//QQueue<SDeal> queDeal;	// сделки которые совершились по данной заявке
+};
+// #define BUY 1
+// #define SELL 2
+// #define TRAP   4
+// #define HOT    8
+
+
 struct SDealID{
 	SRequest* pRequest;
 	SDeal Deal;
@@ -785,8 +843,8 @@ public:
 		}
 		
 		
-		int err=query.prepare("INSERT INTO " + StockCode+ "_deal (trdate,trtime,volume,price,trtype)  VALUES (?, ?, ?, ?, ?)");
-			
+		bool ok=query.prepare("INSERT INTO " + StockCode+ "_deal (trdate,trtime,volume,price,trtype)  VALUES (?, ?, ?, ?, ?)");
+		_ASSERTE(ok);	
 
 		QVariantList listDate;
 		QVariantList listTime;

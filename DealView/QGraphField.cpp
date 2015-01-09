@@ -1,12 +1,10 @@
+#include "MainWindow.h"
+#include "QGraphField.h"
 #include <QPainter>
 #include <math.h>
-
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QPaintEvent>
-#include "QGraphField.h"
-#include "MainWindow.h"
-
 #include <QSqlDatabase>
 #include <QMessageBox>
 #include <QSQLError>

@@ -1,13 +1,14 @@
-#include "../common/Main.h"
-#include "MainWindow.h"
+#include "main.h"
+#include "dbmanager.h"
 
+#include "MainWindow.h"
 #include <QStatusBar>
 #include <QMenuBar>
 #include <QToolBar>
 #include <QXmlStreamReader>
 #include <QDebug>
 #include <QStack>
-#include "dbmanager.h"
+
 QScrollArea* extScrollArea;
 MainWindow::MainWindow()
 {

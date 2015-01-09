@@ -164,11 +164,11 @@ void MainWindow::createMenus(){
 
 }
 void MainWindow::closeEvent(QCloseEvent *event){
-
+event;
 }
 
 void MainWindow::newFile(){
-int g=1;
+
 }
 void MainWindow::StartAllDeals(){
 //	pThreadAllDeals->start();

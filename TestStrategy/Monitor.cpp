@@ -2,6 +2,7 @@
 
 CMonitor::CMonitor(QWidget *parent){
 
+	parent;
 	//stopped=true;
 	//db_index=0;
 

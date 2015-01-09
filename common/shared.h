@@ -1,10 +1,13 @@
 #ifndef SHARED_DEFINED
 #define SHARED_DEFINED
-
+#include "xmllogger.h"
+#include "main.h"
 #include <QSharedMemory>
 #include <QFile>
 #include <QTextStream>
-#include "xmllogger.h"
+#include <QDateTime>
+#define MAX(a,b) ((a) < (b) ? (b) : (a))
+
 //#define  MAX_TICS 1024
 
 //#include "TransaqConnector.h"
@@ -133,7 +136,7 @@ struct S_EasyTicks{
 	uint FindAfter(uint dt, uint fromIndex=0)
 	{
 		S_Tick* pTick=data+fromIndex;
-		for(int i=fromIndex; i<size; i++, pTick++){
+		for(uint i=fromIndex; i<size; i++, pTick++){
 			if (pTick->datetime>dt)
 				return i;
 		}
@@ -273,7 +276,7 @@ struct S_Glass
 // }
 struct S_EasyQuotes{
 	C_EasyQuote data[LIMIT_QOUTES];
-	int			size;
+	uint			size;
 	S_EasyQuotes(){
 		size=0;
 	}
@@ -303,7 +306,7 @@ struct S_EasyQuotes{
 	{
 		S_Quote NewQuote;
 		bool isUpdated=false;
-		for(int i=MAX(0,size-history); i<size; i++){
+		for(uint i=MAX(0,size-history); i<size; i++){
 			C_EasyQuote& HistoryQuote=data[i&(LIMIT_QOUTES-1)];
 			if (HistoryQuote.sell){
 				//------------ if history quote is sell ---------
@@ -416,7 +419,7 @@ struct S_EasyQuotes{
 
 	bool UpdateGlass(S_Glass& Glass, uint toIndex, int history=100)
 	{
-		_ASSERTE(toIndex>=0);
+		_ASSERTE((int)toIndex>=0);
 		_ASSERTE(toIndex<size);
 		uint fromIndex;
 		Glass.datetime=data[toIndex].datetime;
@@ -439,7 +442,7 @@ struct S_EasyQuotes{
 		S_Quote NewQuote;
 		bool isUpdated=false;
 		
-		for(int i=fromIndex; i<=Glass.toIndex; i++){
+		for(uint i=fromIndex; i<=Glass.toIndex; i++){
 			C_EasyQuote& HistoryQuote=data[i&(LIMIT_QOUTES-1)];
 			if (HistoryQuote.sell){
 				//------------ if history quote is sell ---------
@@ -557,7 +560,7 @@ struct S_EasyQuotes{
 		QList<S_Quote> Buy;
 		QString XML;
 
-		UpdateCurrentQuotes(Buy,Sell);
+		UpdateCurrentQuotes(Buy,Sell,history);
 
 		XML ="<quotes>\n"; // seccode='" + QString(Info.seccode)+"'>\n";
 
@@ -740,22 +743,22 @@ public:
 		
 
 	}
-	uint WhichDateTime(uint dt){
-		int idx=-1;
-		int i=0;
-		for(int i=0; i<pData->Ticks.size;i++){
-			if (pData->Ticks.data[i].datetime==dt){
-				break;
-			}
-		}
-		for(idx=i; idx<pData->Ticks.size; idx++){
-			if (pData->Ticks.data[i].datetime!=dt){
-				break;
-			}
-		}
-		return idx;
-
-	}
+// 	uint WhichDateTime(uint dt){
+// 		int idx=-1;
+// 		uint i=0;
+// 		for(int i=0; i<pData->Ticks.size;i++){
+// 			if (pData->Ticks.data[i].datetime==dt){
+// 				break;
+// 			}
+// 		}
+// 		for(idx=i; idx<pData->Ticks.size; idx++){
+// 			if (pData->Ticks.data[i].datetime!=dt){
+// 				break;
+// 			}
+// 		}
+// 		return idx;
+// 
+// 	}
 	//C_Insrument& operator = (const C_Insrument& Inst){
 	//	this->pData=Inst.pData;
 	//	this->pSharedMemory=Inst.pSharedMemory;

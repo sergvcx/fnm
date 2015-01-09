@@ -1,40 +1,18 @@
-#include "string.h"
-#include <windows.h>
+#include "shared.h"
 #include "MainWindow.h"
 #include <QApplication>
-
-
-#include "shared.h"
-#include "TradeMaster.h"
-
 #include <QTextCodec>
 #include <QTDebug>
 #include <QThread>
 #include <conio.h>
-using namespace std;
 
-
-template<class T> class C_SubVector
+void Sleep( int millisecondsToWait )
 {
-public:
-	T*		data;
-	size_t	size;
-	size_t  index;
-	C_SubVector(T* vec, size_t idxBegin,  size_t idxEnd){
-		data=vec+idxBegin;
-		size=idxEnd-idxBegin;
-		index=idxBegin;
-	}
-	C_SubVector(QVector<T>& vec, size_t idxBegin,  size_t idxEnd)
-	{
-		data=&vec[idxBegin];
-		size=idxEnd-idxBegin;
-		index=idxBegin;
-	}
-	T& operator[] (size_t idx){
-		return data[idx];
-	}
-};
+	QTime dieTime = QTime::currentTime().addMSecs( millisecondsToWait );
+	while( QTime::currentTime() < dieTime )
+		QCoreApplication::processEvents( QEventLoop::AllEvents, 100 );
+}
+
 
 bool Trade(QList<SOrder>& listTryBuy, QList<SOrder>& listTrySell,  C_SubVector<S_Tick>& vecTicks, QList<SOrder>& listHitBuy, QList<SOrder>& listHitSell)
 {
@@ -118,6 +96,7 @@ void Close(QList<SOrder>& listBuy, QList<SOrder>& listSell, float &Cash, int& St
 		Cash+=listSell.first().Volume*ClosePrise*(1-Commision);
 		listSell.removeFirst();
 	}
+	Stocks=0;
 }
 
 class C_Strategy{
@@ -131,14 +110,14 @@ class C_Strategy{
 		{
 			Cash=0;
 			Stocks=0;
-			Commision=0.035/100;
+			Commision=float(0.035/100);
 			logger=0;
 		}
 		C_Strategy(QString logname)
 		{
 			Cash=0;
 			Stocks=0;
-			Commision=0.035/100;
+			Commision=float(0.035/100);
 			logger=new C_XML_Logger(logname);
 		}
 		//QTextStream* Stream(){
@@ -149,50 +128,19 @@ class C_Strategy{
 		//		*logger->logStream<< str;
 		//}
 		virtual bool operator << (C_SubVector<S_Tick>& vecTick){
-
+			vecTick;
 			return false;
 		}
 		virtual void Update(QList<S_Quote>& listBuyQuote, QList<S_Quote>& listSellQuote){
+			listBuyQuote;
+			listSellQuote;
 
 		}
 		virtual float Profit(float ClosePrice){
+			ClosePrice;
 			return 0;			
 		}
 };
-
-template <class T> struct S_MinMax {
-	T min;
-	T max;
-	S_MinMax(){
-		min=0;
-		max=0;
-	}
-	S_MinMax(T Min, T Max){
-		min=Min;
-		max=Max;
-	}
-	void init(T Min, T Max){
-		min=Min;
-		max=Max;
-	}
-};
-// 
-// template <class T> struct S_NearFar {
-// 	T Near;
-// 	T Far;
-// 	S_NearFar(){
-// 		//Near=0;
-// 		//Far=0;
-// 	}
-// 	S_NearFar(T _Near, T _Far){
-// 		Near=_Near;
-// 		Far=_Far;
-// 	}
-// 	void init(T _Near, T _Far){
-// 		Near=_Near;
-// 		Far=_Far;
-// 	}
-// };
 
 
 class C_S1_Strategy:public C_Strategy{
@@ -204,6 +152,8 @@ public:
 	S_MinMax<float> SellDelta;
 	uint Count;
 	float CurrentProfit;
+	S_Tick* pLastSell;
+	S_Tick* pLastBuy;
 
 	C_S1_Strategy():C_Strategy(){
 		pLogger=0;
@@ -317,19 +267,6 @@ public:
 };
 
 
-class sqlimport
-{
-	
-public:
-	void run(); //The main thread process
-	QString outputFile;
-
-////private:
-	QFile outfile;
-	QTextStream outStream;
-};
-
-
 struct S_TestMatrix {
 	C_S1_Strategy* st[10][10];
 	S_TestMatrix(QString seccode){
@@ -359,15 +296,21 @@ struct S_TestMatrix {
 	 QApplication app(argc, argv);
 
 	//============================================== offline mode =======================================
-	  QString seccode="VTBR";
-	 //QString seccode="GAZP";
-	 //QString seccode="AFLT";
+	//QString seccode="VTBR";
+	//QString seccode="gazp";
+	//QString seccode="aflt";
+	 QString seccode="gmkn";
 	C_Instrument Instrument;
 	while(!Instrument.Attach(seccode)){
 		qDebug()<< "No connection to " + seccode;
 		Sleep(1000);
 	}
 
+	if (Instrument.pData->Quotes.size==0){
+		qDebug()<< "no quotes!!! press Enter...";
+		_getch();
+
+	}
 
 for(int s=1; s<10; s++)
 for(int b=1; b<10; b++){
@@ -416,7 +359,7 @@ for(int b=1; b<10; b++){
 
 }
 	qDebug() << "Press to continue...";
-	getch();
+	_getch();
 	return 1;
 	//==================================================== real time ======================================================
 	 
