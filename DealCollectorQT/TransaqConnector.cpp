@@ -358,39 +358,39 @@ bool CALLBACK acceptor(BYTE *pData)
 			Instrument.Lock();
 			while (!queueTrade.isEmpty()){
 				S_XML_TradeInfo& xml_trade=queueTrade.head();
-				Instrument.pData->Trades << xml_trade;
+				Instrument.pData->OrdersAndTrades << xml_trade;
 				queueTrade.removeFirst();
 			}
 			Instrument.Unlock();
 		}
 	}
 	//------- разгребаем свои сделки ---------
-	foreach ( QString seccode, mapTick.keys()){
+	foreach ( QString seccode, mapTrade.keys()){
 		if (TransaqConnector.mapInstrument.contains(seccode)){
 			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
-			QQueue<S_XML_OrderInfo>& queueTrade=mapTrade[seccode];
+			QQueue<S_XML_TradeInfo>& queueTrade=mapTrade[seccode];
 			Instrument.Lock();
-			while (!queueOrder.isEmpty()){
+			while (!queueTrade.isEmpty()){
 				S_XML_TradeInfo& xml_trade=queueTrade.head();
 				Instrument.pData->OrdersAndTrades << xml_trade;
-				queueOrder.removeFirst();
+				queueTrade.removeFirst();
 			}
 			Instrument.Unlock();
 		}
 	}
 	//------- разгребаем тики ---------
-	foreach ( QString seccode, mapTick.keys()){
+	foreach ( QString seccode, mapOrder.keys()){
 		if (TransaqConnector.mapInstrument.contains(seccode)){
 			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
-			QQueue<S_XML_Tick>& queueTick=mapTick[seccode];
+			QQueue<S_XML_OrderInfo>& queueOrder=mapOrder[seccode];
 			Instrument.Lock();
-			while (!queueTick.isEmpty()){
-				S_XML_Tick& xml_tick=queueTick.head();
+			while (!queueOrder.isEmpty()){
+				S_XML_OrderInfo& xml_order=queueOrder.head();
 				//if ( Instrument.pTickLog)
 				//	*Instrument.pTickLog<<tick.toXML() <<"\n";
 				
- 				Instrument.pData->Ticks << xml_tick;
-				queueTick.removeFirst();
+ 				Instrument.pData->OrdersAndTrades << xml_order;
+				queueOrder.removeFirst();
 			}
 			Instrument.Unlock();
 		}

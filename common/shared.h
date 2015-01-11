@@ -16,6 +16,7 @@
 #define LIMIT_QOUTES 1024*256		// must be power of two
 #define LIMIT_ORDERS 1024		// must be power of two
 #define LIMIT_GLASSES 16 //32768*8
+#define LIMIT_KILLS 128 //32768*8
 #define GLASS_DEPTH 7
 
 inline QString DateTime2Text(uint datetime)
@@ -277,48 +278,51 @@ struct S_Glass
 // {
 // 	
 // }
-struct S_Order {
+struct S_EasyOrder {
 	float price;
 	uint quantity;
-	//buysell;
+	uint completed;
+	bool is_buy;
+	uint status;
+	uint cancle;
+	uint id;
+
+
 	//reply_from_connector;
 	//reply_from_micex;
 };
-// struct S_EasyOrders{
-// 	//S_EasyOrder data[LIMIT_ORDERS];
-// 	uint size;
-// 	S_EasyQuotes(){
-// 		size=0;
-// 	}
-// 	void Init(){
-// 		size=0;
-// 	}
-// 	C_EasyQuote& operator [] (uint idx)
-// 	{
-// 		return data[idx&(LIMIT_ORDERS-1)];
-// 	}
-// 
-// 	void operator << (S_EasyOrder& Order){
-// 		bool ok;
-// 		C_EasyQuote& quote=data[size&(LIMIT_QOUTES-1)];
-// 		quote.datetime =QuoteInfo.datetime;
-// 		quote.price    =QuoteInfo.price.toFloat(&ok);
-// 		quote.buy      =QuoteInfo.buy.toInt(&ok);
-// 		if (!ok) quote.buy  =0;
-// 		quote.sell     =QuoteInfo.sell.toInt(&ok);
-// 		if (!ok) quote.sell =0;
-// 
-// 		size++;
-// 	}
-// 
-// };
+struct S_KillOrder {
+	uint order_id;
+	uint status;
+};
+
+struct S_XML_OrderInfo ;
+struct S_XML_TradeInfo ;
+
 struct S_EasyOrders{
-	C_EasyQuote data[LIMIT_ORDERS];
-	uint			size;
+	S_EasyOrder data[LIMIT_ORDERS];
+	uint		size;
 	S_EasyOrders(){
 		size=0;
 	}
+	
+	void operator << (S_XML_OrderInfo& Order)
+	{
+
+	}
+	void operator << (S_XML_TradeInfo& Trade)
+	{
+
+	}
 };
+
+struct S_KillOrders 
+{
+	S_KillOrder data[LIMIT_KILLS];
+	uint head;
+	uint tail;
+};
+
 struct S_EasyQuotes{
 	C_EasyQuote data[LIMIT_QOUTES];
 	uint			size;
@@ -686,7 +690,7 @@ public:
 	
 	S_EasyTicks	Ticks;
 	S_EasyQuotes Quotes;
-	S_EasyOrders Orders;
+	S_EasyOrders OrdersAndTrades;
 	void Init(){
 		Ticks.Init();
 		Glasses.Init();
