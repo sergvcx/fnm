@@ -372,7 +372,7 @@ bool CALLBACK acceptor(BYTE *pData)
 			Instrument.Lock();
 			while (!queueOrder.isEmpty()){
 				S_XML_TradeInfo& xml_trade=queueTrade.head();
-				Instrument.pData->Orders << xml_trade;
+				Instrument.pData->OrdersAndTrades << xml_trade;
 				queueOrder.removeFirst();
 			}
 			Instrument.Unlock();
