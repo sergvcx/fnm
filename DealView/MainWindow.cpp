@@ -376,7 +376,7 @@ void MainWindow::Draw(){
 void MainWindow::Attach(){
 	static QString PrevStockCode;
 	Instrument.Detach();
-	Instrument.Attach(StockCode);
+	Instrument.Attach(StockCode.toUpper());
 	PrevStockCode=StockCode;
 	qGraphField->Rescale();
 	qGraphField->Statistic.Reset();

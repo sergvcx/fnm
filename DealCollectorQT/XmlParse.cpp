@@ -26,7 +26,8 @@ bool ParseResult(QString& result, QString& success_value, QString att_key, QStri
 	return (success_value=="true");
 }
 
-int ParseOrder(QXmlStreamReader& xml,S_XML_OrderInfo& order){
+int ParseOrder(QXmlStreamReader& xml,S_XML_OrderInfo& order)
+{
 	
 	if(!(xml.isStartElement() && xml.name() == "order")) {
 		return 0;
@@ -284,4 +285,106 @@ int ParseQuote(QXmlStreamReader& xml,S_XML_QuoteInfo& QuoteInfo){
 
 
 	return 0;
+}
+
+
+int ParseTrade(QXmlStreamReader& xml,S_XML_TradeInfo& trade)
+{
+
+	if(!(xml.isStartElement() && xml.name() == "trade")) {
+		return 0;
+	}
+
+	xml.readNext();
+	//printf(STR(xml.name().toString()));
+	while(!(xml.isEndElement() && xml.name() == "trade")) {
+		if(xml.isStartElement()) {
+
+			QXmlStreamAttributes attributes = xml.attributes();
+			if (attributes.hasAttribute("secid"))
+				trade.secid = attributes.value("secid").toString();
+
+			if(xml.name() == "tradeno") {
+				trade.tradeno= xml.readElementText();
+				continue;
+			}
+
+			if(xml.name() == "tradeno") {
+				trade.tradeno= xml.readElementText();
+				continue;
+			}
+
+			if(xml.name() == "board") {
+				trade.board= xml.readElementText();
+				continue;
+			}
+
+			if(xml.name() == "seccode") {
+				trade.seccode= xml.readElementText();
+				continue;
+			}
+
+			if(xml.name() == "client") {
+				trade.client= xml.readElementText();
+				continue;
+			}
+
+			if(xml.name() == "buysell") {
+				trade.buysell= xml.readElementText();
+				continue;
+			}
+
+			if(xml.name() == "time") {
+				trade.time= xml.readElementText();
+				continue;
+			}
+
+			if(xml.name() == "brokerref") {
+				trade.brokerref= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "value") {
+				trade.value= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "comission") {
+				trade.comission= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "price") {
+				trade.price= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "quantity") {
+				trade.quantity= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "yield") {
+				trade.yield= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "accruedint") {
+				trade.accruedint= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "tradetype") {
+				trade.tradetype= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "settlecode") {
+				trade.settlecode= xml.readElementText();
+				continue;
+			}
+			if(xml.name() == "currentpos") {
+				trade.currentpos= xml.readElementText();
+				continue;
+			}
+		}
+		// ...and next... 
+		xml.readNext();
+		//printf(STR(xml.name().toString()));
+	}
+
+
+	return 1;
 }

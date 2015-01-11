@@ -13,8 +13,9 @@
 //#include "TransaqConnector.h"
 
 #define LIMIT_TICKS  1024*256		// must be power of two
-#define LIMIT_QOUTES 1024*256*4		// must be power of two
-#define LIMIT_GLASSES 32768*8
+#define LIMIT_QOUTES 1024*256		// must be power of two
+#define LIMIT_ORDERS 1024		// must be power of two
+#define LIMIT_GLASSES 16 //32768*8
 #define GLASS_DEPTH 7
 
 inline QString DateTime2Text(uint datetime)
@@ -161,7 +162,9 @@ struct S_EasyTicks{
 		data[ size   &(LIMIT_QOUTES-1)]=Tick;
 		size++;
 	}
-	void operator << (S_XML_Tick& Tick){
+	
+	void operator << (S_XML_Tick& Tick)
+	{
 		bool ok;
 		S_Tick& NewTick =data[ size   &(LIMIT_QOUTES-1)];
 		S_Tick& LastTick=data[(size-1)&(LIMIT_QOUTES-1)];
@@ -274,6 +277,48 @@ struct S_Glass
 // {
 // 	
 // }
+struct S_Order {
+	float price;
+	uint quantity;
+	//buysell;
+	//reply_from_connector;
+	//reply_from_micex;
+};
+// struct S_EasyOrders{
+// 	//S_EasyOrder data[LIMIT_ORDERS];
+// 	uint size;
+// 	S_EasyQuotes(){
+// 		size=0;
+// 	}
+// 	void Init(){
+// 		size=0;
+// 	}
+// 	C_EasyQuote& operator [] (uint idx)
+// 	{
+// 		return data[idx&(LIMIT_ORDERS-1)];
+// 	}
+// 
+// 	void operator << (S_EasyOrder& Order){
+// 		bool ok;
+// 		C_EasyQuote& quote=data[size&(LIMIT_QOUTES-1)];
+// 		quote.datetime =QuoteInfo.datetime;
+// 		quote.price    =QuoteInfo.price.toFloat(&ok);
+// 		quote.buy      =QuoteInfo.buy.toInt(&ok);
+// 		if (!ok) quote.buy  =0;
+// 		quote.sell     =QuoteInfo.sell.toInt(&ok);
+// 		if (!ok) quote.sell =0;
+// 
+// 		size++;
+// 	}
+// 
+// };
+struct S_EasyOrders{
+	C_EasyQuote data[LIMIT_ORDERS];
+	uint			size;
+	S_EasyOrders(){
+		size=0;
+	}
+};
 struct S_EasyQuotes{
 	C_EasyQuote data[LIMIT_QOUTES];
 	uint			size;
@@ -422,7 +467,7 @@ struct S_EasyQuotes{
 		_ASSERTE((int)toIndex>=0);
 		_ASSERTE(toIndex<size);
 		uint fromIndex;
-		Glass.datetime=data[toIndex].datetime;
+		Glass.datetime=data[toIndex&(LIMIT_QOUTES-1)].datetime;
 		if (Glass.fromIndex <= toIndex-history && toIndex-history<= Glass.toIndex && Glass.toIndex<=toIndex){
 			fromIndex=Glass.toIndex;
 			Glass.toIndex=toIndex;
@@ -641,6 +686,7 @@ public:
 	
 	S_EasyTicks	Ticks;
 	S_EasyQuotes Quotes;
+	S_EasyOrders Orders;
 	void Init(){
 		Ticks.Init();
 		Glasses.Init();
@@ -786,7 +832,7 @@ public:
 	bool Attach(QString seccode){
 		pSharedMemory=new QSharedMemory(seccode);
 		if (!pSharedMemory){
-			//_ASSERTE(false);
+			_ASSERTE(false);
 			return false;
 		}
 		if (!pSharedMemory->attach()) {

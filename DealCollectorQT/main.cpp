@@ -1,18 +1,14 @@
-#include "string.h"
+#include "TransaqConnector.h"
+#include "shared.h"
 #include "MainWindow.h"
 #include <QApplication>
-#include "TransaqConnector.h"
-
-#include "shared.h"
-//extern CThreadAllDeals* pThreadAllDeals;
-
 #include <QTextCodec>
 #include <QTDebug>
-using namespace std;
+#include <conio.h>
+//using namespace std;
 
 C_TransaqConnector TransaqConnector;
 QSqlDatabase db_trading;
-
 
 
  int main(int argc, char *argv[])
@@ -46,7 +42,7 @@ QSqlDatabase db_trading;
 	
 	 QApplication app(argc, argv);
 
-	 MainWindow* mainWin=new MainWindow;
+	 //MainWindow* mainWin=new MainWindow;
 	 //if (argc==2){
 	//	 if (strcmp(argv[1],"-auto")==0){
 	//		pThreadAllDeals->start();
@@ -68,13 +64,41 @@ QSqlDatabase db_trading;
 	 //Sleep(1000);
 	 
 	 TransaqConnector <<  "GMKN" 
-		 <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
-		 				    <<"VTBR"     
-	  << "ODVA" <<"PLZL"<<"SVAV"<<"MGNT" <<"MSNG"   <<"MTSS"  <<"MTLRP"  <<"NLMK" <<"NMTP"  <<"NVTK" <<"ROSN"
-		 				  <<"RTKM" <<"RTKMP" <<"HYDR"  <<"CHMF" <<"URKA" <<"YNDX";
-//TransaqConnector <<  "VTBR" ;
+ 		<<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
+ 		<< "ODVA" <<"PLZL"<<"SVAV"<<"MGNT" <<"MSNG"   <<"MTSS"  <<"MTLRP"  <<"NLMK" <<"NMTP" <<"NVTK" <<"ROSN"
+ 		<<"RTKM" <<"RTKMP" <<"HYDR"  <<"CHMF" <<"URKA" <<"YNDX" <<"VTBR" ; 
+
 
 	sql_open_database("trading",db_trading);
+	QMap<QString,C_Instrument> mapInstrument;
+
+	for(int i=0; i<TransaqConnector.listActive.size();i++){
+		QString seccode=TransaqConnector.listActive.at(i);
+
+		C_Instrument Instrument;
+
+
+
+		while (!Instrument.Attach(seccode)){
+
+			qDebug() << seccode << "attach error!!!";
+			Sleep(100);
+		}
+		mapInstrument[seccode]=Instrument; // MUST BE IN THE END !!!
+		sql_create_seccode_deal (db_trading,seccode);
+		sql_create_seccode_quote(db_trading,seccode);
+		//Instrument.TickInfo.lastDateTimeInDB=sql_get_last_datetime_from_seccode_deal(db_trading, seccode);
+		//Instrument.TickInfo.tail=Instrument.pData->Ticks.FindAfter(lastDateTime);
+
+
+		qDebug() << seccode << "attached!!!";
+		//_getch();
+
+	}
+
+	qDebug() << "map Instrumente is constructed";
+
+
 	//sql_drop_tables(db_trading,TransaqConnector.listActive,"_quote");
 	//sql_drop_tables(db_trading,TransaqConnector.listActive,"_trd");
 
@@ -97,25 +121,7 @@ QSqlDatabase db_trading;
 	Sleep(1000);
 
 	 
-	QMap<QString,C_Instrument> mapInstrument;
-	for(int i=0; i<TransaqConnector.listActive.size();i++){
-		QString seccode=TransaqConnector.listActive.at(i);
-
-		sql_create_seccode_deal(db_trading,seccode);
-		sql_create_seccode_quote(db_trading,seccode);
-		C_Instrument Instrument;
-		
-		Instrument.TickInfo.lastDateTimeInDB=sql_get_last_datetime_from_seccode_deal(db_trading, seccode);
-		//Instrument.TickInfo.tail=Instrument.pData->Ticks.FindAfter(lastDateTime);
-
-		bool ok=Instrument.Attach(seccode);
-		if (ok){
-			mapInstrument[seccode]=Instrument; // MUST BE IN THE END !!!
-		}
-		
-	}
-	qDebug() << "map Instrumente is constructed";
-
+	
 	
 	if (TransaqConnector.subscribe(TransaqConnector.listActive)){
 		TransaqConnector.disconnect();

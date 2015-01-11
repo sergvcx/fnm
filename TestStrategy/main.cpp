@@ -19,7 +19,7 @@ bool Trade(QList<SOrder>& listTryBuy, QList<SOrder>& listTrySell,  C_SubVector<S
 	bool hit=false;
 	for(uint i=0; i<vecTicks.size; i++){
 		S_Tick& tick=vecTicks[i];
-		if (tick.isSell()){
+		if (!tick.isSell()){
 			while(!listTrySell.isEmpty()){
 				SOrder& my=listTrySell.first();
 				if (tick.price<my.Price-0.001)
@@ -39,7 +39,6 @@ bool Trade(QList<SOrder>& listTryBuy, QList<SOrder>& listTrySell,  C_SubVector<S
 				my.datetime=tick.datetime;
 				my.id=i+vecTicks.index;		
 				listHitBuy<<my;
-
 				listTryBuy.removeFirst();
 				hit=true;
 			}
@@ -296,71 +295,71 @@ struct S_TestMatrix {
 	 QApplication app(argc, argv);
 
 	//============================================== offline mode =======================================
-	//QString seccode="VTBR";
-	//QString seccode="gazp";
-	//QString seccode="aflt";
-	 QString seccode="gmkn";
-	C_Instrument Instrument;
-	while(!Instrument.Attach(seccode)){
-		qDebug()<< "No connection to " + seccode;
-		Sleep(1000);
-	}
-
-	if (Instrument.pData->Quotes.size==0){
-		qDebug()<< "no quotes!!! press Enter...";
-		_getch();
-
-	}
-
-for(int s=1; s<10; s++)
-for(int b=1; b<10; b++){
-	S_MinMax<float> mySell;
-	S_MinMax<float> myBuy;
-	mySell.max=1+s*s*0.02/100;
-	mySell.min=1+s*s*0.01/100;
-	myBuy.max =1-b*b*0.01/100;
-	myBuy.min =1-b*b*0.02/100;
-	C_S1_Strategy Test(	seccode+QString::number(b)+QString::number(s)+".xml",
-						mySell.max,
-						mySell.min, 
-						myBuy.max, 
-						myBuy.min);
-
-	
-	uint idxStart=Instrument.pData->Ticks.FindAfter("2015-01-08 10:30:00");
-	uint idxFinal=Instrument.pData->Ticks.FindAfter("2015-01-08 18:30:00");
-
-	uint idxBegin=idxStart;
-	uint idxEnd=0;
-	uint idxFind;
-	S_Glass& Glass=Instrument.Glass;
-	S_EasyTicks& Ticks=Instrument.pData->Ticks;
-	Glass.toIndex=0;
-
-	while (idxEnd<idxFinal){
-		idxEnd=Instrument.pData->Ticks.NextSecondIndex(idxBegin);
-		C_SubVector<S_Tick> TickPortion(Instrument.pData->Ticks.data, idxBegin, idxEnd);
-		
-
-		if (Instrument.pData->Quotes.FindBefore(Ticks.data[idxBegin].datetime, Glass.toIndex, idxFind)){
-			Instrument.pData->Quotes.UpdateGlass(Glass,idxFind,200);			
-		}
-
-		if (!Glass.listBuy.isEmpty() && !Glass.listSell.isEmpty()){
-			float maxSpread=Glass.listSell.first().price;
-			float minSpread=Glass.listBuy.first().price;
-			Test.Update(minSpread, maxSpread,Glass.datetime);
-		}
-		Test << TickPortion;
-
-		idxBegin=idxEnd;
-	}
-	qDebug()<< s << b << Test.Profit(Ticks.data[1000].price)*100 << "%";
-
-}
-	qDebug() << "Press to continue...";
-	_getch();
-	return 1;
+// 	//QString seccode="VTBR";
+// 	//QString seccode="gazp";
+// 	//QString seccode="aflt";
+// 	 QString seccode="gmkn";
+// 	C_Instrument Instrument;
+// 	while(!Instrument.Attach(seccode)){
+// 		qDebug()<< "No connection to " + seccode;
+// 		Sleep(1000);
+// 	}
+// 
+// 	if (Instrument.pData->Quotes.size==0){
+// 		qDebug()<< "no quotes!!! press Enter...";
+// 		_getch();
+// 
+// 	}
+// 
+// for(int s=1; s<10; s++)
+// for(int b=1; b<10; b++){
+// 	S_MinMax<float> mySell;
+// 	S_MinMax<float> myBuy;
+// 	mySell.max=1+s*s*0.02/100;
+// 	mySell.min=1+s*s*0.01/100;
+// 	myBuy.max =1-b*b*0.01/100;
+// 	myBuy.min =1-b*b*0.02/100;
+// 	C_S1_Strategy Test(	seccode+QString::number(b)+QString::number(s)+".xml",
+// 						mySell.max,
+// 						mySell.min, 
+// 						myBuy.max, 
+// 						myBuy.min);
+// 
+// 	
+// 	uint idxStart=Instrument.pData->Ticks.FindAfter("2015-01-08 10:30:00");
+// 	uint idxFinal=Instrument.pData->Ticks.FindAfter("2015-01-08 18:30:00");
+// 
+// 	uint idxBegin=idxStart;
+// 	uint idxEnd=0;
+// 	uint idxFind;
+// 	S_Glass& Glass=Instrument.Glass;
+// 	S_EasyTicks& Ticks=Instrument.pData->Ticks;
+// 	Glass.toIndex=0;
+// 
+// 	while (idxEnd<idxFinal){
+// 		idxEnd=Instrument.pData->Ticks.NextSecondIndex(idxBegin);
+// 		C_SubVector<S_Tick> TickPortion(Instrument.pData->Ticks.data, idxBegin, idxEnd);
+// 		
+// 
+// 		if (Instrument.pData->Quotes.FindBefore(Ticks.data[idxBegin].datetime, Glass.toIndex, idxFind)){
+// 			Instrument.pData->Quotes.UpdateGlass(Glass,idxFind,200);			
+// 		}
+// 
+// 		if (!Glass.listBuy.isEmpty() && !Glass.listSell.isEmpty()){
+// 			float maxSpread=Glass.listSell.first().price;
+// 			float minSpread=Glass.listBuy.first().price;
+// 			Test.Update(minSpread, maxSpread,Glass.datetime);
+// 		}
+// 		Test << TickPortion;
+// 
+// 		idxBegin=idxEnd;
+// 	}
+// 	qDebug()<< s << b << Test.Profit(Ticks.data[1000].price)*100 << "%";
+// 
+// }
+// 	qDebug() << "Press to continue...";
+// 	_getch();
+// 	return 1;
 	//==================================================== real time ======================================================
 	 
 	 
@@ -383,7 +382,7 @@ for(int b=1; b<10; b++){
 		C_Instrument Instrument;
 		while (!Instrument.Attach(seccode)){
 			qDebug()<< "No connection to " + seccode;
-			Sleep(1000);
+			Sleep(100);
 		}
 		
 		Instrument.TickInfo.tail=Instrument.pData->Ticks.size;

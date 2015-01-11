@@ -1,4 +1,10 @@
+//#include "demo.h"
+#include "fight.h"
+#include "XmlParse.h"
+#include "main.h"
 #include "MainWindow.h"
+#include "TransaqConnector.h"
+
 #include <QApplication>
 #include <QXmlStreamReader>
 #include <QMessageBox>
@@ -13,8 +19,6 @@
 #include <QSharedMemory>
 #include <QTextCodec>
 #include "ui_ui.h"
-#include "main.h"
-#include "XmlParse.h"
 #include <QtDebug>
 
 #define STR(a) a.toAscii().data()
@@ -26,10 +30,9 @@
 
 #include <iostream>
 #include <fstream>
-//#include "demo.h"
-#include "fight.h"
 
-#include "TransaqConnector.h"
+
+
 
 
 
@@ -191,6 +194,8 @@ bool copy(S_InstrumentInfo& info, S_XML_SecInfo& xml_secinfo){
 bool CALLBACK acceptor(BYTE *pData)
 {
 	QMap<QString,QQueue<S_XML_Tick> > mapTick;
+	QMap<QString,QQueue<S_XML_OrderInfo> > mapOrder;
+	QMap<QString,QQueue<S_XML_TradeInfo> > mapTrade;
 	QMap<QString,QQueue<S_XML_QuoteInfo> > mapQuote;
 	QMap<QString,S_XML_SecInfo> mapSecInfo;
 
@@ -270,11 +275,29 @@ bool CALLBACK acceptor(BYTE *pData)
 				if (xml.isStartElement() && xml.name() == "order"){					
 					S_XML_OrderInfo xml_order;
 					ParseOrder(xml,xml_order);
+					mapOrder[xml_order.seccode].enqueue(xml_order);
 				}
 				xml.readNext();
 			}
-			std::cout<<"-security finished" ; fflush(stdout);
+			std::cout<<"-orders finished" ; fflush(stdout);
 			
+		}
+		//-------------------------------------------------------------
+		if (xml.isStartElement() && xml.name() == "trades"){
+			xml_quotes << pData << std::endl;
+
+			std::cout<<"-trade";
+			xml.readNext();
+			while (!(xml.isEndElement() && xml.name()=="trades" )){
+				if (xml.isStartElement() && xml.name() == "trade"){					
+					S_XML_TradeInfo xml_trade;
+					ParseTrade(xml,xml_trade);
+					mapTrade[xml_trade.seccode].enqueue(xml_trade);
+				}
+				xml.readNext();
+			}
+			std::cout<<"-trades finished" ; fflush(stdout);
+
 		}
 		//-------------------------------------------------------------
 		if (xml.isStartElement() && xml.name() == "sec_info_upd"){
@@ -326,6 +349,34 @@ bool CALLBACK acceptor(BYTE *pData)
 
 		}
 
+	}
+	//------- разгребаем свои сделки ---------
+	foreach ( QString seccode, mapTick.keys()){
+		if (TransaqConnector.mapInstrument.contains(seccode)){
+			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
+			QQueue<S_XML_TradeInfo>& queueTrade=mapTrade[seccode];
+			Instrument.Lock();
+			while (!queueTrade.isEmpty()){
+				S_XML_TradeInfo& xml_trade=queueTrade.head();
+				Instrument.pData->Trades << xml_trade;
+				queueTrade.removeFirst();
+			}
+			Instrument.Unlock();
+		}
+	}
+	//------- разгребаем свои сделки ---------
+	foreach ( QString seccode, mapTick.keys()){
+		if (TransaqConnector.mapInstrument.contains(seccode)){
+			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
+			QQueue<S_XML_OrderInfo>& queueTrade=mapTrade[seccode];
+			Instrument.Lock();
+			while (!queueOrder.isEmpty()){
+				S_XML_TradeInfo& xml_trade=queueTrade.head();
+				Instrument.pData->Orders << xml_trade;
+				queueOrder.removeFirst();
+			}
+			Instrument.Unlock();
+		}
 	}
 	//------- разгребаем тики ---------
 	foreach ( QString seccode, mapTick.keys()){
@@ -771,7 +822,9 @@ bool CALLBACK acceptor(BYTE *pData)
 	C_TransaqConnector& C_TransaqConnector::operator<< (QString seccode){
 		listActive << seccode;
 		C_Instrument Instrument;
-		Instrument.Create(seccode);
+		bool ok=Instrument.Create(seccode);
+		qDebug()<< "Instrument" << seccode << "created";
+		_ASSERTE(ok);
 		//Instrument.pQuoteLog= new C_XML_Logger(seccode+"_quote.xml");
 		//Instrument.pQuoteLog->Header();
 		//Instrument.pTickLog= new C_XML_Logger(seccode+"_tick.xml");

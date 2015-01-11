@@ -61,6 +61,29 @@ struct S_XML_OrderInfo{
 
 };
 
+struct S_XML_TradeInfo
+{
+	QString secid;		//»дентификатор бумаги
+	QString tradeno;	//Ќомер сделки на биржеQString
+	QString orderno;	//Ќомер за€вки на биржеQString
+	QString board;		//»дентификатор бордаQString /board; //
+	QString seccode;	//  од инструмента QString /seccode; //
+	QString client;	//»дентификатор клиентаQString /client; //
+	QString buysell;	//B - покупка, S - продажаQString /buysell; //
+	QString time;		//врем€ сделкиQString /time; //
+	QString brokerref; //примечаниеQString /brokerref; //
+	QString value;		//объем сделкиQString /value; //
+	QString comission; //комисси€QString /comission; //
+	QString price;		//ценаQString /price; //
+	QString quantity; //количество лотовQString /quantity; //
+	QString yield;		//доходностьQString /yield; //
+	QString accruedint; //Ќ ƒQString /accruedint; //
+	QString tradetype; //тип сделки: СTТ Ц обычна€ СNТ Ц –ѕ— СRТ Ц –≈ѕќ 	СPТ Ц размещениеQString /tradetype; //
+	QString settlecode; //код поставкиQString /settlecode; //
+	QString currentpos; //“екуща€ позици€ по инструментуuint /currentpos; //
+};
+
+
 struct S_XML_ServerStatus{
 	QString id ;
 	QString connected;
