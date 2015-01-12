@@ -351,20 +351,6 @@ bool CALLBACK acceptor(BYTE *pData)
 
 	}
 	//------- разгребаем свои сделки ---------
-	foreach ( QString seccode, mapTick.keys()){
-		if (TransaqConnector.mapInstrument.contains(seccode)){
-			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
-			QQueue<S_XML_TradeInfo>& queueTrade=mapTrade[seccode];
-			Instrument.Lock();
-			while (!queueTrade.isEmpty()){
-				S_XML_TradeInfo& xml_trade=queueTrade.head();
-				Instrument.pData->OrdersAndTrades << xml_trade;
-				queueTrade.removeFirst();
-			}
-			Instrument.Unlock();
-		}
-	}
-	//------- разгребаем свои сделки ---------
 	foreach ( QString seccode, mapTrade.keys()){
 		if (TransaqConnector.mapInstrument.contains(seccode)){
 			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
@@ -378,9 +364,9 @@ bool CALLBACK acceptor(BYTE *pData)
 			Instrument.Unlock();
 		}
 	}
-	//------- разгребаем тики ---------
+	//------- разгребаем заявки сделки ---------
 	foreach ( QString seccode, mapOrder.keys()){
-		if (TransaqConnector.mapInstrument.contains(seccode)){
+		if (TransaqConnector.mapOrder.contains(seccode)){
 			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
 			QQueue<S_XML_OrderInfo>& queueOrder=mapOrder[seccode];
 			Instrument.Lock();
@@ -388,9 +374,26 @@ bool CALLBACK acceptor(BYTE *pData)
 				S_XML_OrderInfo& xml_order=queueOrder.head();
 				//if ( Instrument.pTickLog)
 				//	*Instrument.pTickLog<<tick.toXML() <<"\n";
-				
- 				Instrument.pData->OrdersAndTrades << xml_order;
+
+				Instrument.pData->OrdersAndTrades << xml_order;
 				queueOrder.removeFirst();
+			}
+			Instrument.Unlock();
+		}
+	}
+	//------- разгребаем тики ---------
+	foreach ( QString seccode, mapTick.keys()){
+		if (TransaqConnector.mapInstrument.contains(seccode)){
+			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
+			QQueue<S_XML_Tick>& queueTick=mapTick[seccode];
+			Instrument.Lock();
+			while (!queueTick.isEmpty()){
+				S_XML_Tick& xml_tick=queueTick.head();
+				//if ( Instrument.pTickLog)
+				//	*Instrument.pTickLog<<tick.toXML() <<"\n";
+				
+ 				Instrument.pData->Ticks << xml_tick;
+				queueTick.removeFirst();
 			}
 			Instrument.Unlock();
 		}
