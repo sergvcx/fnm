@@ -317,7 +317,7 @@ struct S_CancleOrder {
 	uint status;
 };
 
-struct S_CancleOrders 
+struct S_CancelOrders 
 {
 	S_CancelOrder data[LIMIT_KILLS];
 	uint head;
