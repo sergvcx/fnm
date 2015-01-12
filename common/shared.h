@@ -291,10 +291,6 @@ struct S_EasyOrder {
 	//reply_from_connector;
 	//reply_from_micex;
 };
-struct S_KillOrder {
-	uint order_id;
-	uint status;
-};
 
 struct S_XML_OrderInfo ;
 struct S_XML_TradeInfo ;
@@ -316,9 +312,14 @@ struct S_EasyOrders{
 	}
 };
 
-struct S_KillOrders 
+struct S_CancleOrder {
+	uint transactionid;
+	uint status;
+};
+
+struct S_CancleOrders 
 {
-	S_KillOrder data[LIMIT_KILLS];
+	S_CancelOrder data[LIMIT_KILLS];
 	uint head;
 	uint tail;
 };
