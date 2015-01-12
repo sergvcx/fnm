@@ -45,7 +45,7 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 	 QApplication app(argc, argv);
 
 	 sql_open_database("trading",db_trading);
-	 sql_switch_all_buysell(db_trading);
+	 //sql_switch_all_buysell(db_trading);
 	 //MainWindow* mainWin=new MainWindow;
 	 //if (argc==2){
 	//	 if (strcmp(argv[1],"-auto")==0){
