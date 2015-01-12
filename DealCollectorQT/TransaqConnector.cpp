@@ -366,7 +366,7 @@ bool CALLBACK acceptor(BYTE *pData)
 	}
 	//------- разгребаем заявки сделки ---------
 	foreach ( QString seccode, mapOrder.keys()){
-		if (TransaqConnector.mapOrder.contains(seccode)){
+		if (TransaqConnector.mapInstrument.contains(seccode)){
 			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
 			QQueue<S_XML_OrderInfo>& queueOrder=mapOrder[seccode];
 			Instrument.Lock();
