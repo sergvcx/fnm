@@ -10,11 +10,13 @@
 C_TransaqConnector TransaqConnector;
 QSqlDatabase db_trading;
 
+bool sql_switch_all_buysell(QSqlDatabase& db);
 
  int main(int argc, char *argv[])
  {
 	 setlocale(LC_ALL, "Russian");
 
+	 sql_switch_all_buysell(db_trading);
 // 	 uint dt=0;
 // 	 QDateTime datetime;
 // 	 datetime.setTime_t(0);//=QDateTime::
