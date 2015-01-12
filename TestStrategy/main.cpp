@@ -22,25 +22,33 @@ bool Trade(QList<SOrder>& listTryBuy, QList<SOrder>& listTrySell,  C_SubVector<S
 		if (tick.isSell()){
 			while(!listTrySell.isEmpty()){
 				SOrder& my=listTrySell.first();
-				if (tick.price<my.Price-0.001)
+				//if (tick.price<my.Price-0.00001)
+				//	break;
+				if (my.Price<tick.price+0.000001){
+					my.datetime=tick.datetime;
+					my.id=i+vecTicks.index;
+					listHitSell<<my;
+					listTrySell.removeFirst();
+					hit=true;
+				}
+				else
 					break;
-				my.datetime=tick.datetime;
-				my.id=i+vecTicks.index;
-				listHitSell<<my;
-				listTrySell.removeFirst();
-				hit=true;
 			}
 		}
 		else {
 			while(!listTryBuy.isEmpty()){
 				SOrder& my=listTryBuy.first();
-				if (my.Price<tick.price-0.001)
+				//if (my.Price<tick.price-0.00001)
+				//	break;
+				if (my.Price>tick.price-0.000001){
+					my.datetime=tick.datetime;
+					my.id=i+vecTicks.index;		
+					listHitBuy<<my;
+					listTryBuy.removeFirst();
+					hit=true;
+				}
+				else
 					break;
-				my.datetime=tick.datetime;
-				my.id=i+vecTicks.index;		
-				listHitBuy<<my;
-				listTryBuy.removeFirst();
-				hit=true;
 			}
 		}
 	}
@@ -50,14 +58,14 @@ void FilterSell(QList<SOrder>& listTrySell, float minThreshold, float maxThresho
 {
 	while (!listTrySell.isEmpty()){
 		SOrder& out=listTrySell.first();
-		if (minThreshold<out.Price+0.0001)
+		if (minThreshold<out.Price+0.000001)
 			break;
 		Stocks+=out.Volume;
 		listTrySell.removeFirst();
 	}
 	while (!listTrySell.isEmpty()){
 		SOrder& out=listTrySell.last();
-		if (maxThreshold>out.Price-0.0001)
+		if (maxThreshold>out.Price-0.000001)
 			break;
 		Stocks+=out.Volume;
 		listTrySell.removeLast();
@@ -68,14 +76,14 @@ void FilterBuy(QList<SOrder>& listTryBuy, float minThreshold, float maxThreshold
 {
 	while (!listTryBuy.isEmpty()){
 		SOrder& out=listTryBuy.first();
-		if (maxThreshold>out.Price-0.0001)
+		if (maxThreshold>out.Price-0.000001)
 			break;
 		Cash+=out.Volume*out.Price;
 		listTryBuy.removeFirst();
 	}
 	while (!listTryBuy.isEmpty()){
 		SOrder& out=listTryBuy.last();
-		if (minThreshold<out.Price+0.0001)
+		if (minThreshold<out.Price+0.000001)
 			break;
 		Cash+=out.Volume*out.Price;
 		listTryBuy.removeLast();
@@ -413,6 +421,8 @@ struct S_TestMatrix {
 		
 			//qDebug() << Instrument.pData->Quotes.toXML(6);
 			float MaxProfit=-100;
+			float Profit=-100;
+			int ij=0;
 			for(int i=0; i<10; i++){
 				for(int j=0; j<10; j++){
 					if (!Instrument.Glass.listBuy.isEmpty() && !Instrument.Glass.listSell.isEmpty()){
@@ -422,10 +432,15 @@ struct S_TestMatrix {
 						if (TickPortion.size)
 							*Test.st[i][j] << TickPortion;
 					}
-					MaxProfit=MAX(MaxProfit,Test.st[i][j]->Profit(Instrument.pData->Ticks.Last().price));
+					Profit = Test.st[i][j]->Profit(Instrument.pData->Ticks.Last().price);
+					if (Profit>MaxProfit){
+						MaxProfit=Profit;
+						ij=i*10+j;
+					}
+					//MaxProfit=MAX(MaxProfit,);
 				}
 			}
-			qDebug()<< seccode << MaxProfit;
+			qDebug()<< seccode << MaxProfit <<ij;
 		}
 		Sleep(1000);
 	}
