@@ -16,7 +16,7 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
  {
 	 setlocale(LC_ALL, "Russian");
 
-	 sql_switch_all_buysell(db_trading);
+	
 // 	 uint dt=0;
 // 	 QDateTime datetime;
 // 	 datetime.setTime_t(0);//=QDateTime::
@@ -44,6 +44,8 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 	
 	 QApplication app(argc, argv);
 
+	 sql_open_database("trading",db_trading);
+	 sql_switch_all_buysell(db_trading);
 	 //MainWindow* mainWin=new MainWindow;
 	 //if (argc==2){
 	//	 if (strcmp(argv[1],"-auto")==0){
@@ -71,7 +73,7 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
  		<<"RTKM" <<"RTKMP" <<"HYDR"  <<"CHMF" <<"URKA" <<"YNDX" <<"VTBR" ; 
 
 
-	sql_open_database("trading",db_trading);
+
 	QMap<QString,C_Instrument> mapInstrument;
 
 	for(int i=0; i<TransaqConnector.listActive.size();i++){

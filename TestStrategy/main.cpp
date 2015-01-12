@@ -19,7 +19,7 @@ bool Trade(QList<SOrder>& listTryBuy, QList<SOrder>& listTrySell,  C_SubVector<S
 	bool hit=false;
 	for(uint i=0; i<vecTicks.size; i++){
 		S_Tick& tick=vecTicks[i];
-		if (!tick.isSell()){
+		if (tick.isSell()){
 			while(!listTrySell.isEmpty()){
 				SOrder& my=listTrySell.first();
 				if (tick.price<my.Price-0.001)

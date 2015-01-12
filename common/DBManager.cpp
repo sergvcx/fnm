@@ -1196,11 +1196,13 @@ uint sql_get_last_datetime_from_seccode_deal(QSqlDatabase& db, QString seccode)
 uint sql_get_last_id_from_tbl(QSqlDatabase& db, QString tbl)
 {
 	QSqlQuery query(db);
-	QString Cmd="SELECT * FROM " + tbl+ " ORDER BY id DESC LIMIT 1";
+	QString Cmd="SELECT MAX(id) FROM " + tbl;
 	bool ok=query.exec(Cmd);
 	_ASSERTE(ok);
 	VALID(query);
-	uint id=query.value(0).toInt();
+	uint id=0;
+	if (query.next())
+		id=query.value(0).toInt();
 	return id;
 }
 
@@ -1400,7 +1402,7 @@ uint sql_show_tables(QSqlDatabase& db, QString suffix, QList<QString>& listTable
 bool sql_switch_buysell(QSqlDatabase& db, QString tbl, uint index)
 {
 	QSqlQuery query(db);
-	QString cmd = "SELECT * FROM " +tbl+ "WHERE ID=" + index;
+	QString cmd = "SELECT * FROM " +tbl+ " WHERE ID=" + QString::number(index);
 
 	bool ok=query.exec(cmd);
 	_ASSERTE(ok);
@@ -1408,6 +1410,8 @@ bool sql_switch_buysell(QSqlDatabase& db, QString tbl, uint index)
 
 
 	SDeal Deal;
+	query.next();
+	uint id     =query.value(0).toInt();
 	Deal.nDate  =query.value(1).toInt();
 	Deal.nTime  =query.value(2).toInt();
 	Deal.nVolume=query.value(3).toInt();
@@ -1419,7 +1423,7 @@ bool sql_switch_buysell(QSqlDatabase& db, QString tbl, uint index)
 	else 
 		Deal.SetDemandType();
 	
-	cmd= "UPDATE "+tbl+ " SET trtype=" +QString::number(Deal.nType)+ " WHERE ID="+index;
+	cmd= "UPDATE "+tbl+ " SET trtype=" +QString::number(Deal.nType)+ " WHERE ID="+ QString::number(index);
 	ok=query.exec(cmd);
 	_ASSERTE(ok);
 	return ok;
@@ -1430,22 +1434,25 @@ bool sql_switch_all_buysell(QSqlDatabase& db)
 	QSqlQuery query(db);
 	sql_show_tables(db,"_deal",listTables);
 	for(int i=0; i<listTables.size();i++){
+		
  		QString tbl=listTables[i];
-// 		QString cmd= "SELECT * FROM "+ tbl + "WHERE trdate=24 LIMIT 1";
-// 		bool ok=query.exec(cmd);
-// 		_ASSERTE(ok);
-// 		VALID(query);
-// 
-// 		SDeal Deal;
-// 		uint ID     =query.value(0).toInt();
-// 		Deal.nDate  =query.value(1).toInt();
-// 		Deal.nTime  =query.value(2).toInt();
-// 		Deal.nVolume=query.value(3).toInt();
-// 		Deal.Price  =query.value(4).toDouble();
-// 		Deal.nType  =query.value(5).toInt();
+		qDebug()<< tbl;
+		QString cmd= "SELECT * FROM "+ tbl + " WHERE trdate>=20141224 LIMIT 1";
+		bool ok=query.exec(cmd);
+		_ASSERTE(ok);
+		VALID(query);
+		_ASSERTE(query.next());
+
+		SDeal Deal;
+		uint ID     =query.value(0).toInt();
+		Deal.nDate  =query.value(1).toInt();
+		Deal.nTime  =query.value(2).toInt();
+		Deal.nVolume=query.value(3).toInt();
+		Deal.Price  =query.value(4).toDouble();
+		Deal.nType  =query.value(5).toInt();
 
 		uint lastID=sql_get_last_id_from_tbl(db, tbl);
-		for(int id=lastID; id<=lastID; i++)
+		for(int id=ID; id<=lastID; id++)
 			sql_switch_buysell(db, tbl,id);
 	}
 	return true;
