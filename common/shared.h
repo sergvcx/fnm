@@ -114,7 +114,7 @@ struct S_Tick{
 		return dt;
 	}
 };
-
+//============================ S_EasyTicks ====================================
 
 struct S_EasyTicks{
 	S_Tick	data[LIMIT_TICKS];
@@ -186,9 +186,11 @@ struct S_EasyTicks{
 				NewTick.type|=FIRST_IN_SECOND;	
 		}
 		if (Tick.buysell=="S")
-			NewTick.SetSellType();
-		else 
+			//NewTick.SetSellType();
 			NewTick.SetBuyType();
+		else 
+			//NewTick.SetBuyType();
+			NewTick.SetSellType();
 		size++;
 	}
 };
@@ -312,7 +314,7 @@ struct S_EasyOrders{
 	}
 };
 
-struct S_CancleOrder {
+struct S_CancelOrder {
 	uint transactionid;
 	uint status;
 };
@@ -323,7 +325,7 @@ struct S_CancelOrders
 	uint head;
 	uint tail;
 };
-
+//======================= S_EasyQuotes ============================================
 struct S_EasyQuotes{
 	C_EasyQuote data[LIMIT_QOUTES];
 	uint			size;
@@ -684,6 +686,8 @@ struct S_EasyQuotes{
 	}
 
 } ;
+
+//======================= C_SharedMemoryInstrument ============================================
 class C_SharedMemoryInstrument {
 public:
 	
@@ -738,6 +742,7 @@ public:
 	
 };
 
+//======================= C_Instrument ============================================
 
 class C_Instrument {
 private:

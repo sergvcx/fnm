@@ -59,17 +59,6 @@ CDBManager::CDBManager(QWidget *parent): QWidget(parent){
 	QTime time;
 	time.currentTime();
 	int min=time.minute();
-/*
-	db_quik= QSqlDatabase::addDatabase("QMYSQL","dbmanager_quik"+QString::number(min));
-	db_quik.setHostName("");
-	db_quik.setDatabaseName("quik");
-	//db_quik.setDatabaseName("quiktest");
-	db_quik.setUserName("root");
-	db_quik.setPassword("root");
-	if (!db_quik.open()) {
-		QMessageBox::critical(0, QObject::tr("Database Error"), db_quik.lastError().text());
-	}
-*/
 
 	db_trading = QSqlDatabase::addDatabase("QMYSQL","dbmanager_trading"+QString::number(min));
 	db_trading.setHostName("");
@@ -1204,6 +1193,16 @@ uint sql_get_last_datetime_from_seccode_deal(QSqlDatabase& db, QString seccode)
 	return last_dt;
 }
 
+uint sql_get_last_id_from_tbl(QSqlDatabase& db, QString tbl)
+{
+	QSqlQuery query(db);
+	QString Cmd="SELECT * FROM " + tbl+ " ORDER BY id DESC LIMIT 1";
+	bool ok=query.exec(Cmd);
+	_ASSERTE(ok);
+	VALID(query);
+	uint id=query.value(0).toInt();
+	return id;
+}
 
 
 void Ticks2Mysql ( QSqlQuery& query, QString seccode, S_EasyTicks& ticks,   uint fromIndex, uint count, unsigned afterDateTime)
@@ -1397,3 +1396,57 @@ uint sql_show_tables(QSqlDatabase& db, QString suffix, QList<QString>& listTable
 	return i;
 }
 
+
+bool sql_switch_buysell(QSqlDatabase& db, QString tbl, uint index)
+{
+	QSqlQuery query(db);
+	QString cmd = "SELECT * FROM " +tbl+ "WHERE ID=" + index;
+
+	bool ok=query.exec(cmd);
+	_ASSERTE(ok);
+	VALID(query);
+
+
+	SDeal Deal;
+	Deal.nDate  =query.value(1).toInt();
+	Deal.nTime  =query.value(2).toInt();
+	Deal.nVolume=query.value(3).toInt();
+	Deal.Price  =query.value(4).toDouble();
+	Deal.nType  =query.value(5).toInt();
+
+	if (Deal.IsBuy())
+		Deal.SetSupplyType();
+	else 
+		Deal.SetDemandType();
+	
+	cmd= "UPDATE "+tbl+ " SET trtype=" +QString::number(Deal.nType)+ " WHERE ID="+index;
+	ok=query.exec(cmd);
+	_ASSERTE(ok);
+	return ok;
+}
+bool sql_switch_all_buysell(QSqlDatabase& db)
+{
+	QStringList listTables;
+	QSqlQuery query(db);
+	sql_show_tables(db,"_deal",listTables);
+	for(int i=0; i<listTables.size();i++){
+ 		QString tbl=listTables[i];
+// 		QString cmd= "SELECT * FROM "+ tbl + "WHERE trdate=24 LIMIT 1";
+// 		bool ok=query.exec(cmd);
+// 		_ASSERTE(ok);
+// 		VALID(query);
+// 
+// 		SDeal Deal;
+// 		uint ID     =query.value(0).toInt();
+// 		Deal.nDate  =query.value(1).toInt();
+// 		Deal.nTime  =query.value(2).toInt();
+// 		Deal.nVolume=query.value(3).toInt();
+// 		Deal.Price  =query.value(4).toDouble();
+// 		Deal.nType  =query.value(5).toInt();
+
+		uint lastID=sql_get_last_id_from_tbl(db, tbl);
+		for(int id=lastID; id<=lastID; i++)
+			sql_switch_buysell(db, tbl,id);
+	}
+	return true;
+}
