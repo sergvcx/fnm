@@ -358,13 +358,13 @@ bool CALLBACK acceptor(BYTE *pData)
 			Instrument.Lock();
 			while (!queueTrade.isEmpty()){
 				S_XML_TradeInfo& xml_trade=queueTrade.head();
-				Instrument.pData->OrdersAndTrades << xml_trade;
+				Instrument.pData->Trades << xml_trade;
 				queueTrade.removeFirst();
 			}
 			Instrument.Unlock();
 		}
 	}
-	//------- разгребаем заявки сделки ---------
+	//------- разгребаем заявки  ---------
 	foreach ( QString seccode, mapOrder.keys()){
 		if (TransaqConnector.mapInstrument.contains(seccode)){
 			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
@@ -375,7 +375,8 @@ bool CALLBACK acceptor(BYTE *pData)
 				//if ( Instrument.pTickLog)
 				//	*Instrument.pTickLog<<tick.toXML() <<"\n";
 
-				Instrument.pData->OrdersAndTrades << xml_order;
+				bool ok=Instrument.pData->Orders << xml_order;
+				_ASSERTE(ok);
 				queueOrder.removeFirst();
 			}
 			Instrument.Unlock();

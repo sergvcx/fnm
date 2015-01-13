@@ -100,7 +100,7 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 
 	}
 
-	qDebug() << "map Instrumente is constructed";
+	qDebug() << "map Instrument is constructed";
 
 
 	//sql_drop_tables(db_trading,TransaqConnector.listActive,"_quote");
@@ -144,6 +144,15 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 
 	//QMap<QString,C_Instrument> mapInstrument;
 
+	C_Instrument& Instrument=mapInstrument["aflt"];
+
+	Instrument.pData->Orders.NewOrders.Insert(12,1,'B');
+
+
+	while (1){
+
+		Sleep(100);
+	}
 
 	QSqlQuery tick_query(db_trading);
 

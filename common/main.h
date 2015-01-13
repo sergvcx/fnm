@@ -14,6 +14,9 @@
 #define FIRST_IN_SECOND 2
 //#define LAST_IN_SECOND 4
 
+// const char *c_str1 = str.toStdString().c_str();
+// const char *cString = qString1.toUtf8().constData(); 
+
 #define STR(a) a.toAscii().data()
 #define RUS(str) QString::fromLocal8Bit(str.toAscii().data())
 #define ASCII(str) str.toAscii().data()

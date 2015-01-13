@@ -18,6 +18,7 @@
 #define LIMIT_GLASSES 16 //32768*8
 #define LIMIT_KILLS 128 //32768*8
 #define GLASS_DEPTH 7
+#define LIMIT_TRADES 1024
 
 inline QString DateTime2Text(uint datetime)
 {
@@ -280,51 +281,221 @@ struct S_Glass
 // {
 // 	
 // }
-struct S_EasyOrder {
-	float price;
-	uint quantity;
-	uint completed;
-	bool is_buy;
-	uint status;
-	uint cancle;
-	uint id;
 
 
-	//reply_from_connector;
-	//reply_from_micex;
+struct S_XML_OrderInfo{
+	QString transactionid;
+	QString orderno;
+	QString secid;
+	QString board;
+	QString seccode;
+	QString client;
+	QString status;
+	QString buysell;
+	QString brokerref;
+	QString time;
+	QString value; // объем за€вки в копейках
+	QString accruedint;
+	QString settlecode;
+	QString balance; //Ќеудовлетворенный остаток объема за€вки в лотах (контрактах)
+	QString price;
+	QString quantity;
+	QString result; //сообщение биржи в случае отказа выставить  за€вку
+
 };
 
-struct S_XML_OrderInfo ;
-struct S_XML_TradeInfo ;
+struct S_XML_TradeInfo
+{
+	QString secid;		//»дентификатор бумаги
+	QString tradeno;	//Ќомер сделки на биржеQString
+	QString orderno;	//Ќомер за€вки на биржеQString
+	QString board;		//»дентификатор бордаQString /board; //
+	QString seccode;	//  од инструмента QString /seccode; //
+	QString client;	//»дентификатор клиентаQString /client; //
+	QString buysell;	//B - покупка, S - продажаQString /buysell; //
+	QString time;		//врем€ сделкиQString /time; //
+	QString brokerref; //примечаниеQString /brokerref; //
+	QString value;		//объем сделкиQString /value; //
+	QString comission; //комисси€QString /comission; //
+	QString price;		//ценаQString /price; //
+	QString quantity; //количество лотовQString /quantity; //
+	QString yield;		//доходностьQString /yield; //
+	QString accruedint; //Ќ ƒQString /accruedint; //
+	QString tradetype; //тип сделки: СTТ Ц обычна€ СNТ Ц –ѕ— СRТ Ц –≈ѕќ 	СPТ Ц размещениеQString /tradetype; //
+	QString settlecode; //код поставкиQString /settlecode; //
+	QString currentpos; //“екуща€ позици€ по инструментуuint /currentpos; //
+};
 
-struct S_EasyOrders{
-	S_EasyOrder data[LIMIT_ORDERS];
-	uint		size;
-	S_EasyOrders(){
-		size=0;
-	}
-	
-	void operator << (S_XML_OrderInfo& Order)
-	{
+struct S_EasyTrade 
+{
+	uint tradeno;
+	uint orderno;
+	uint time;
+	uint quantity;
+	char buysell;
+	float commision;
+	float price;
+	uint currentpos;
+};
 
-	}
-	void operator << (S_XML_TradeInfo& Trade)
-	{
+struct S_EasyTrades 
+{
+	S_EasyTrade data[LIMIT_TRADES];
+	uint head;
+	uint tail;
 
+	void Init(){
+		head=0;
+		tail=0;
 	}
+	S_EasyTrade& operator [] (uint idx){
+		return data[idx&(LIMIT_TRADES-1)];
+	}
+	bool operator << (S_XML_TradeInfo& Trade){
+		if (head==tail+LIMIT_TRADES)
+			return false;
+		S_EasyTrade& trade=data[(head+1)&(LIMIT_TRADES-1)];
+		if (Trade.buysell=="B")
+			trade.buysell='B';
+		else if (Trade.buysell=="S")
+			trade.buysell='S';
+		trade.orderno=Trade.orderno.toUInt();
+		trade.commision=Trade.comission.toFloat();
+		trade.currentpos=Trade.currentpos.toUInt();
+		trade.quantity=Trade.quantity.toUInt();
+		trade.price=Trade.price.toFloat();
+		//trade.time=
+		head++;
+		return true;
+	}
+
 };
 
 struct S_CancelOrder {
 	uint transactionid;
-	uint status;
+	struct {
+		int  success;
+		char result[128];
+	} transaq;
 };
 
-struct S_CancelOrders 
+struct S_NewOrder
 {
-	S_CancelOrder data[LIMIT_KILLS];
-	uint head;
-	uint tail;
+	//-------- my order ------------
+	float price;
+	uint quantity;
+	char buysell;
+	bool bymarket;
+	//--------- transaq reply ------
+	struct {
+		int  success;
+		uint transactionid;
+		char result[128];
+	} transaq;
+	//--------- micex reply --------
+	struct {
+		uint orderno;
+		float price;
+		uint quantity;
+		uint time;
+		uint accepttime;
+		char result[128];
+		uint balance;
+	} server;
+	
 };
+
+
+struct S_EasyOrders
+{
+	struct S_NewOrders
+	{
+		S_NewOrder data[LIMIT_ORDERS];
+		uint head;
+		uint tail;
+		void Init(){
+			head=0;
+			tail=0;
+		}
+		S_NewOrder* Insert(float price, uint quantity, char buysell, bool bymarket=false){
+			_ASSERTE(head<tail+LIMIT_ORDERS);
+			S_NewOrder& order=data[(head+1)&(LIMIT_ORDERS-1)];
+			order.price=price;
+			order.quantity=quantity;
+			order.buysell=buysell;
+			order.bymarket=bymarket;
+			order.transaq.success=-1;
+			order.transaq.transactionid=-1;
+			order.transaq.result[0]=0;
+			order.server.orderno=0;
+			order.server.result[0]=0;
+			
+			head++;
+			while (order.transaq.success==-1){
+				if (order.transaq.success==0)
+					return 0;
+				else 
+					return &order;
+				//Sleep(100);
+			}
+
+		}
+		S_NewOrder& operator [] (uint idx){
+			return data[idx&(LIMIT_ORDERS-1)];
+		}
+	} NewOrders;
+
+	struct S_CancelOrders 
+	{
+		S_CancelOrder data[LIMIT_KILLS];
+		uint head;
+		uint tail;
+		void Init(){
+			head=0;
+			tail=0;
+		}
+		bool Insert(uint id){
+			_ASSERTE(head<tail+LIMIT_KILLS);
+			S_CancelOrder& order=data[(head+1)&(LIMIT_KILLS-1)];
+			order.transactionid=id;
+			order.transaq.success=-1;
+			order.transaq.result[0]=0;
+			head++;
+			while (order.transaq.success==-1){
+				if (order.transaq.success==0)
+					return false;
+				else 
+					return true;
+				//Sleep(100);
+			}
+		}
+		
+	} CancelOrders;
+
+	
+	bool operator << (S_XML_OrderInfo& Reply)
+	{
+		uint transactionid=Reply.transactionid.toUInt();
+		for(int idx=NewOrders.head; idx>=0; idx--){
+			S_NewOrder& order=NewOrders[idx];
+			if (order.transaq.transactionid==transactionid){
+				order.server.orderno=Reply.orderno.toUInt();
+				order.server.price  =Reply.price.toFloat();
+				order.server.quantity=Reply.quantity.toUInt();
+				order.server.balance =Reply.balance.toUInt();
+				strncpy(order.server.result,STR(Reply.result),127);
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	void Init(){
+		CancelOrders.Init();
+		NewOrders.Init();
+	}
+};
+
 //======================= S_EasyQuotes ============================================
 struct S_EasyQuotes{
 	C_EasyQuote data[LIMIT_QOUTES];
@@ -695,11 +866,14 @@ public:
 	
 	S_EasyTicks	Ticks;
 	S_EasyQuotes Quotes;
-	S_EasyOrders OrdersAndTrades;
+	S_EasyTrades Trades;
+	S_EasyOrders Orders;
 	void Init(){
 		Ticks.Init();
 		Glasses.Init();
 		Quotes.Init();
+		Trades.Init();
+		Orders.Init();
 	}
 	struct {
 		C_FixedGlass data[LIMIT_GLASSES];
