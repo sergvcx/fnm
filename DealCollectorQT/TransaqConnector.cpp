@@ -612,7 +612,8 @@ bool CALLBACK acceptor(BYTE *pData)
 
 			QString success;
 			QString diff;
-			bool ok=ParseResult(en,success,"diff",diff);
+			QString text;
+			bool ok=ParseResult(en,success,"diff",diff,text);
 			_ASSERTE(ok);
 // 			QXmlStreamReader xml(en);
 // 			while (!xml.atEnd() && !xml.hasError()){
@@ -748,7 +749,8 @@ bool CALLBACK acceptor(BYTE *pData)
 		return 0;
 	}
 	//============ neworder =====================================================
-	int C_TransaqConnector::neworder(QString seccode,float price, uint quantity, QString buysell, QString brokerref)
+	//int C_TransaqConnector::neworder(QString seccode,float price, uint quantity, QString buysell, QString& result, int& transactionid)
+	int C_TransaqConnector::neworder(QString seccode,S_NewOrder& order)
 	{
 		try {
 			std::cout<<"Sending 'neworder' command..."<<std::endl;
@@ -764,10 +766,10 @@ bool CALLBACK acceptor(BYTE *pData)
 			Cmd+=		"<seccode>"+seccode+"</seccode>";
 			Cmd+=	"</security>";
 			Cmd+=	"<client>" CLIENT_ID "</client>";
-			Cmd+=	"<price>"+QString::number(price)+"</price>";
-			Cmd+=	"<quantity>"+QString::number(quantity)+"</quantity>";
-			Cmd+=	"<buysell>"+buysell+"</buysell>";
-			Cmd+=	"<brokerref>"+brokerref+"</brokerref>";
+			Cmd+=	"<price>"+QString::number(order.price)+"</price>";
+			Cmd+=	"<quantity>"+QString::number(order.quantity)+"</quantity>";
+			Cmd+=	"<buysell>"+QString(order.buysell)+"</buysell>";
+			//Cmd+=	"<brokerref>"+brokerref+"</brokerref>";
 			Cmd+="</command>";
 
 			printf(STR(Cmd));
@@ -779,8 +781,18 @@ bool CALLBACK acceptor(BYTE *pData)
 			FreeMemory(ss);
 			QString success;
 			QString transactionid;
-			if (ParseResult(en,success,"transactionid",transactionid)){
-				return transactionid.toInt();
+			QString text;
+			if (ParseResult(en,success,"transactionid",transactionid,text)){
+				if (success=="true"){
+					order.transaq.success=true;
+					order.transaq.transactionid=transactionid.toUInt();
+				}
+				else if (success=="false"){
+					order.transaq.success=false;
+					strncpy(order.transaq.result,STR(text),128);
+				}
+				
+				//return transactionid.toInt();
 			}
 			
 			
@@ -792,6 +804,54 @@ bool CALLBACK acceptor(BYTE *pData)
 		}
 		return 0;
 	}
+
+	int C_TransaqConnector::cancelorder(S_CancelOrder& order)
+	{
+		try {
+			std::cout<<"Sending 'cancle order' command..."<<std::endl;
+
+			QString Cmd;
+			Cmd ="<command id='cancelorder'>";
+			Cmd+=	"<transactionid>";
+			Cmd+=		QString::number(order.transactionid);
+			Cmd+=	"</transactionid>";
+			Cmd+="</command>";
+
+			printf(STR(Cmd));
+			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
+			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+			QString  en = codec->toUnicode((char*)ss); 
+			qDebug() << en+"\n"; 
+
+			FreeMemory(ss);
+			QString success;
+			QString dummy;
+			QString result;
+
+			if (ParseResult(en,success,"dummy",dummy,result)){
+				if (success=="true"){
+					order.transaq.success=true;
+					//order.transaq.transactionid=transactionid.toUInt();
+				}
+				else if (success=="false"){
+					order.transaq.success=false;
+					strncpy(order.transaq.result,STR(result),128);
+				}
+
+				//strncpy(order)
+				//return transactionid.toInt();
+			}
+
+
+		}
+		catch (std::runtime_error& e) {
+			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+			UnloadLibrary(hm);
+			return 1;
+		}
+		return 0;
+	}
+
 
 	//============ get_securities  ===========================================
 	int C_TransaqConnector::get_securities(){
@@ -851,4 +911,36 @@ bool CALLBACK acceptor(BYTE *pData)
 		//while (isBusy)
 		//	Sleep(500);
 		return (ServerStatus.connected=="true");
+	}
+
+	void C_TransaqConnector::run(){
+		qDebug() << "trasaq is listening...";
+		while(1){
+			foreach(QString seccode, mapInstrument.keys()){
+				C_Instrument& Instrument=mapInstrument[seccode];
+				//---------------- new order ---------------
+				{
+					uint& head=Instrument.pData->Orders.NewOrders.head;
+					uint& tail=Instrument.pData->Orders.NewOrders.tail;
+					while(head>tail){
+						S_NewOrder& order=Instrument.pData->Orders.NewOrders[head];
+						neworder(seccode, order);
+						tail++;
+					}
+				}
+				//------------------ cancle order--------------
+				{
+					uint& head=Instrument.pData->Orders.CancelOrders.head;
+					uint& tail=Instrument.pData->Orders.CancelOrders.tail;
+					while(head>tail){
+						S_CancelOrder& order=Instrument.pData->Orders.CancelOrders[head];
+						cancelorder(order);
+						tail++;
+					}
+				}
+			}
+			msleep(100);			
+		}
+		
+
 	}

@@ -3,7 +3,7 @@
 #include "main.h"
 #include "shared.h"
 
-bool ParseResult(QString& result, QString& success_value, QString att_key, QString& att_value)
+bool ParseResult(QString& result, QString& success_value, QString att_key, QString& att_value, QString& result_text)
 {
 	QXmlStreamReader xml(result);
 	while (!xml.atEnd() && !xml.hasError()){
@@ -13,6 +13,8 @@ bool ParseResult(QString& result, QString& success_value, QString att_key, QStri
 			continue;
 
 		if (xml.isStartElement() && xml.name() == "result"){
+
+			result_text= xml.readElementText();
 
 			QXmlStreamAttributes attributes = xml.attributes();
 			if (attributes.hasAttribute("success"))

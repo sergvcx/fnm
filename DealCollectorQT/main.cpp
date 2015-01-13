@@ -156,6 +156,7 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 
 	QSqlQuery tick_query(db_trading);
 
+	TransaqConnector.start();
 	while (1){
 		//Instrument.pData->Quotes.UpdateCurrentQuotes()
 		

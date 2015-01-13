@@ -432,15 +432,14 @@ struct S_EasyOrders
 			
 			head++;
 			while (order.transaq.success==-1){
-				if (order.transaq.success==0)
-					return 0;
-				else 
-					return &order;
-				//Sleep(100);
-			}
 
+			}
+			if (order.transaq.success==0)
+				return 0;
+			else 
+				return &order;
 		}
-		S_NewOrder& operator [] (uint idx){
+		S_NewOrder& operator [] (uint idx)		{
 			return data[idx&(LIMIT_ORDERS-1)];
 		}
 	} NewOrders;
@@ -469,7 +468,9 @@ struct S_EasyOrders
 				//Sleep(100);
 			}
 		}
-		
+		S_CancelOrder& operator[] (uint idx){
+			return data[(idx)&(LIMIT_KILLS-1)];
+		}
 	} CancelOrders;
 
 	

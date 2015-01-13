@@ -1,14 +1,17 @@
 #ifndef TRAHNSAQCONNECTOR_DEFINED
 #define TRAHNSAQCONNECTOR_DEFINED
+
 #include <windows.h>
+#include "main.h"
+#include "shared.h"
 
 #include <iostream>
 #include <fstream>
 #include <qfile>
 #include <QSharedMemory>
+#include <QThread>
 #include <qtdEBUG>
-#include "main.h"
-#include "shared.h"
+
 //class C_SharedMemoryInstrument;
 //class C_Instrument;
 
@@ -67,7 +70,7 @@ struct  S_Security {
 
 
 
-class C_TransaqConnector {
+class C_TransaqConnector:  public QThread {
 	HMODULE hm;
 	static const unsigned buffSize = 256;
 	char error[buffSize];
@@ -77,7 +80,7 @@ class C_TransaqConnector {
 	typeSetLogLevel  SetLogLevel;
 	typeSetCallback  SetCallback;
 	typeSendCommand  SendCommand;
-	
+	Q_OBJECT
 public:
 	int servtime_difference;	// время сервера - время на компьютере (+ на эту величину нужно корректировать )
 	bool isBusy;
@@ -95,7 +98,9 @@ public:
 	int get_securities();
 	int change_pass();
 	int get_servtime_difference();
-	int neworder(QString seccode,float price, uint quantity, QString buysell, QString brokerref);
+	//int neworder(QString seccode,float price, uint quantity, QString buysell);
+	int neworder(QString seccode,S_NewOrder& order);
+	int cancelorder(S_CancelOrder& order);
 
 	C_TransaqConnector& operator << (QString seccode);
 	//C_TransaqConnector& operator << (QList<QString>& list);
@@ -106,6 +111,11 @@ public:
 
 
 	bool isConnected();
+protected:	
+	void run();
+	void stop(){
+
+	}
 };
 
 void OpenXML();
