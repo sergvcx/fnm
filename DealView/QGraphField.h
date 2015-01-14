@@ -133,7 +133,7 @@ public:
 	void* mainWin;
 	//QSqlDatabase db_trading;
 	//int ReadData(QDateTime DateTime0, QDateTime DateTime1, QString StockCode);
-	QVector<SPortfolio*> Portfolios;
+	//QVector<SPortfolio*> Portfolios;
 
 	QString StockCode;
 	QString StockName;
@@ -165,6 +165,9 @@ public:
 	QVector<SMyDeal>	vecTrade;
 	QVector<SRequest>	vecRequest;
 
+	unsigned minDateTime;
+	unsigned maxDateTime;
+
 public slots:
 	void ZoomInX();
 	void ZoomOutX();
@@ -187,7 +190,10 @@ public slots:
 	
 	
 		
+	
 	void Histo();
+
+
 
 protected:
 	void paintEvent(QPaintEvent *event);
@@ -196,14 +202,14 @@ protected:
 
 private:
 
+	int		ViewMode;
 	float	minY;
 	float	maxY;
 
 	double	MX;
 	double	MY;
 	int		WinHeight;
-
-
+	
 };
 
 

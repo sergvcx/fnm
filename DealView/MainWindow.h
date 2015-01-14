@@ -118,6 +118,12 @@ private:
 	QDateTime DateTime1;
 
 	QVector<SPortfolio*> Portfolios;
+// 	QVector<S_EasyTrade> Trade;
+// 	QVector<C_EasyQuote> Quote;
+// 	QVector<C_EasyTrade*> TimeLineTrade;
+// 	QVector<C_EasyQuote*> TimeLineQuote;
+// 	QVector<S_Tick*> TimeLineTrade;
+
 
 };
 

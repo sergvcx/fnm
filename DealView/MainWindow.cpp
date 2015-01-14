@@ -430,6 +430,7 @@ void MainWindow::ReadMyDeals(){
 		//Deal.Balance=query.value(5).toInt();
 		qGraphField->vecTrade << MyDeal;
 	}
+	
 }
 
 void MainWindow::ReadRequest(){
@@ -476,6 +477,11 @@ void MainWindow::ReadDeal(){
 
 	sql_read_ticks (db_trading, StockCode, DateTime0, DateTime1, Instrument.pData->Ticks);
 	sql_read_quotes(db_trading, StockCode, DateTime0, DateTime1, Instrument.pData->Quotes);
+
+	uint lastIdx=Instrument.pData->Ticks.size-1;
+	qGraphField->minDateTime=Instrument.pData->Ticks.data[0].datetime;
+	qGraphField->maxDateTime=Instrument.pData->Ticks.data[lastIdx].datetime;
+	
 
 // 	int nDate0=intDate(DateTime0);
 // 	int nDate1=intDate(DateTime1);

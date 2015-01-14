@@ -97,6 +97,8 @@ void QGraphField::paintEvent(QPaintEvent * event)
 //	int nDate1=vecDeal[x1].nDate;
 	
 	//---------------- рисуем график сделок -----------------------------
+if (!bViewOfferFlag){
+
 	painter.setPen(BlackPen);
 	int SwitchColor=5;
 	printf("----------------\n");
@@ -350,6 +352,26 @@ void QGraphField::paintEvent(QPaintEvent * event)
 		painter.setPen(GreenPen);
 		painter.drawLine(x0,0,x0,WinHeight);
 	}
+}
+//============================================
+else {
+	S_EasyTicks& Ticks=pInstrument->pData->Ticks;
+	S_Tick* pTick=Ticks.data;
+	painter.setPen(BlackPen);
+
+	for(int i=0; i<Ticks.size; i++, pTick++){
+
+		uint x=x2pix(pTick->datetime-minDateTime);
+		uint y=y2pix(pTick->price);
+		if (pTick->isSell())
+			painter.setBrush(GreenBrush);
+		else 
+			painter.setBrush(RedBrush);
+		painter.drawRect(x-1,y-1,3,3);			
+	}
+
+}
+//=====================================
 	WatchDialog->raise();
 
 
@@ -378,19 +400,22 @@ int QGraphField::Rescale(){
 			minY=val;
 	}
 
-	// pixy=y*MY+C;
-	// 0=maxY*MY+C
-	// winheight-1=minY*MY+C
-	// MY=(winheight-1)/(minY-MaxY)
-	// C =-maxY*MY
-	// pixy=y*MY-maxY*MY;
-	// pixy=(y-maxY)*MY
-	
-
-	MX=4;
 	MY=-(WinHeight-1)/(maxY-minY);
-	setMinimumSize(DataSize*MX,WinHeight);
-	setMaximumSize(DataSize*MX,WinHeight);
+	if (!bViewOfferFlag){
+		MX=4;
+		setMinimumSize(DataSize*MX,WinHeight);
+		setMaximumSize(DataSize*MX,WinHeight);
+	}
+	else 
+	{
+
+		MX=1;
+		setMinimumSize((maxDateTime-minDateTime)*MX,WinHeight);
+		setMaximumSize((maxDateTime-minDateTime)*MX,WinHeight);
+
+	}
+
+	
 	update();
 	
 	return 1;
