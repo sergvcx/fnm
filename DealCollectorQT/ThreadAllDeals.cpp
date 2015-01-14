@@ -308,7 +308,7 @@ void CThreadAllDeals::Parse(QQueue<S_XML_Tick>& TickQueue)
 			//printf(STR(Tick.seccode));
 			// читаем поля строки из БД
 			bool ok;
-			db_index	= Tick.tradeno.toLongLong(); //printf(STR(Tick.tradeno));
+			db_index	= Tick.tradeno.toULongLong(); //printf(STR(Tick.tradeno));
 			db_stcode	= Tick.seccode;
 			db_stdate	= Tick.tradetime.left(10.); //08.08.2014 10:01:52
 			db_sttime	= Tick.tradetime.right(8);

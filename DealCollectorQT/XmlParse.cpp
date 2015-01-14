@@ -6,26 +6,32 @@
 bool ParseResult(QString& result, QString& success_value, QString att_key, QString& att_value, QString& result_text)
 {
 	QXmlStreamReader xml(result);
+
+
 	while (!xml.atEnd() && !xml.hasError()){
 		xml.readNext();
 	
-		if (xml.isStartDocument())
-			continue;
+		//if (xml.isStartDocument())
+		//	continue;
 
-		if (xml.isStartElement() && xml.name() == "result"){
+		
+		if(xml.isStartElement() && xml.name() == "result") {
 
-			result_text= xml.readElementText();
+				QXmlStreamAttributes attributes = xml.attributes();
+				if (attributes.hasAttribute("success"))
+					success_value = attributes.value("success").toString();
 
-			QXmlStreamAttributes attributes = xml.attributes();
-			if (attributes.hasAttribute("success"))
-				success_value = attributes.value("success").toString();
+				if (attributes.hasAttribute(att_key))
+					att_value = attributes.value(att_key).toString();
 
-			if (attributes.hasAttribute(att_key))
-				att_value = attributes.value(att_key).toString();
+			}
+		if(xml.isStartElement() && xml.name() == "message") {
+				result_text= xml.readElementText();
 		}
+		
 	}
 	_ASSERTE(!xml.hasError());
-	return (success_value=="true");
+	return !xml.hasError();
 }
 
 int ParseOrder(QXmlStreamReader& xml,S_XML_OrderInfo& order)
@@ -35,14 +41,16 @@ int ParseOrder(QXmlStreamReader& xml,S_XML_OrderInfo& order)
 		return 0;
 	}
 
+	QXmlStreamAttributes attributes = xml.attributes();
+	if (attributes.hasAttribute("transactionid"))
+		order.transactionid = attributes.value("transactionid").toString();
+
 	xml.readNext();
 	//printf(STR(xml.name().toString()));
 	while(!(xml.isEndElement() && xml.name() == "order")) {
 		if(xml.isStartElement()) {
 
-			QXmlStreamAttributes attributes = xml.attributes();
-			if (attributes.hasAttribute("transactionid"))
-				order.transactionid = attributes.value("transactionid").toString();
+			
 
 			if(xml.name() == "orderno") {
 				order.orderno= xml.readElementText();
@@ -302,17 +310,19 @@ int ParseTrade(QXmlStreamReader& xml,S_XML_TradeInfo& trade)
 	while(!(xml.isEndElement() && xml.name() == "trade")) {
 		if(xml.isStartElement()) {
 
-			QXmlStreamAttributes attributes = xml.attributes();
-			if (attributes.hasAttribute("secid"))
-				trade.secid = attributes.value("secid").toString();
+
+			if(xml.name() == "secid") {
+				trade.secid= xml.readElementText();
+				continue;
+			}
 
 			if(xml.name() == "tradeno") {
 				trade.tradeno= xml.readElementText();
 				continue;
 			}
 
-			if(xml.name() == "tradeno") {
-				trade.tradeno= xml.readElementText();
+			if(xml.name() == "orderno") {
+				trade.orderno= xml.readElementText();
 				continue;
 			}
 

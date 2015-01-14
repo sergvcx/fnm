@@ -92,7 +92,7 @@ public:
 	int connect();
 	int disconnect();
 	int server_status();
-	int subscribe_ticks(QList<QString>& SeccodeList, int tradeno=1);
+	int subscribe_ticks(QList<QString>& SeccodeList, unsigned long long tradeno=1);
 	int subscribe_ticks(QString& seccode);
 	int subscribe(QList<QString>& SeccodeList);
 	int get_securities();

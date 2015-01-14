@@ -229,7 +229,7 @@ bool CALLBACK acceptor(BYTE *pData)
 					if (SecInfo.seccode=="")
 						std::cerr<< "ERROR: Empty seccode" <<std::endl;
 					else{
-						qDebug() << SecInfo.seccode ;
+						//qDebug() << SecInfo.seccode ;
 						if (TransaqConnector.mapInstrument.contains(SecInfo.seccode)){
 							copy(TransaqConnector.mapInstrument[SecInfo.seccode].pData->Info,SecInfo);
 							//QString fname="xml_quote_"+SecInfo.seccode+".xml";
@@ -376,7 +376,7 @@ bool CALLBACK acceptor(BYTE *pData)
 				//	*Instrument.pTickLog<<tick.toXML() <<"\n";
 
 				bool ok=Instrument.pData->Orders << xml_order;
-				_ASSERTE(ok);
+				//_ASSERTE(ok);
 				queueOrder.removeFirst();
 			}
 			Instrument.Unlock();
@@ -683,7 +683,7 @@ bool CALLBACK acceptor(BYTE *pData)
 		return 0;
 	}
 	//============ subscribe_ticks (list) ===========================================
-	int C_TransaqConnector::subscribe_ticks(QList<QString>& SeccodeList, int tradeno)
+	int C_TransaqConnector::subscribe_ticks(QList<QString>& SeccodeList, unsigned long long tradeno)
 	{
 		try {
 			std::cout<<"Sending 'subscribe ticks' command..."<<std::endl;
@@ -836,6 +836,7 @@ bool CALLBACK acceptor(BYTE *pData)
 				else if (success=="false"){
 					order.transaq.success=false;
 					strncpy(order.transaq.result,STR(result),128);
+					
 				}
 
 				//strncpy(order)
@@ -923,7 +924,7 @@ bool CALLBACK acceptor(BYTE *pData)
 					uint& head=Instrument.pData->Orders.NewOrders.head;
 					uint& tail=Instrument.pData->Orders.NewOrders.tail;
 					while(head>tail){
-						S_NewOrder& order=Instrument.pData->Orders.NewOrders[head];
+						S_NewOrder& order=Instrument.pData->Orders.NewOrders[tail];
 						neworder(seccode, order);
 						tail++;
 					}
@@ -933,7 +934,7 @@ bool CALLBACK acceptor(BYTE *pData)
 					uint& head=Instrument.pData->Orders.CancelOrders.head;
 					uint& tail=Instrument.pData->Orders.CancelOrders.tail;
 					while(head>tail){
-						S_CancelOrder& order=Instrument.pData->Orders.CancelOrders[head];
+						S_CancelOrder& order=Instrument.pData->Orders.CancelOrders[tail];
 						cancelorder(order);
 						tail++;
 					}

@@ -223,7 +223,7 @@ public:
 	{
 		if (SpreadMax<SpreadMin)
 			return ;
-		_ASSERTE(SpreadMax>SpreadMin);
+		_ASSERTE(SpreadMax>=SpreadMin);
 
 		FilterSell(listSell,SpreadMax*SellDelta.min, SpreadMax*SellDelta.max,Stocks);
 		FilterBuy( listBuy, SpreadMin*BuyDelta.min,  SpreadMin*BuyDelta.max, Cash);

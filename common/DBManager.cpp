@@ -1452,7 +1452,7 @@ bool sql_switch_all_buysell(QSqlDatabase& db)
 		Deal.nType  =query.value(5).toInt();
 
 		uint lastID=sql_get_last_id_from_tbl(db, tbl);
-		for(int id=ID; id<=lastID; id++)
+		for(uint id=ID; id<=lastID; id++)
 			sql_switch_buysell(db, tbl,id);
 	}
 	return true;

@@ -14,8 +14,13 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 
  int main(int argc, char *argv[])
  {
+	 
 	 setlocale(LC_ALL, "Russian");
 
+	 char p[100];
+
+	QString s="вывывtextрпор";
+	strncpy(p,STR(s),128);
 	
 // 	 uint dt=0;
 // 	 QDateTime datetime;
@@ -139,22 +144,48 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 		qDebug() << "Error in subscribe_ticks";
 		return 1;
 	}
+
+	
 	//if (!TransaqConnector.subscribe_ticks(TransaqConnector.listActive))
 	//	TransaqConnector.disconnect();
 
 	//QMap<QString,C_Instrument> mapInstrument;
 
-	C_Instrument& Instrument=mapInstrument["aflt"];
-
-	Instrument.pData->Orders.NewOrders.Insert(12,1,'B');
-
-
-	while (1){
-
-		Sleep(100);
-	}
-
+	
 	QSqlQuery tick_query(db_trading);
+//	TransaqConnector.start();
+// 	C_Instrument& Instrument=mapInstrument["VTBR"];
+// 
+// 	float price=0.065;
+// 	Instrument.pData->Orders.NewOrders.Insert(price,1,'S');
+// 	Sleep(5000);
+// 	while (Instrument.pData->Trades.head==3){
+// 		
+// 		uint& id=Instrument.pData->Orders.NewOrders.Last().transaq.transactionid;
+// 		qDebug() << "cancel" << price;
+// 		bool ok=Instrument.pData->Orders.CancelOrders.Insert(id);
+// 		_ASSERTE(ok);
+// 		qDebug() << "cancel ok";
+// 		price-=0.001;
+// 		qDebug() << "insert" << price;
+// 		Sleep(100);
+// 		Instrument.pData->Orders.NewOrders.Insert(price,1,'S');
+// 		Sleep(5000);
+// 		
+// 	}
+// 	qDebug()<< "hit";
+//274672
+// 	
+// 	
+// 
+// 
+// 
+// 	while (1){
+// 
+// 		Sleep(1000);
+// 	}
+
+	
 
 	TransaqConnector.start();
 	while (1){

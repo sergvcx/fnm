@@ -328,8 +328,8 @@ struct S_XML_TradeInfo
 
 struct S_EasyTrade 
 {
-	uint tradeno;
-	uint orderno;
+	unsigned long long tradeno;
+	unsigned long long orderno;
 	uint time;
 	uint quantity;
 	char buysell;
@@ -354,17 +354,19 @@ struct S_EasyTrades
 	bool operator << (S_XML_TradeInfo& Trade){
 		if (head==tail+LIMIT_TRADES)
 			return false;
-		S_EasyTrade& trade=data[(head+1)&(LIMIT_TRADES-1)];
+		S_EasyTrade& trade=data[head&(LIMIT_TRADES-1)];
 		if (Trade.buysell=="B")
 			trade.buysell='B';
 		else if (Trade.buysell=="S")
 			trade.buysell='S';
-		trade.orderno=Trade.orderno.toUInt();
+		trade.orderno=Trade.orderno.toULongLong();
+		trade.tradeno=Trade.orderno.toULongLong();
 		trade.commision=Trade.comission.toFloat();
 		trade.currentpos=Trade.currentpos.toUInt();
 		trade.quantity=Trade.quantity.toUInt();
 		trade.price=Trade.price.toFloat();
-		//trade.time=
+		trade.time=Text2DateTime(Trade.time).toTime_t();
+		trade.time=Text2DateTime(Trade.time).toTime_t();
 		head++;
 		return true;
 	}
@@ -394,7 +396,7 @@ struct S_NewOrder
 	} transaq;
 	//--------- micex reply --------
 	struct {
-		uint orderno;
+		unsigned long long orderno;
 		float price;
 		uint quantity;
 		uint time;
@@ -417,9 +419,18 @@ struct S_EasyOrders
 			head=0;
 			tail=0;
 		}
+		S_NewOrder& Last(){
+			_ASSERTE(head>0);
+			return data[(head-1)&(LIMIT_ORDERS-1)];
+		}
+// 		S_NewOrder& First(){
+// 			_ASSERTE(head==0);
+// 			return data[(head-1)&(LIMIT_ORDERS-1)];
+// 		}
+
 		S_NewOrder* Insert(float price, uint quantity, char buysell, bool bymarket=false){
 			_ASSERTE(head<tail+LIMIT_ORDERS);
-			S_NewOrder& order=data[(head+1)&(LIMIT_ORDERS-1)];
+			S_NewOrder& order=data[head&(LIMIT_ORDERS-1)];
 			order.price=price;
 			order.quantity=quantity;
 			order.buysell=buysell;
@@ -427,14 +438,14 @@ struct S_EasyOrders
 			order.transaq.success=-1;
 			order.transaq.transactionid=-1;
 			order.transaq.result[0]=0;
-			order.server.orderno=0;
+			order.server.orderno=-1;
 			order.server.result[0]=0;
 			
 			head++;
 			while (order.transaq.success==-1){
 
 			}
-			if (order.transaq.success==0)
+			if (order.transaq.success==false)
 				return 0;
 			else 
 				return &order;
@@ -455,18 +466,19 @@ struct S_EasyOrders
 		}
 		bool Insert(uint id){
 			_ASSERTE(head<tail+LIMIT_KILLS);
-			S_CancelOrder& order=data[(head+1)&(LIMIT_KILLS-1)];
+			S_CancelOrder& order=data[head&(LIMIT_KILLS-1)];
 			order.transactionid=id;
 			order.transaq.success=-1;
 			order.transaq.result[0]=0;
 			head++;
 			while (order.transaq.success==-1){
-				if (order.transaq.success==0)
-					return false;
-				else 
-					return true;
-				//Sleep(100);
+
 			}
+			if (order.transaq.success==false)
+				return false;
+			else 
+				return true;
+				//Sleep(100);
 		}
 		S_CancelOrder& operator[] (uint idx){
 			return data[(idx)&(LIMIT_KILLS-1)];
@@ -477,10 +489,11 @@ struct S_EasyOrders
 	bool operator << (S_XML_OrderInfo& Reply)
 	{
 		uint transactionid=Reply.transactionid.toUInt();
-		for(int idx=NewOrders.head; idx>=0; idx--){
+		_ASSERTE(transactionid);
+		for(int idx=NewOrders.head-1; idx>=0; idx--){
 			S_NewOrder& order=NewOrders[idx];
 			if (order.transaq.transactionid==transactionid){
-				order.server.orderno=Reply.orderno.toUInt();
+				order.server.orderno=Reply.orderno.toULongLong();
 				order.server.price  =Reply.price.toFloat();
 				order.server.quantity=Reply.quantity.toUInt();
 				order.server.balance =Reply.balance.toUInt();
