@@ -57,7 +57,7 @@ MainWindow::MainWindow()
 }
 
 void MainWindow::createActions(){
-	newAction = new QAction(tr("&New"), this);
+	newAction = new QAction(tr("&Open XML"), this);
 	newAction->setIcon(QIcon(":/images/new.png"));
 	newAction->setShortcut(QKeySequence::New);
 	newAction->setStatusTip(tr("Create a new spreadsheet file"));
@@ -220,6 +220,10 @@ void MainWindow::createStatusBar()
 	labelIndex->setMinimumWidth(40);//(setIndent(4);
 	labelIndex->setAlignment(Qt::AlignRight);
 
+	labelDateTime = new QLabel("------");
+	labelDateTime->setMinimumWidth(80);//(setIndent(4);
+	labelDateTime->setAlignment(Qt::AlignRight);
+
 	labelDate = new QLabel("-------");
 	labelDate->setMinimumWidth(40);//(setIndent(4);
 	labelDate->setAlignment(Qt::AlignRight);
@@ -249,6 +253,7 @@ void MainWindow::createStatusBar()
 	//labelVolume->setIndent(4);
 
 	statusBar()->addWidget(labelIndex);
+	statusBar()->addWidget(labelDateTime);
 	statusBar()->addWidget(labelDate);
 	statusBar()->addWidget(labelTime);
 	statusBar()->addWidget(labelPrice);
@@ -290,7 +295,7 @@ void MainWindow::newFile(){
 		this,
 		tr("Open file"),
 		"d:/Kitchen/MySoft/fnm/TestStrategy",
-		"xml files(*.xml)"
+		"xml files(" + StockCode+ "*.xml)"
 		);
 
 	QFile XmlFile(filename);

@@ -41,12 +41,14 @@ public:
 	QSqlDatabase db_trading;
 	QString StockCode;
 	QLabel *labelIndex;
+	QLabel *labelDateTime;
 	QLabel *labelDate;
 	QLabel *labelTime;
 	QLabel *labelPrice;
 	QLabel *labelVolume;
 	QLabel *labelPriceMouse;
-
+	
+	
 	C_Instrument Instrument;
 	void ReadRequest();
 	void ReadDeal();

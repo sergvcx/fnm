@@ -13,7 +13,7 @@
 //#include "TransaqConnector.h"
 
 #define LIMIT_TICKS  1024*256		// must be power of two
-#define LIMIT_QOUTES 1024*256		// must be power of two
+#define LIMIT_QUOTES 1024*256*4		// must be power of two
 #define LIMIT_ORDERS 1024		// must be power of two
 #define LIMIT_GLASSES 16 //32768*8
 #define LIMIT_KILLS 128 //32768*8
@@ -60,8 +60,7 @@ struct S_Tick{
 	int			quantity;
 	int			type;
 	uint		datetime;
-	//C_FixedGlass* pGlass;
-
+	
 	S_Tick(){
 		price=0;
 		quantity=0;
@@ -121,10 +120,10 @@ struct S_EasyTicks{
 	S_Tick	data[LIMIT_TICKS];
 	size_t	size;
 	S_Tick& operator[] (int idx){
-		return data[idx&(LIMIT_QOUTES-1)];
+		return data[idx&(LIMIT_TICKS-1)];
 	}
 	S_Tick& Last(){
-		return data[(size-1)&(LIMIT_QOUTES-1)];
+		return data[(size-1)&(LIMIT_TICKS-1)];
 	}
 	void Init(){
 		size=0;
@@ -139,7 +138,7 @@ struct S_EasyTicks{
 	uint FindAfter(uint dt, uint fromIndex=0)
 	{
 		S_Tick* pTick=data+fromIndex;
-		for(uint i=fromIndex; i<size; i++, pTick++){
+		for(uint i=fromIndex; i<MIN(size,LIMIT_TICKS); i++, pTick++){
 			if (pTick->datetime>dt)
 				return i;
 		}
@@ -153,7 +152,7 @@ struct S_EasyTicks{
 	{
 		S_Tick* pTick=data+fromIndex;
 		uint from_datetime=pTick->datetime;
-		for(uint i=fromIndex; i<size; i++, pTick++)
+		for(uint i=fromIndex; i<MIN(size,LIMIT_TICKS); i++, pTick++)
 			if (pTick->datetime>from_datetime)
 				return i;
 		return size;
@@ -161,15 +160,15 @@ struct S_EasyTicks{
 	
 	void operator << (S_Tick& Tick)
 	{
-		data[ size   &(LIMIT_QOUTES-1)]=Tick;
+		data[ size   &(LIMIT_TICKS-1)]=Tick;
 		size++;
 	}
 	
 	void operator << (S_XML_Tick& Tick)
 	{
 		bool ok;
-		S_Tick& NewTick =data[ size   &(LIMIT_QOUTES-1)];
-		S_Tick& LastTick=data[(size-1)&(LIMIT_QOUTES-1)];
+		S_Tick& NewTick =data[ size   &(LIMIT_TICKS-1)];
+		S_Tick& LastTick=data[(size-1)&(LIMIT_TICKS-1)];
 		NewTick.type     =0;
 		NewTick.price    =Tick.price.toFloat(&ok);
 		NewTick.quantity =Tick.quantity.toInt(&ok);
@@ -512,7 +511,7 @@ struct S_EasyOrders
 
 //======================= S_EasyQuotes ============================================
 struct S_EasyQuotes{
-	C_EasyQuote data[LIMIT_QOUTES];
+	C_EasyQuote data[LIMIT_QUOTES];
 	uint			size;
 	S_EasyQuotes(){
 		size=0;
@@ -522,12 +521,12 @@ struct S_EasyQuotes{
 	}
 	C_EasyQuote& operator [] (uint idx)
 	{
-		return data[idx&(LIMIT_QOUTES-1)];
+		return data[idx&(LIMIT_QUOTES-1)];
 	}
 
 	void operator << (S_XML_QuoteInfo& QuoteInfo){
 		bool ok;
-		C_EasyQuote& quote=data[size&(LIMIT_QOUTES-1)];
+		C_EasyQuote& quote=data[size&(LIMIT_QUOTES-1)];
 		quote.datetime =QuoteInfo.datetime;
 		quote.price    =QuoteInfo.price.toFloat(&ok);
 		quote.buy      =QuoteInfo.buy.toInt(&ok);
@@ -543,8 +542,8 @@ struct S_EasyQuotes{
 	{
 		S_Quote NewQuote;
 		bool isUpdated=false;
-		for(uint i=MAX(0,size-history); i<size; i++){
-			C_EasyQuote& HistoryQuote=data[i&(LIMIT_QOUTES-1)];
+		for(uint i=MAX(0,size-history); i<MIN(size,LIMIT_QUOTES); i++){
+			C_EasyQuote& HistoryQuote=data[i&(LIMIT_QUOTES-1)];
 			if (HistoryQuote.sell){
 				//------------ if history quote is sell ---------
 				if (listSellQuote.isEmpty() && HistoryQuote.sell>0 ){
@@ -659,7 +658,7 @@ struct S_EasyQuotes{
 		_ASSERTE((int)toIndex>=0);
 		_ASSERTE(toIndex<size);
 		uint fromIndex;
-		Glass.datetime=data[toIndex&(LIMIT_QOUTES-1)].datetime;
+		Glass.datetime=data[toIndex&(LIMIT_QUOTES-1)].datetime;
 		if (Glass.fromIndex <= toIndex-history && toIndex-history<= Glass.toIndex && Glass.toIndex<=toIndex){
 			fromIndex=Glass.toIndex;
 			Glass.toIndex=toIndex;
@@ -680,7 +679,7 @@ struct S_EasyQuotes{
 		bool isUpdated=false;
 		
 		for(uint i=fromIndex; i<=Glass.toIndex; i++){
-			C_EasyQuote& HistoryQuote=data[i&(LIMIT_QOUTES-1)];
+			C_EasyQuote& HistoryQuote=data[i&(LIMIT_QUOTES-1)];
 			if (HistoryQuote.sell){
 				//------------ if history quote is sell ---------
 				if (Glass.listSell.isEmpty() && HistoryQuote.sell>0 ){
@@ -848,7 +847,7 @@ struct S_EasyQuotes{
 		if (pQuote->datetime < datetime){  // found . forward search of last bedore
 			pQuote++;
 			find_index++;
-			for(; find_index<size; find_index++,pQuote++){
+			for(; find_index<MIN(size,LIMIT_QUOTES); find_index++,pQuote++){
 				if (datetime <= pQuote->datetime) // overcross with found. Stop
 					break; 
 			}
@@ -878,7 +877,7 @@ public:
 	
 	S_InstrumentInfo Info;
 	
-	S_EasyTicks	Ticks;
+	S_EasyTicks	 Ticks;
 	S_EasyQuotes Quotes;
 	S_EasyTrades Trades;
 	S_EasyOrders Orders;

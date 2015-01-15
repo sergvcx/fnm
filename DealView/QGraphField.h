@@ -152,6 +152,8 @@ public:
 	int		x2pix(int x);
 	int		y2pix(double y);
 
+	int		idxClick;
+	uint	clickTime;
 	C_Instrument* pInstrument;
 	
 	//QVector<SDeal>		vecDeal; 

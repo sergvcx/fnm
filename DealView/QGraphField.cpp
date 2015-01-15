@@ -17,6 +17,7 @@
 QGraphField::QGraphField(QWidget *parent)
 : QWidget(parent)
 {
+	clickTime=0;
 	MX=1;
 	MY=1;
 	
@@ -59,6 +60,7 @@ void QGraphField::paintEvent(QPaintEvent * event)
 	
 	QPen DayPen	 (Qt::red,Qt::DashDotLine);
 	QPen RedPen	 (Qt::red,Qt::SolidLine);
+	QPen BluePen	 (Qt::blue,Qt::SolidLine);
 	QPen GreenPen(Qt::green,Qt::SolidLine);
 	QPen WhitePen(Qt::white,Qt::SolidLine);
 	QPen BlackPen(Qt::black,Qt::SolidLine);
@@ -177,22 +179,7 @@ if (!bViewOfferFlag){
 
 		
 	}
-	//------------------ draw glass ------------
-	S_Glass& Glass=pInstrument->Glass;
-	painter.setPen(RedPen);
-	for(int i=0; i<Glass.listSell.size(); i++){
-		int x0=x2pix(Statistic.idx0);
-		float price   =Glass.listSell[i].price;
-		float quantity=Glass.listSell[i].quantity;
-		painter.drawLine(x0,y2pix(price),x0+quantity,y2pix(price));
-	}
-	painter.setPen(GreenPen);
-	for(int i=0; i<Glass.listBuy.size(); i++){
-		int x0=x2pix(Statistic.idx0);
-		float price   =Glass.listBuy[i].price;
-		float quantity=Glass.listBuy[i].quantity;
-		painter.drawLine(x0,y2pix(price),x0+quantity,y2pix(price));
-	}
+	
 	// ============== рисуем график заявок ====================
 	//printf("%d--\n\n\n",0);
 	/*
@@ -341,11 +328,11 @@ if (!bViewOfferFlag){
 		points[3]= QPoint(x0,y1);
 		points[4]= QPoint(x0,y0);
 
-		painter.setPen(GreenPen);
+		painter.setPen(BluePen);
 		painter.drawPolyline(points,5);
 	} else {
 		int x0=x2pix(Statistic.idx0);
-		painter.setPen(GreenPen);
+		painter.setPen(BluePen);
 		painter.drawLine(x0,0,x0,WinHeight);
 	}
 }
@@ -402,9 +389,32 @@ else {
 		//painter.drawEllipse(x,y,7,7);			
 	}
 
-	
+
 
 }
+	//------------------ draw glass ------------
+	S_Glass& Glass=pInstrument->Glass;
+	painter.setPen(GreenPen);
+// x0;
+	if (!bViewOfferFlag)
+		x0=x2pix(Statistic.idx0);
+	else {
+		x0=x2pix(clickTime-minDateTime);
+	}
+
+	for(int i=0; i<Glass.listSell.size(); i++){
+		
+		float price   =Glass.listSell[i].price;
+		float quantity=Glass.listSell[i].quantity;
+		painter.drawLine(x0,y2pix(price),x0+quantity,y2pix(price));
+	}
+	painter.setPen(RedPen);
+	for(int i=0; i<Glass.listBuy.size(); i++){
+		//int x0=x2pix(Statistic.idx0);
+		float price   =Glass.listBuy[i].price;
+		float quantity=Glass.listBuy[i].quantity;
+		painter.drawLine(x0,y2pix(price),x0+quantity,y2pix(price));
+	}
 //=====================================
 	WatchDialog->raise();
 
@@ -500,8 +510,25 @@ void QGraphField::mousePressEvent(QMouseEvent *event){
 	S_EasyTicks& Ticks=pInstrument->pData->Ticks;
 	//int idx=MIN(vecDeal.size()-1,pix2x(Point.x()));
 	int idx=MIN(Ticks.size-1,pix2x(Point.x()));
+	clickTime=Ticks[idx].datetime;
+	if (bViewOfferFlag)
+	{
+		clickTime=pix2x(Point.x())+minDateTime;
+		//int idxSec=pix2x(Point.x())-minDateTime;
+		idx=Ticks.FindAfter(pix2x(Point.x())+minDateTime-1);
+		
+	}
+	
 	switch(event->button()){
 		case Qt::LeftButton :
+
+		
+			((MainWindow*)mainWin)->labelIndex->setNum(idx);
+			((MainWindow*)mainWin)->labelDateTime->setNum((int)clickTime);
+			((MainWindow*)mainWin)->labelPrice->setNum(Ticks[idx].price);
+			
+			
+			
 				
 				Statistic.idx0=idx;
 				if (Statistic.idx0>=Statistic.idx1){
@@ -527,11 +554,12 @@ void QGraphField::mousePressEvent(QMouseEvent *event){
 					
 					S_Glass& Glass=pInstrument->Glass;
 					uint index;
-					uint dt=Ticks.data[idx].datetime;
-					if (dt)
-						if (pInstrument->pData->Quotes.FindBefore(Ticks.data[idx].datetime, Glass.toIndex, index)){
-							QDateTime dt; dt.setTime_t(Ticks.data[idx].datetime);
-							pInstrument->pData->Quotes.UpdateGlass(Glass,index,200);
+					//uint dt=clickTime;//Ticks.data[idx].datetime;
+					if (clickTime)
+						//if (pInstrument->pData->Quotes.FindBefore(Ticks.data[idx].datetime, Glass.toIndex, index)){
+						if (pInstrument->pData->Quotes.FindBefore(clickTime, Glass.toIndex, index)){
+							//QDateTime dt; dt.setTime_t(Ticks.data[idx].datetime);
+							pInstrument->pData->Quotes.UpdateGlass(Glass,index,400);
 						}
 				}
 
@@ -583,8 +611,10 @@ void QGraphField::mouseMoveEvent(QMouseEvent *event){
 	else {
 		S_Tick Tick;
 		Tick.datetime=minDateTime+pix2x(Point.x());
+		double MousePrice=pix2y(Point.y());
 		((MainWindow*)mainWin)->labelDate->setText(Tick.TextDate());
 		((MainWindow*)mainWin)->labelTime->setText(Tick.TextTime());
+		//((MainWindow*)mainWin)->labelPriceMouse->setText(QString::number(MousePrice)+":"+QString::number((MousePrice-Price)*100/Price)+"%");
 	} 
 
 	
