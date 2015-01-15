@@ -8,6 +8,7 @@
 #include <QXmlStreamReader>
 #include <QDebug>
 #include <QStack>
+#include <QFileDialog>
 
 QScrollArea* extScrollArea;
 MainWindow::MainWindow()
@@ -98,11 +99,13 @@ void MainWindow::createActions(){
 
 	actViewOfferFlag = new QAction("View offer legend",this);
 	actViewOfferFlag->setCheckable(true);
-	connect(actViewOfferFlag, SIGNAL(triggered()), qGraphField, SLOT(ViewOffer()));
+	actViewOfferFlag->setChecked(qGraphField->bViewOfferFlag);
+	connect(actViewOfferFlag, SIGNAL(triggered()), this, SLOT(ViewOffer()));
 	
 	actViewTradeFlag = new QAction("View trade legend",this);
 	actViewTradeFlag->setCheckable(true);
-	connect(actViewTradeFlag, SIGNAL(triggered()), qGraphField, SLOT(ViewTrade()));
+	actViewTradeFlag->setChecked(qGraphField->bViewTradeFlag);
+	connect(actViewTradeFlag, SIGNAL(triggered()), this, SLOT(ViewTrade()));
 
 	actViewRequestFlag = new QAction("View request legend",this);
 	actViewRequestFlag->setCheckable(true);
@@ -270,7 +273,86 @@ void MainWindow::closeEvent(QCloseEvent *event){
 
 }*/
 
+//<hit type='S' datetime='2015-01-14 18:39:46' price='36.44' quantity='1' cash='0.911444' stocks='0' cnt='114' tick='3299'/>
+//<try type='S' datetime='2015-01-14 18:39:46' price='36.44' quantity='1' cash='-35.5158' stocks='0'/>
 
+
+
+void MainWindow::newFile(){
+	QVector<S_EasyTrade>& vecTrade=qGraphField->vecTrade;
+	QVector<S_NewOrder>& vecOrder=qGraphField->vecOrder;
+
+	vecTrade.clear();
+	vecOrder.clear();
+
+
+	QString filename=QFileDialog::getOpenFileName(
+		this,
+		tr("Open file"),
+		"d:/Kitchen/MySoft/fnm/TestStrategy",
+		"xml files(*.xml)"
+		);
+
+	QFile XmlFile(filename);
+	if (XmlFile.open(QIODevice::ReadOnly|QIODevice::Text))
+	{
+		QXmlStreamReader xml(&XmlFile);
+		xml.addData("</strategy>");
+
+
+		while (!xml.atEnd() && !xml.hasError()){
+			xml.readNext();
+			if (xml.isStartDocument())
+				continue;
+
+			if (xml.isStartElement() && xml.name() == "hit"){
+				S_EasyTrade trade;
+				QXmlStreamAttributes attributes = xml.attributes();
+				if (attributes.hasAttribute("type")){
+					QString buysell= attributes.value("type").toString();
+					if (buysell=="S")
+						trade.buysell='S';
+					else 
+						trade.buysell='B';
+				}
+				if (attributes.hasAttribute("datetime")){
+					QString datetime= attributes.value("datetime").toString();
+					trade.time=Text2DateTime(datetime).toTime_t();
+				}
+				if (attributes.hasAttribute("price")){
+					QString price= attributes.value("price").toString();
+					trade.price=price.toFloat();
+				}
+				vecTrade << trade;
+
+			}
+			if (xml.isStartElement() && xml.name() == "try"){
+				S_NewOrder order;
+				QXmlStreamAttributes attributes = xml.attributes();
+				if (attributes.hasAttribute("type")){
+					QString buysell= attributes.value("type").toString();
+					if (buysell=="S")
+						order.buysell='S';
+					if (buysell=="B") 
+						order.buysell='B';
+				}
+				if (attributes.hasAttribute("datetime")){
+					QString datetime= attributes.value("datetime").toString();
+					order.server.time=Text2DateTime(datetime).toTime_t();
+				}
+				if (attributes.hasAttribute("price")){
+					QString price= attributes.value("price").toString();
+					order.price=price.toFloat();
+				}
+				vecOrder<< order;
+			}
+
+		}
+	
+	}
+
+
+}
 
 
 void MainWindow::about()
@@ -400,6 +482,7 @@ void MainWindow::ViewTrade(){
 }
 
 void MainWindow::ReadMyDeals(){
+	/*
 	qGraphField->vecTrade.resize(0);
 	int nDate0=intDate(DateTime0);
 	int nDate1=intDate(DateTime1);
@@ -430,11 +513,11 @@ void MainWindow::ReadMyDeals(){
 		//Deal.Balance=query.value(5).toInt();
 		qGraphField->vecTrade << MyDeal;
 	}
-	
+	*/
 }
 
 void MainWindow::ReadRequest(){
-	qGraphField->vecRequest.resize(0);
+/*	qGraphField->vecRequest.resize(0);
 	int nDate0=intDate(DateTime0);
 	int nDate1=intDate(DateTime1);
 	int nTime0=intTime(DateTime0);
@@ -461,6 +544,7 @@ void MainWindow::ReadRequest(){
 		Request.Price  =query.value(4).toDouble();
 		qGraphField->vecRequest << Request;
 	}
+	*/
 }
 
 

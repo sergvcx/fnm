@@ -979,7 +979,7 @@ public:
 		TickInfo.tailQoute=0;
 		TickInfo.tailLogQuote=0;
 		TickInfo.pTickLog=0;
-
+		TickInfo.lastDateTimeInDB=0;
 		pData=0;
 		pSharedMemory=0;
 		QuoteInfo.tail=0;

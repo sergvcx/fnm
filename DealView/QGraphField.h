@@ -161,9 +161,11 @@ public:
 //	QVector<SDealPeriod> vec1MinDeal;
 //	QVector<SDealPeriod> vec5MinDeal;
 
-	QVector<SOffer>		vecOffer;
-	QVector<SMyDeal>	vecTrade;
-	QVector<SRequest>	vecRequest;
+	//QVector<SOffer>		vecOffer;
+	//QVector<SMyDeal>	vecTrade;
+	//QVector<SRequest>	vecRequest;
+	QVector<S_EasyTrade> vecTrade;
+	QVector<S_NewOrder> vecOrder;
 
 	unsigned minDateTime;
 	unsigned maxDateTime;

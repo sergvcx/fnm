@@ -11,10 +11,6 @@
 #include <QSQLQuery>
 #include <QDebug>
 
-//#include "Classifier.h"
-//#include "Trader.h"
-
-
 
 
 
@@ -32,9 +28,9 @@ QGraphField::QGraphField(QWidget *parent)
 	//setAutoFillBackground(true);
 
 
-	bViewOfferFlag=0;
+	bViewOfferFlag=1;
 	bViewRequestFlag=1;
-	bViewTradeFlag=0;
+	bViewTradeFlag=1;
 
 
 	setMouseTracking(true);
@@ -359,6 +355,41 @@ else {
 	S_Tick* pTick=Ticks.data;
 	painter.setPen(BlackPen);
 
+	int yy=0;
+	int xx=0;
+	for(int i=0; i<vecOrder.size()-1; i++){
+		
+		S_NewOrder& order=vecOrder[i];
+		S_NewOrder& order1=vecOrder[i+1];
+		uint x=x2pix(order.server.time-minDateTime);
+		uint y=y2pix(order.price);
+		uint x1=x2pix(order1.server.time-minDateTime);
+		
+
+		if (order.buysell=='S')
+			painter.setPen(GreenPen);
+		else if (order.buysell=='B')
+			painter.setPen(RedPen);
+		else 
+			painter.setPen(BlackPen);
+		//painter.drawRect(x-2,y-2,5,5);			
+		painter.drawLine(x,y,x1,y);			
+		//xx=x;
+		//y//y=y;
+	}
+	painter.setPen(BlackPen);
+	for(int i=0; i<vecTrade.size(); i++){
+		S_EasyTrade& trade=vecTrade[i];
+		uint x=x2pix(trade.time-minDateTime);
+		uint y=y2pix(trade.price);
+		if (trade.buysell=='S')
+			painter.setBrush(GreenBrush);
+		else 
+			painter.setBrush(RedBrush);
+		//painter.drawRect(x-2,y-2,5,5);			
+		painter.drawEllipse(x-3,y-3,7,7);			
+	}
+
 	for(int i=0; i<Ticks.size; i++, pTick++){
 
 		uint x=x2pix(pTick->datetime-minDateTime);
@@ -368,7 +399,10 @@ else {
 		else 
 			painter.setBrush(RedBrush);
 		painter.drawRect(x-1,y-1,3,3);			
+		//painter.drawEllipse(x,y,7,7);			
 	}
+
+	
 
 }
 //=====================================
@@ -402,14 +436,14 @@ int QGraphField::Rescale(){
 
 	MY=-(WinHeight-1)/(maxY-minY);
 	if (!bViewOfferFlag){
-		MX=4;
+		//MX=4;
 		setMinimumSize(DataSize*MX,WinHeight);
 		setMaximumSize(DataSize*MX,WinHeight);
 	}
 	else 
 	{
 
-		MX=1;
+		//MX=1;
 		setMinimumSize((maxDateTime-minDateTime)*MX,WinHeight);
 		setMaximumSize((maxDateTime-minDateTime)*MX,WinHeight);
 
@@ -530,15 +564,28 @@ void QGraphField::mousePressEvent(QMouseEvent *event){
 void QGraphField::mouseMoveEvent(QMouseEvent *event){
 	QPoint Point=event->pos();
 	S_EasyTicks& Ticks=pInstrument->pData->Ticks;
-	int idx=MIN(Ticks.size-1,pix2x(Point.x()));
-	double MousePrice=pix2y(Point.y());
-	double Price=Ticks[idx].price;
-	((MainWindow*)mainWin)->labelIndex->setNum(idx);
-	((MainWindow*)mainWin)->labelDate->setText(Ticks[idx].TextDate());
-	((MainWindow*)mainWin)->labelTime->setText(Ticks[idx].TextTime());
-	((MainWindow*)mainWin)->labelVolume->setNum(Ticks[idx].quantity);
-	((MainWindow*)mainWin)->labelPrice->setNum(Price);
-	((MainWindow*)mainWin)->labelPriceMouse->setText(QString::number(MousePrice)+":"+QString::number((MousePrice-Price)*100/Price)+"%");
+	int idx;
+	if (!bViewOfferFlag){
+		idx=MIN(Ticks.size-1,pix2x(Point.x()));
+	
+
+
+		double MousePrice=pix2y(Point.y());
+		double Price=Ticks[idx].price;
+		
+		((MainWindow*)mainWin)->labelIndex->setNum(idx);
+		((MainWindow*)mainWin)->labelDate->setText(Ticks[idx].TextDate());
+		((MainWindow*)mainWin)->labelTime->setText(Ticks[idx].TextTime());
+		((MainWindow*)mainWin)->labelVolume->setNum(Ticks[idx].quantity);
+		((MainWindow*)mainWin)->labelPrice->setNum(Price);
+		((MainWindow*)mainWin)->labelPriceMouse->setText(QString::number(MousePrice)+":"+QString::number((MousePrice-Price)*100/Price)+"%");
+	}
+	else {
+		S_Tick Tick;
+		Tick.datetime=minDateTime+pix2x(Point.x());
+		((MainWindow*)mainWin)->labelDate->setText(Tick.TextDate());
+		((MainWindow*)mainWin)->labelTime->setText(Tick.TextTime());
+	} 
 
 	
 }
@@ -571,8 +618,11 @@ extern QScrollArea* extScrollArea;
 void QGraphField::ZoomInX(){
 	double factor=sqrt(2.0);
 	MX*=factor;
-	setMinimumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
-	setMaximumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+//	if (!bViewOfferFlag)}
+//		setMinimumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+//		setMaximumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+//	}
+	Rescale();
 	QScrollBar* sb = extScrollArea->horizontalScrollBar();
 	sb->setValue(int(sb->value()*factor+sb->pageStep()/2*(factor-1)));
 	update();
@@ -580,8 +630,9 @@ void QGraphField::ZoomInX(){
 void QGraphField::ZoomOutX(){
 	double factor=1/sqrt(2.0);
 	MX*=factor;
-	setMinimumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
-	setMaximumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+	//setMinimumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+	//setMaximumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+	Rescale();
 	QScrollBar* sb = extScrollArea->horizontalScrollBar();
 	sb->setValue(int(sb->value()*factor+sb->pageStep()/2*(factor-1)));
 	update();
@@ -590,8 +641,9 @@ void QGraphField::ZoomInY(){
 	double factor=sqrt(2.0);
 	MY*=factor;
 	WinHeight*=factor;
-	setMinimumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
-	setMaximumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+	//setMinimumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+	//setMaximumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+	Rescale();
 	QScrollBar* sb = extScrollArea->verticalScrollBar();
 	sb->setValue(int(sb->value()*factor+sb->pageStep()/2*(factor-1)));
 	update();
@@ -600,8 +652,9 @@ void QGraphField::ZoomOutY(){
 	double factor=1/sqrt(2.0);
 	MY*=factor;
 	WinHeight*=factor;
-	setMinimumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
-	setMaximumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+	//setMinimumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+	//setMaximumSize(pInstrument->pData->Ticks.size*MX,WinHeight);
+	Rescale();
 	QScrollBar* sb = extScrollArea->verticalScrollBar();
 	sb->setValue(int(sb->value()*factor+sb->pageStep()/2*(factor-1)));
 	update();

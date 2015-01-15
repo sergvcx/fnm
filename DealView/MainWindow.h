@@ -53,6 +53,7 @@ public:
 	void ReadMyDeals();
 	
 public slots:
+	void newFile();
 	void Draw();
 	void Attach();
 	//void StartAllDeals();
