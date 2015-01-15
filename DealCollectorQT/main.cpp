@@ -55,7 +55,7 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 
 	qDebug() << "map Instrument is constructed";
 
-
+	
 	TransaqConnector.connect();
 	while (!TransaqConnector.isConnected()){
 		qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
