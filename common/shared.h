@@ -12,7 +12,7 @@
 
 //#include "TransaqConnector.h"
 
-#define LIMIT_TICKS  1024*256		// must be power of two
+#define LIMIT_TICKS  1024*256*4		// must be power of two
 #define LIMIT_QUOTES 1024*256*4		// must be power of two
 #define LIMIT_ORDERS 1024		// must be power of two
 #define LIMIT_GLASSES 16 //32768*8
@@ -31,9 +31,14 @@ inline QString DateTime2Text(QDateTime& dt)
 	return dt.toString("yyyy-MM-dd hh:mm:ss");
 }
 
-inline QDateTime Text2DateTime(QString& date_time)
+inline QDateTime Text2DateTime(QString date_time)
 {
 	return QDateTime::fromString(date_time,"yyyy-MM-dd hh:mm:ss");
+}
+
+inline QTime Text2Time(QString time)
+{
+	return QTime::fromString(time,"hh:mm:ss");
 }
 
 
@@ -72,6 +77,12 @@ struct S_Tick{
 	}
 	bool isBuy(){
 		return type>=0;
+	}
+	bool isInSecond(){
+		return type&IN_SECOND;
+	}
+	bool isFirstInSecond(){
+		return type&FIRST_IN_SECOND;
 	}
 	void SetSellType(){
 		type&=0xFF;
@@ -659,7 +670,7 @@ struct S_EasyQuotes{
 		_ASSERTE(toIndex<size);
 		uint fromIndex;
 		Glass.datetime=data[toIndex&(LIMIT_QUOTES-1)].datetime;
-		if (Glass.fromIndex <= toIndex-history && toIndex-history<= Glass.toIndex && Glass.toIndex<=toIndex){
+		if ((Glass.fromIndex <= toIndex-history) && (toIndex-history<= Glass.toIndex) && (Glass.toIndex<=toIndex)){
 			fromIndex=Glass.toIndex;
 			Glass.toIndex=toIndex;
 			
@@ -942,7 +953,8 @@ public:
 	QList<S_Quote> listSellQuote;
 	QString strLastGlass;
 	C_SharedMemoryInstrument* pData;
-	
+	S_Glass Glass;
+
 	struct {
 		uint tail;
 		uint tailQoute;
@@ -952,15 +964,20 @@ public:
 		S_EasyTicks* pTicks;
 	} TickInfo;
 
+	C_SubVector<S_Tick> TickSubVector(){
+		C_SubVector<S_Tick> vec(pData->Ticks.data,0,pData->Ticks.size);
+		return vec;
+	}
+
 	struct {
 		uint tail;
 		C_XML_Logger* pQuoteLog;
 		S_EasyQuotes* pQuotes;
 	} QuoteInfo;
 
-	S_Glass Glass;
+	
 
-	bool UpdateGlass(uint toIndex=0, int history=100){
+	bool UpdateGlass(uint toIndex=0, int history=400){
 		if (pData->Quotes.size==0)
 			return false;
 		if (toIndex==0)
@@ -986,6 +1003,7 @@ public:
 		
 
 	}
+
 // 	uint WhichDateTime(uint dt){
 // 		int idx=-1;
 // 		uint i=0;

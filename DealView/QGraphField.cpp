@@ -29,7 +29,7 @@ QGraphField::QGraphField(QWidget *parent)
 	//setAutoFillBackground(true);
 
 
-	bViewOfferFlag=1;
+	bViewOfferFlag=0;
 	bViewRequestFlag=1;
 	bViewTradeFlag=1;
 
@@ -40,6 +40,9 @@ QGraphField::QGraphField(QWidget *parent)
 	WatchDialog->raise();
 	WatchDialog->activateWindow();
 	WatchDialog->show();
+
+	vecTrade.clear();
+	vecOrder.clear();
 }
 
 void QGraphField::paintEvent(QPaintEvent * event)
@@ -377,7 +380,7 @@ else {
 		painter.drawEllipse(x-3,y-3,7,7);			
 	}
 
-	for(int i=0; i<Ticks.size; i++, pTick++){
+	for(int i=0; i<MIN(Ticks.size,LIMIT_TICKS); i++, pTick++){
 
 		uint x=x2pix(pTick->datetime-minDateTime);
 		uint y=y2pix(pTick->price);

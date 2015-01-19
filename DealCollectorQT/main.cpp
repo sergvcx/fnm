@@ -55,7 +55,12 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 
 	qDebug() << "map Instrument is constructed";
 
-	
+	while (QTime::currentTime()<Text2Time("09:55:00") || QTime::currentTime()>Text2Time("19:00:00")){
+		printf("Zzzz...");
+		Sleep(1000);
+	}
+
+Connect:
 	TransaqConnector.connect();
 	while (!TransaqConnector.isConnected()){
 		qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
@@ -66,8 +71,14 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 	qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
 
 	TransaqConnector.get_servtime_difference();
-	//if (TransaqConnector.servtime_difference!=0) 
-	//	return -1;
+	if (TransaqConnector.servtime_difference!=0) {
+		qDebug() << "Disconnecting...";
+		TransaqConnector.disconnect();
+		Sleep(1000);
+		goto Connect;
+		//_getch();
+		//return -1;
+	}
 
 	Sleep(1000);
 	
@@ -87,39 +98,7 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 
 	
 	QSqlQuery tick_query(db_trading);
-//	TransaqConnector.start();
-// 	C_Instrument& Instrument=mapInstrument["VTBR"];
-// 
-// 	float price=0.065;
-// 	Instrument.pData->Orders.NewOrders.Insert(price,1,'S');
-// 	Sleep(5000);
-// 	while (Instrument.pData->Trades.head==3){
-// 		
-// 		uint& id=Instrument.pData->Orders.NewOrders.Last().transaq.transactionid;
-// 		qDebug() << "cancel" << price;
-// 		bool ok=Instrument.pData->Orders.CancelOrders.Insert(id);
-// 		_ASSERTE(ok);
-// 		qDebug() << "cancel ok";
-// 		price-=0.001;
-// 		qDebug() << "insert" << price;
-// 		Sleep(100);
-// 		Instrument.pData->Orders.NewOrders.Insert(price,1,'S');
-// 		Sleep(5000);
-// 		
-// 	}
-// 	qDebug()<< "hit";
-//274672
-// 	
-// 	
-// 
-// 
-// 
-// 	while (1){
-// 
-// 		Sleep(1000);
-// 	}
 
-	
 
 	TransaqConnector.start();
 	while (1){
@@ -151,3 +130,47 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 	 return 1;
 	 
  }
+
+
+
+
+
+
+
+
+
+
+
+
+ //	TransaqConnector.start();
+ // 	C_Instrument& Instrument=mapInstrument["VTBR"];
+ // 
+ // 	float price=0.065;
+ // 	Instrument.pData->Orders.NewOrders.Insert(price,1,'S');
+ // 	Sleep(5000);
+ // 	while (Instrument.pData->Trades.head==3){
+ // 		
+ // 		uint& id=Instrument.pData->Orders.NewOrders.Last().transaq.transactionid;
+ // 		qDebug() << "cancel" << price;
+ // 		bool ok=Instrument.pData->Orders.CancelOrders.Insert(id);
+ // 		_ASSERTE(ok);
+ // 		qDebug() << "cancel ok";
+ // 		price-=0.001;
+ // 		qDebug() << "insert" << price;
+ // 		Sleep(100);
+ // 		Instrument.pData->Orders.NewOrders.Insert(price,1,'S');
+ // 		Sleep(5000);
+ // 		
+ // 	}
+ // 	qDebug()<< "hit";
+ //274672
+ // 	
+ // 	
+ // 
+ // 
+ // 
+ // 	while (1){
+ // 
+ // 		Sleep(1000);
+ // 	}
+

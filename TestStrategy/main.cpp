@@ -5,6 +5,7 @@
 #include <QTDebug>
 #include <QThread>
 #include <conio.h>
+#include "strategy.h"
 
 void Sleep( int millisecondsToWait )
 {
@@ -13,268 +14,6 @@ void Sleep( int millisecondsToWait )
 		QCoreApplication::processEvents( QEventLoop::AllEvents, 100 );
 }
 
-
-bool Trade(QList<SOrder>& listTryBuy, QList<SOrder>& listTrySell,  C_SubVector<S_Tick>& vecTicks, QList<SOrder>& listHitBuy, QList<SOrder>& listHitSell)
-{
-	bool hit=false;
-	for(uint i=0; i<vecTicks.size; i++){
-		S_Tick& tick=vecTicks[i];
-		if (tick.isSell()){
-			while(!listTrySell.isEmpty()){
-				SOrder& my=listTrySell.first();
-				//if (tick.price<my.Price-0.00001)
-				//	break;
-				if (my.Price<tick.price+0.000001){
-					my.datetime=tick.datetime;
-					my.id=i+vecTicks.index;
-					listHitSell<<my;
-					listTrySell.removeFirst();
-					hit=true;
-				}
-				else
-					break;
-			}
-		}
-		else {
-			while(!listTryBuy.isEmpty()){
-				SOrder& my=listTryBuy.first();
-				//if (my.Price<tick.price-0.00001)
-				//	break;
-				if (my.Price>tick.price-0.000001){
-					my.datetime=tick.datetime;
-					my.id=i+vecTicks.index;		
-					listHitBuy<<my;
-					listTryBuy.removeFirst();
-					hit=true;
-				}
-				else
-					break;
-			}
-		}
-	}
-	return hit;
-}
-void FilterSell(QList<SOrder>& listTrySell, float minThreshold, float maxThreshold, int& Stocks)
-{
-	while (!listTrySell.isEmpty()){
-		SOrder& out=listTrySell.first();
-		if (minThreshold<out.Price+0.000001)
-			break;
-		Stocks+=out.Volume;
-		listTrySell.removeFirst();
-	}
-	while (!listTrySell.isEmpty()){
-		SOrder& out=listTrySell.last();
-		if (maxThreshold>out.Price-0.000001)
-			break;
-		Stocks+=out.Volume;
-		listTrySell.removeLast();
-	}
-}
-
-void FilterBuy(QList<SOrder>& listTryBuy, float minThreshold, float maxThreshold, float &Cash)
-{
-	while (!listTryBuy.isEmpty()){
-		SOrder& out=listTryBuy.first();
-		if (maxThreshold>out.Price-0.000001)
-			break;
-		Cash+=out.Volume*out.Price;
-		listTryBuy.removeFirst();
-	}
-	while (!listTryBuy.isEmpty()){
-		SOrder& out=listTryBuy.last();
-		if (minThreshold<out.Price+0.000001)
-			break;
-		Cash+=out.Volume*out.Price;
-		listTryBuy.removeLast();
-	}
-}
-
-
-
-
-void Close(QList<SOrder>& listBuy, QList<SOrder>& listSell, float &Cash, int& Stocks, float ClosePrise, float Commision)
-{
-	while (!listBuy.isEmpty()){
-		Cash+=listBuy.first().Volume*listBuy.first().Price;
-		listBuy.removeFirst();
-	}
-	while (!listSell.isEmpty()){
-		Cash+=listSell.first().Volume*ClosePrise*(1-Commision);
-		listSell.removeFirst();
-	}
-	Stocks=0;
-}
-
-class C_Strategy{
-	public:
-		float Cash;
-		int   Stocks;
-		float Commision;
-		C_XML_Logger* logger;
-
-		C_Strategy()
-		{
-			Cash=0;
-			Stocks=0;
-			Commision=float(0.035/100);
-			logger=0;
-		}
-		C_Strategy(QString logname)
-		{
-			Cash=0;
-			Stocks=0;
-			Commision=float(0.035/100);
-			logger=new C_XML_Logger(logname);
-		}
-		//QTextStream* Stream(){
-		//	return logger->logStream;
-		//}
-		//void Log(QString str){
-		//	if (logger)
-		//		*logger->logStream<< str;
-		//}
-		virtual bool operator << (C_SubVector<S_Tick>& vecTick){
-			vecTick;
-			return false;
-		}
-		virtual void Update(QList<S_Quote>& listBuyQuote, QList<S_Quote>& listSellQuote){
-			listBuyQuote;
-			listSellQuote;
-
-		}
-		virtual float Profit(float ClosePrice){
-			ClosePrice;
-			return 0;			
-		}
-};
-
-
-class C_S1_Strategy:public C_Strategy{
-public:
-	QList<SOrder> listBuy;
-	QList<SOrder> listSell;
-	C_XML_Logger* pLogger;
-	S_MinMax<float> BuyDelta;
-	S_MinMax<float> SellDelta;
-	uint Count;
-	float CurrentProfit;
-	S_Tick* pLastSell;
-	S_Tick* pLastBuy;
-
-	C_S1_Strategy():C_Strategy(){
-		pLogger=0;
-		Count=0;
-// 		SellDelta.Far =(1+0.5/100);
-// 		SellDelta.Near=(1+0.1/100);
-// 		BuyDelta.Near =(1-0.1/100);
-// 		BuyDelta.Far  =(1-0.5/100);
-	}
-	C_S1_Strategy(QString logname, float sellmax, float sellmin, float buymax, float buymin){
-		pLogger=new C_XML_Logger(logname,LOGGER_WRITE);
-		pLogger->Header();
-		*pLogger<< "<strategy>\n";
-		*pLogger << QString::number(sellmax) <<"\n"<<  QString::number(sellmin) <<"\n"<< QString::number(buymax) <<"\n"<< QString::number(buymin)<<"\n";
-		pLogger->flush();
-		SellDelta.max=sellmax;
-		SellDelta.min=sellmin;
-		BuyDelta.max=buymax;
-		BuyDelta.min=buymin;
-		Count=0;
-		CurrentProfit=0;
-		
-	}
-	~C_S1_Strategy(){
-		*pLogger<< "</strategy>\n";
-		pLogger->flush();
-		delete pLogger;
-	}
-
-	bool operator << (C_SubVector<S_Tick>& vecTick){
-		QList<SOrder> listHitBuy;
-		QList<SOrder> listHitSell;
-		bool hit=Trade(listBuy,listSell,vecTick,listHitBuy,listHitSell);//Cash,Stocks,Commision);
-		while (!listHitBuy.isEmpty()){
-			SOrder& hit=listHitBuy.first();
-			Cash-=hit.Price*hit.Volume*Commision;
-			Stocks+=hit.Volume;
-			Count++;
-			if (pLogger){
-				*pLogger << "<hit type='B' datetime='" << DateTime2Text(hit.datetime) << "' price='" <<hit.Price<< "' quantity='"<<hit.Volume<< "' cash='" <<Cash<< "' stocks='" <<Stocks<< "' cnt='" <<Count<< "' tick='"<<hit.id <<"'/>\n";
-				pLogger->flush();
-			}
-			listHitBuy.removeFirst();
-		}
-		while (!listHitSell.isEmpty()){
-			SOrder& hit=listHitSell.first();
-			Cash+=hit.Price*hit.Volume*(1-Commision);
-			Count++;
-			CurrentProfit=Cash/hit.Price*100;
-			if (pLogger){
-				*pLogger << "<hit type='S' datetime='" <<DateTime2Text(hit.datetime) << "' price='" <<hit.Price<< "' quantity='"<<hit.Volume<< "' cash='" <<Cash<< "' stocks='" <<Stocks<< "' cnt='" <<Count<< "' tick='"<<hit.id <<"'/>\n";
-				pLogger->flush();
-			}
-			listHitSell.removeFirst();
-		}
-		return hit;
-	}
-
-	virtual void Update(float SpreadMin, float SpreadMax, uint datetime)
-	{
-		if (SpreadMax<SpreadMin)
-			return ;
-		_ASSERTE(SpreadMax>=SpreadMin);
-
-		FilterSell(listSell,SpreadMax*SellDelta.min, SpreadMax*SellDelta.max,Stocks);
-		FilterBuy( listBuy, SpreadMin*BuyDelta.min,  SpreadMin*BuyDelta.max, Cash);
-
-		if (listBuy.isEmpty() && listSell.isEmpty()){
-			if (Stocks){
-				SOrder NewSell;
-				NewSell.Price=SpreadMax*(SellDelta.min + SellDelta.max)/2;
-				NewSell.Volume=1;
-				NewSell.datetime=datetime;
-
-				listSell << NewSell;
-				Stocks-=NewSell.Volume;
-				if (pLogger){
-					*pLogger << "<try type='S' datetime='" <<DateTime2Text(NewSell.datetime) << "' price='" <<NewSell.Price<< "' quantity='"<<NewSell.Volume<< "' cash='" <<Cash<< "' stocks='" <<Stocks <<"'/>\n";
-					pLogger->flush();
-				}
-			}
-			else {
-				SOrder NewBuy;
-				NewBuy.Price=SpreadMin*(BuyDelta.min+BuyDelta.max)/2;
-				NewBuy.Volume=1;
-				NewBuy.datetime=datetime;
-				listBuy << NewBuy;
-				Cash-=NewBuy.Price*NewBuy.Volume;
-				if (pLogger){
-					*pLogger << "<try type='B' datetime='" <<DateTime2Text(NewBuy.datetime) << "' price='" <<NewBuy.Price<< "' quantity='"<<NewBuy.Volume<< "' cash='" <<Cash<< "' stocks='" <<Stocks <<"'/>\n";
-					pLogger->flush();
-				}
-			}
-		}
-	}
-
-
-	virtual void Update(QList<S_Quote>& listBuyQuote, QList<S_Quote>& listSellQuote, uint datetime)
-	{
-		if (listSellQuote.isEmpty() || listBuyQuote.isEmpty()) // if glass is empty
-			return;
-	
-		Update(listBuyQuote.first().price, listSellQuote.first().price, datetime);
-		
-	}
-	float Profit(float ClosePrice){
-		QList<SOrder> listB=listBuy;
-		QList<SOrder> listS=listSell;
-		float C=Cash;
-		int S=Stocks;
-		Close(listB,listS,C,S,ClosePrice,Commision);
-		return C/ClosePrice;
-	}
-};
 
 
 struct S_TestMatrix {
@@ -298,6 +37,163 @@ struct S_TestMatrix {
 		}
 	}
 };
+uint MinMaxInSecond(C_SubVector<S_Tick>& vec, uint idx, S_MinMax<float>& price, char buysell){
+	S_Tick* pTick=&vec[idx];
+	if (!pTick->isInSecond()){
+		return false;
+	}
+	bool isSell=(buysell=='S');
+	price.max=0;
+	price.min=999999;
+	uint dt=pTick->datetime;
+	for( ;pTick->datetime==dt && idx<vec.size; idx++,pTick++){
+		if (pTick->isSell()==isSell){
+			price.min=MIN(price.min,pTick->price);
+			price.max=MAX(price.max,pTick->price);
+		}
+	}
+	if (price.max==0)
+		return 0;
+	else return idx;
+}
+
+uint  FindAfter(C_SubVector<S_Tick>& vec, uint idxFrom, uint after_timeout, char buysell){
+	uint datetimeout = vec[idxFrom].datetime+after_timeout;
+	bool isSell=(buysell=='S');
+	for(uint i=idxFrom; i<vec.size; i++){
+		S_Tick& tick=vec[i];
+		if (tick.isSell()!=isSell)
+			continue;
+		if (tick.datetime>=datetimeout)
+			return i;
+	}
+	return 0;
+}
+
+
+uint  FindGtPrice(C_SubVector<S_Tick>& vec, uint idxFrom, float price, uint timeout, char buysell){
+	uint datetimeout = vec[idxFrom].datetime+timeout;
+	bool isSell=(buysell=='S');
+	for(uint i=idxFrom; i<vec.size; i++){
+		S_Tick& tick=vec[i];
+		if (tick.datetime>datetimeout)
+			return 0;
+		if (tick.isSell()!=isSell)
+			continue;
+		if (tick.price>=price)
+			return i;
+	}
+	return 0;
+}
+
+
+uint  FindLtPrice(C_SubVector<S_Tick>& vec, uint idxFrom, float price, uint timeout, char buysell){
+	uint datetimeout = vec[idxFrom].datetime+timeout;
+	bool isSell=(buysell=='S');
+	for(uint i=idxFrom; i<vec.size; i++){
+		S_Tick& tick=vec[i];
+		if (tick.datetime>datetimeout)
+			return 0;
+		if (tick.isSell()!=isSell)
+			continue;
+		if (tick.price<=price)
+			return i;
+	}
+	return 0;
+}
+
+struct S_FlashStatistics
+{
+	QTime minTime;
+	QTime maxTime;
+	QDate minDate;
+	QDate maxDate;
+
+	float enterDeviation;
+	float returnDeviation;
+	uint  countSell;
+	uint  countBuy;
+
+	uint countGoodSell;
+	uint countGoodBuy;
+	//char buysell;
+	float profitSell;
+	float profitBuy;
+	float lossSell;
+	float lossBuy;
+	float lossComission;
+	float Commision;
+
+	S_FlashStatistics(){
+		lossComission=0;
+		Commision=0.04/100;
+		countSell=0;
+		countBuy=0;
+
+		countGoodSell=0;
+		countGoodBuy=0;
+
+		profitSell=0;
+		profitBuy=0;
+		lossSell=0;
+		lossBuy=0;
+
+		minTime=Text2Time("10:10:00");
+		maxTime=Text2Time("18:30:00");
+		
+	}
+	void operator << (C_SubVector<S_Tick>& vec){
+		S_Tick* baseTick=0;
+		for(int i=0; i<vec.size; i++){
+			S_Tick& tick=vec.data[i];
+			QDateTime dt; dt=QDateTime::fromTime_t(tick.datetime);
+			//if (dt.date()<minDate || dt.date()>maxDate)
+			//	continue;
+			//qDebug() << dt.time().toString();
+			//qDebug() << minTime.toString();
+			if (dt.time()<minTime || dt.time()>maxTime)
+				continue;
+			if (tick.isFirstInSecond()){
+				S_MinMax<float> price;
+				uint idx=MinMaxInSecond(vec,i,price,'B');
+				if (idx){
+					if (price.max*(1-enterDeviation)>price.min){	// значит произошeл Enter-Buy
+						countBuy++;
+						
+						if (FindGtPrice(vec,idx,price.max*(1-returnDeviation),60,'S')){ // Return-Sell is occurred
+							countGoodBuy++;
+							profitBuy+= -price.max*(1-enterDeviation)+price.max*(1-returnDeviation);
+						}
+						else{
+							idx=FindAfter(vec,idx,60,'S');
+							if (idx)
+								lossBuy+= -price.max*(1-enterDeviation)+ vec[idx].price;
+						}
+						lossComission+=	Commision*price.min*2;
+
+					}
+				}
+				idx=MinMaxInSecond(vec,i,price,'S');
+				if (idx){
+					if (price.min*(1+enterDeviation)<price.max){	// значит произошeл Enter-Sell
+						countSell++;
+						if (FindLtPrice(vec,idx,price.min*(1+returnDeviation),60,'B')){	// если произошел return-Buy
+							countGoodSell++;
+							profitSell+= price.min*(1+enterDeviation) - price.min*(1+returnDeviation);
+						}
+						else {
+							idx=FindAfter(vec,idx,60,'B');
+							lossSell+=  price.min*(1+enterDeviation)-vec[idx].price;
+						}
+						lossComission+=	Commision*price.min*2;
+					}
+				}
+			}
+		}
+	}
+
+};
+
  int main(int argc, char *argv[])
  {
 	
@@ -305,11 +201,38 @@ struct S_TestMatrix {
 	
 	 QApplication app(argc, argv);
 
+// 	 C_Instrument Instrument;
+// 	 QString seccode="gmkn";
+// 	 while (!Instrument.Attach(seccode)){
+// 		 qDebug()<< "No connection to " + seccode;
+// 		 Sleep(100);
+// 	 }
+// 
+// 	 
+	 //size_t idxBegin=Instrument.TickInfo.tail;
+	 //size_t idxEnd  =Instrument.pData->Ticks.size;
+// 	 C_SubVector<S_Tick> TickData=Instrument.TickSubVector();
+// 	
+// 	 for(float dev=0.01; dev <0.5; dev+=0.01){
+// 		S_FlashStatistics stat;
+// 		stat.enterDeviation=dev/100;
+// 		stat.returnDeviation=stat.enterDeviation*0.0;
+// 		stat<< TickData;
+// 		float profit = stat.profitBuy + stat.lossBuy + stat.profitSell + stat.lossSell ;
+// 		
+// 		qDebug()<< dev << "|B="<< stat.countBuy << "/" << stat.countGoodBuy << "|S=" << stat.countSell <<"/" << stat.countGoodSell << "|B" << stat.profitBuy << stat.lossBuy << "|S" << stat.profitSell << stat.lossSell  << "||" << profit << stat.lossComission << "=" << profit - stat.lossComission ;// dev*(stat.countBuy+stat.countSell);
+// 	//	printf();
+// 	 }
+// 	 
+// 
+// 	 return 1;
+
 	//============================================== offline mode =======================================
 // 	//QString seccode="VTBR";
 // 	//QString seccode="gazp";
 // 	//QString seccode="aflt";
-// 	 QString seccode="gmkn";
+// 	//QString seccode="gmkn";
+// 	 QString seccode="sber";
 // 	C_Instrument Instrument;
 // 	while(!Instrument.Attach(seccode)){
 // 		qDebug()<< "No connection to " + seccode;
@@ -326,10 +249,10 @@ struct S_TestMatrix {
 // for(int b=1; b<10; b++){
 // 	S_MinMax<float> mySell;
 // 	S_MinMax<float> myBuy;
-// 	mySell.max=1+s*s*0.02/100;
-// 	mySell.min=1+s*s*0.01/100;
-// 	myBuy.max =1-b*b*0.01/100;
-// 	myBuy.min =1-b*b*0.02/100;
+// 	mySell.max=1+s*s*0.02/100/2;
+// 	mySell.min=1+s*s*0.01/100/2;
+// 	myBuy.max =1-b*b*0.01/100/2;
+// 	myBuy.min =1-b*b*0.02/100/2;
 // 	C_S1_Strategy Test(	seccode+QString::number(b)+QString::number(s)+".xml",
 // 						mySell.max,
 // 						mySell.min, 
@@ -337,8 +260,8 @@ struct S_TestMatrix {
 // 						myBuy.min);
 // 
 // 	
-// 	uint idxStart=Instrument.pData->Ticks.FindAfter("2015-01-08 10:30:00");
-// 	uint idxFinal=Instrument.pData->Ticks.FindAfter("2015-01-08 18:30:00");
+// 	uint idxStart=Instrument.pData->Ticks.FindAfter("2015-01-15 10:30:00");
+// 	uint idxFinal=Instrument.pData->Ticks.FindAfter("2015-01-15 18:30:00");
 // 
 // 	uint idxBegin=idxStart;
 // 	uint idxEnd=0;
@@ -352,14 +275,14 @@ struct S_TestMatrix {
 // 		C_SubVector<S_Tick> TickPortion(Instrument.pData->Ticks.data, idxBegin, idxEnd);
 // 		
 // 
-// 		if (Instrument.pData->Quotes.FindBefore(Ticks.data[idxBegin].datetime, Glass.toIndex, idxFind)){
+// 		if (Instrument.pData->Quotes.FindBefore(Ticks.data[idxBegin].datetime+2, Glass.toIndex, idxFind)){
 // 			Instrument.pData->Quotes.UpdateGlass(Glass,idxFind,200);			
 // 		}
 // 
 // 		if (!Glass.listBuy.isEmpty() && !Glass.listSell.isEmpty()){
 // 			float maxSpread=Glass.listSell.first().price;
 // 			float minSpread=Glass.listBuy.first().price;
-// 			Test.Update(minSpread, maxSpread,Glass.datetime);
+// 			Test.Update(minSpread, maxSpread,Ticks.data[idxBegin].datetime);
 // 		}
 // 		Test << TickPortion;
 // 
@@ -431,7 +354,7 @@ struct S_TestMatrix {
 					if (!Instrument.Glass.listBuy.isEmpty() && !Instrument.Glass.listSell.isEmpty()){
 						float maxSpread=Instrument.Glass.listSell.first().price;
 			 			float minSpread=Instrument.Glass.listBuy.first().price;
-						Test.st[i][j]->Update(minSpread, maxSpread, Instrument.Glass.datetime);
+						Test.st[i][j]->Update(minSpread, maxSpread, TickPortion.data[TickPortion.size-1].datetime);
 						if (TickPortion.size)
 							*Test.st[i][j] << TickPortion;
 					}
