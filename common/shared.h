@@ -437,7 +437,13 @@ struct S_EasyOrders
 // 			_ASSERTE(head==0);
 // 			return data[(head-1)&(LIMIT_ORDERS-1)];
 // 		}
-
+		S_NewOrder* FindOrderNo(unsigned long long orderno){
+			for(int i=tail; i<head; i++){
+				if ((*this)[i].server.orderno==orderno)
+					return &((*this)[i]);
+			}
+			return 0;
+		}
 		S_NewOrder* Insert(float price, uint quantity, char buysell, bool bymarket=false){
 			_ASSERTE(head<tail+LIMIT_ORDERS);
 			S_NewOrder& order=data[head&(LIMIT_ORDERS-1)];
