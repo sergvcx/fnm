@@ -380,6 +380,18 @@ struct S_EasyTrades
 		head++;
 		return true;
 	}
+	bool Insert(float price, uint quantity, char buysell, long long orderno, long long tradeno){
+		if (head==tail+LIMIT_TRADES)
+			return false;
+		S_EasyTrade& Trade=(*this)[head];
+		Trade.price=price;
+		Trade.quantity=quantity;
+		Trade.buysell=buysell;
+		Trade.orderno=orderno;
+		Trade.tradeno=tradeno;
+		head++;
+		return true;
+	}
 
 };
 
@@ -458,14 +470,16 @@ struct S_EasyOrders
 			order.server.result[0]=0;
 			
 			head++;
+			
+			return &order;
+		}
+		bool isSuccess(S_NewOrder& order){
 			while (order.transaq.success==-1){
 
 			}
-			if (order.transaq.success==false)
-				return 0;
-			else 
-				return &order;
+			return order.transaq.success;
 		}
+
 		S_NewOrder& operator [] (uint idx)		{
 			return data[idx&(LIMIT_ORDERS-1)];
 		}
@@ -480,21 +494,18 @@ struct S_EasyOrders
 			head=0;
 			tail=0;
 		}
-		bool Insert(uint id){
+		S_CancelOrder* Insert(uint id){
 			_ASSERTE(head<tail+LIMIT_KILLS);
 			S_CancelOrder& order=data[head&(LIMIT_KILLS-1)];
 			order.transactionid=id;
 			order.transaq.success=-1;
 			order.transaq.result[0]=0;
 			head++;
-			while (order.transaq.success==-1){
-
-			}
-			if (order.transaq.success==false)
-				return false;
-			else 
-				return true;
-				//Sleep(100);
+			return &order;
+		}
+		bool isSuccess(S_CancelOrder* pOrder){
+			while (pOrder->transaq.success==-1);
+			return (pOrder->transaq.success);
 		}
 		S_CancelOrder& operator[] (uint idx){
 			return data[(idx)&(LIMIT_KILLS-1)];
@@ -529,12 +540,14 @@ struct S_EasyOrders
 //======================= S_EasyQuotes ============================================
 struct S_EasyQuotes{
 	C_EasyQuote data[LIMIT_QUOTES];
-	uint			size;
+	uint size;
+	uint last_find_index;
 	S_EasyQuotes(){
 		size=0;
 	}
 	void Init(){
 		size=0;
+		last_find_index=0;
 	}
 	C_EasyQuote& operator [] (uint idx)
 	{
@@ -885,6 +898,14 @@ struct S_EasyQuotes{
 		}
 		return 0;
 	}
+	C_EasyQuote* FindFirstBefore(uint datetime){
+		C_EasyQuote* pQuote=FindBefore(datetime, 0, last_find_index);
+		return pQuote;
+	}
+	C_EasyQuote* FindNextBefore(uint datetime){
+		C_EasyQuote* pQuote=FindBefore(datetime, last_find_index, last_find_index);
+		return pQuote;
+	}
 
 } ;
 
@@ -1006,8 +1027,6 @@ public:
 		pSharedMemory=0;
 		QuoteInfo.tail=0;
 		QuoteInfo.pQuoteLog=0;
-		
-
 	}
 
 // 	uint WhichDateTime(uint dt){

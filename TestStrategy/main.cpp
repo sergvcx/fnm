@@ -6,6 +6,7 @@
 #include <QThread>
 #include <conio.h>
 #include "strategy.h"
+#include "testconnector.h"
 
 void Sleep( int millisecondsToWait )
 {
@@ -201,6 +202,19 @@ struct S_FlashStatistics
 	
 	 QApplication app(argc, argv);
 
+	 
+
+// 	 C_Instrument Instrument;
+// 	 if (!Instrument.Attach("aflt"))
+// 		 return 1;
+// 	 
+// 	 S_MinMax<float> FastDeviation(0.001/100, 0.002/100);
+// 	 S_MinMax<float> SlowDeviation(0.01/100, 0.02/100);
+// 	 C_YoStrategy Strategy(Instrument,SlowDeviation,FastDeviation,10000,0);
+// 	 C_TestConnector TestConnector(Instrument);
+// 	 TestConnector.Trade(Strategy);
+// 	 return 1;
+	 
 // 	 C_Instrument Instrument;
 // 	 QString seccode="gmkn";
 // 	 while (!Instrument.Attach(seccode)){
