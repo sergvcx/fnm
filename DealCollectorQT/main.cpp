@@ -100,7 +100,7 @@ Connect:
 	QSqlQuery tick_query(db_trading);
 
 
-	TransaqConnector.start();
+	//TransaqConnector.start();
 	while (1){
 		foreach(QString seccode , mapInstrument.keys()){
 			C_Instrument& Instrument=mapInstrument[seccode];

@@ -12,13 +12,73 @@
 
 //#include "TransaqConnector.h"
 
+#define TEST_MODE
+
+#ifdef TEST_MODE
+#define LIMIT_TICKS  1024*256*16		// must be power of two
+#define LIMIT_QUOTES 1024*256*16		// must be power of two
+#define LIMIT_ORDERS 1024*16		// must be power of two
+#define LIMIT_KILLS  1024*16	 //32768*8
+#define LIMIT_TRADES 1024*16
+#else
 #define LIMIT_TICKS  1024*256*4		// must be power of two
 #define LIMIT_QUOTES 1024*256*4		// must be power of two
 #define LIMIT_ORDERS 1024		// must be power of two
-#define LIMIT_GLASSES 16 //32768*8
 #define LIMIT_KILLS 128 //32768*8
-#define GLASS_DEPTH 7
 #define LIMIT_TRADES 1024
+#endif
+
+#define GLASS_DEPTH 7
+
+
+template<class T,int SIZE> class CRingBuffer{
+	T data[SIZE];
+	size_t size;
+	size_t head;
+	size_t tail;
+	void Init(){
+		head=0;
+		tail=0;
+		size=SIZE;
+		memset(data,0,sizeof(data));
+	}
+	CRingBuffer(){
+		Init();
+	}
+	T* Tail(){
+		if (tail==head)
+			return 0;
+		return data+(tail&(SIZE-1));
+	}
+	
+	T* Head(){
+		return data+(head&(SIZE-1));
+	}
+	
+	T* At(size_t indx){
+		if (indx<tail || head<=indx)
+			return 0;
+		return data+(indx&(SIZE-1));
+	}
+
+	T& operator [] (size_t indx){
+		return data+(indx&(SIZE-1));
+	}
+
+	bool operator << (T& item){
+		if (head-tail<SIZE){
+			*Head()=item;
+			head++;
+		}
+	}
+
+	bool operator >> (T& item){
+		if (tail<head){
+			item=*Tail();
+			tail++;
+		}
+	}
+};
 
 inline QString DateTime2Text(uint datetime)
 {
@@ -380,28 +440,22 @@ struct S_EasyTrades
 		head++;
 		return true;
 	}
-	bool Insert(float price, uint quantity, char buysell, long long orderno, long long tradeno){
+	bool Insert(float price, uint quantity, char buysell, long long orderno, long long tradeno, uint datetime){
 		if (head==tail+LIMIT_TRADES)
 			return false;
-		S_EasyTrade& Trade=(*this)[head];
+		S_EasyTrade& Trade=data[head&(LIMIT_TRADES-1)];
 		Trade.price=price;
 		Trade.quantity=quantity;
 		Trade.buysell=buysell;
 		Trade.orderno=orderno;
 		Trade.tradeno=tradeno;
+		Trade.time = datetime;
 		head++;
 		return true;
 	}
 
 };
 
-struct S_CancelOrder {
-	uint transactionid;
-	struct {
-		int  success;
-		char result[128];
-	} transaq;
-};
 
 struct S_NewOrder
 {
@@ -426,99 +480,67 @@ struct S_NewOrder
 		char result[128];
 		uint balance;
 	} server;
-	
+	bool isSuccess(){
+		while (transaq.success==-1);
+		return transaq.success;
+	}
 };
 
 
-struct S_EasyOrders
+struct S_NewOrders
 {
-	struct S_NewOrders
-	{
-		S_NewOrder data[LIMIT_ORDERS];
-		uint head;
-		uint tail;
-		void Init(){
-			head=0;
-			tail=0;
-		}
-		S_NewOrder& Last(){
-			_ASSERTE(head>0);
-			return data[(head-1)&(LIMIT_ORDERS-1)];
-		}
-// 		S_NewOrder& First(){
-// 			_ASSERTE(head==0);
-// 			return data[(head-1)&(LIMIT_ORDERS-1)];
-// 		}
-		S_NewOrder* FindOrderNo(unsigned long long orderno){
-			for(int i=tail; i<head; i++){
-				if ((*this)[i].server.orderno==orderno)
-					return &((*this)[i]);
-			}
+	S_NewOrder data[LIMIT_ORDERS];
+	uint head;
+	uint tail;
+	void Init(){
+		head=0;
+		tail=0;
+		memset(data,0,sizeof(data));
+	}
+	S_NewOrder* Tail(){
+		if (tail==head)
 			return 0;
+		return data+(tail&(LIMIT_ORDERS-1));
+	}
+	S_NewOrder& Last(){
+		_ASSERTE(head>0);
+		return data[(head-1)&(LIMIT_ORDERS-1)];
+	}
+	// 		S_NewOrder& First(){
+	// 			_ASSERTE(head==0);
+	// 			return data[(head-1)&(LIMIT_ORDERS-1)];
+	// 		}
+	S_NewOrder* FindOrderNo(unsigned long long orderno){
+		S_NewOrder* pOrder=Tail();
+		for(uint i=tail; i<head; i++, pOrder++){
+			if ((*this)[i].server.orderno==orderno)
+				return &(*this)[i];
 		}
-		S_NewOrder* Insert(float price, uint quantity, char buysell, bool bymarket=false){
-			_ASSERTE(head<tail+LIMIT_ORDERS);
-			S_NewOrder& order=data[head&(LIMIT_ORDERS-1)];
-			order.price=price;
-			order.quantity=quantity;
-			order.buysell=buysell;
-			order.bymarket=bymarket;
-			order.transaq.success=-1;
-			order.transaq.transactionid=-1;
-			order.transaq.result[0]=0;
-			order.server.orderno=-1;
-			order.server.result[0]=0;
-			
-			head++;
-			
-			return &order;
-		}
-		bool isSuccess(S_NewOrder& order){
-			while (order.transaq.success==-1){
+		return 0;
+	}
+	S_NewOrder* Insert(float price, uint quantity, char buysell, bool bymarket=false){
+		_ASSERTE(head<tail+LIMIT_ORDERS);
+		S_NewOrder& order=(*this)[head];
+		order.price=price;
+		order.quantity=quantity;
+		order.buysell=buysell;
+		order.bymarket=bymarket;
+		order.transaq.success=-1;
+		order.transaq.transactionid=0;
+		order.transaq.result[0]=0;
+		order.server.orderno=0;
+		order.server.result[0]=0;
 
-			}
-			return order.transaq.success;
-		}
+		head++;
 
-		S_NewOrder& operator [] (uint idx)		{
-			return data[idx&(LIMIT_ORDERS-1)];
-		}
-	} NewOrders;
-
-	struct S_CancelOrders 
-	{
-		S_CancelOrder data[LIMIT_KILLS];
-		uint head;
-		uint tail;
-		void Init(){
-			head=0;
-			tail=0;
-		}
-		S_CancelOrder* Insert(uint id){
-			_ASSERTE(head<tail+LIMIT_KILLS);
-			S_CancelOrder& order=data[head&(LIMIT_KILLS-1)];
-			order.transactionid=id;
-			order.transaq.success=-1;
-			order.transaq.result[0]=0;
-			head++;
-			return &order;
-		}
-		bool isSuccess(S_CancelOrder* pOrder){
-			while (pOrder->transaq.success==-1);
-			return (pOrder->transaq.success);
-		}
-		S_CancelOrder& operator[] (uint idx){
-			return data[(idx)&(LIMIT_KILLS-1)];
-		}
-	} CancelOrders;
-
-	
+		return &order;
+	}
 	bool operator << (S_XML_OrderInfo& Reply)
 	{
 		uint transactionid=Reply.transactionid.toUInt();
 		_ASSERTE(transactionid);
-		for(int idx=NewOrders.head-1; idx>=0; idx--){
-			S_NewOrder& order=NewOrders[idx];
+		for(int idx=head-1; idx>=0; idx--){
+			S_NewOrder& order=(*this)[idx];
 			if (order.transaq.transactionid==transactionid){
 				order.server.orderno=Reply.orderno.toULongLong();
 				order.server.price  =Reply.price.toFloat();
@@ -530,6 +552,64 @@ struct S_EasyOrders
 		}
 		return false;
 	}
+
+	S_NewOrder& operator [] (uint idx)		{
+		return data[idx&(LIMIT_ORDERS-1)];
+	}
+} ;
+
+
+struct S_CancelOrder {
+	uint transactionid;
+	struct {
+		int  success;
+		char result[128];
+	} transaq;
+	bool isSuccess(){
+		while (transaq.success==-1);
+		return (transaq.success);
+	}
+};
+
+struct S_CancelOrders 
+{
+	S_CancelOrder data[LIMIT_KILLS];
+	uint head;
+	uint tail;
+	void Init(){
+		head=0;
+		tail=0;
+		memset(data,0,sizeof(data));
+	}
+	S_CancelOrder* Tail(){
+		if (tail==head)
+			return 0;
+		return data+(tail&(LIMIT_KILLS-1));
+	}
+	S_CancelOrder* Insert(uint id){
+		_ASSERTE(head<tail+LIMIT_KILLS);
+		S_CancelOrder& order=data[head&(LIMIT_KILLS-1)];
+		order.transactionid=id;
+		order.transaq.success=-1;
+		order.transaq.result[0]=0;
+		head++;
+		return &order;
+	}
+	
+	S_CancelOrder& operator[] (uint idx){
+		return data[(idx)&(LIMIT_KILLS-1)];
+	}
+} ;
+
+
+struct S_EasyOrders
+{
+
+
+	S_NewOrders NewOrders;
+	S_CancelOrders CancelOrders;
+	
+	
 	
 	void Init(){
 		CancelOrders.Init();
@@ -918,49 +998,51 @@ public:
 	S_EasyTicks	 Ticks;
 	S_EasyQuotes Quotes;
 	S_EasyTrades Trades;
-	S_EasyOrders Orders;
+	S_NewOrders  NewOrders;
+	S_CancelOrders CancelOrders;
 	void Init(){
 		Ticks.Init();
-		Glasses.Init();
+	//	Glasses.Init();
 		Quotes.Init();
 		Trades.Init();
-		Orders.Init();
+		NewOrders.Init();
+		CancelOrders.Init();
 	}
-	struct {
-		C_FixedGlass data[LIMIT_GLASSES];
-		uint size;
-		C_FixedGlass* FindInInterval(uint datetime,uint interval, uint& fromIndex){
-			uint saveIndex=fromIndex;
-			C_FixedGlass* pGlass=data+fromIndex;
-			for(; fromIndex<size; fromIndex++, pGlass++){
-				if (datetime<=pGlass->datetime)
-					if (pGlass->datetime-datetime<=interval)
-						return pGlass;
-			}
-			fromIndex=saveIndex;
-			return 0;
-		}
-		C_FixedGlass* FindBefore(uint datetime, uint interval, uint& fromIndex){
-			fromIndex=MAX(1,fromIndex);
-			uint saveIndex=fromIndex;
-			C_FixedGlass* pGlass=data+fromIndex;
-			for(; fromIndex<size; fromIndex++, pGlass++){
-				if (datetime<pGlass->datetime){
-					if (pGlass->datetime-datetime<interval){
-						pGlass--;
-						fromIndex--;
-						//_ASSERTE(fromIndex>=0);
-						return pGlass;
-					}
-				}
-			}
-			fromIndex=saveIndex;
-			return 0;
-		}
-		void Init(){
-			size=0;
-		}
-	} Glasses;
+// 	struct {
+// 		C_FixedGlass data[LIMIT_GLASSES];
+// 		uint size;
+// 		C_FixedGlass* FindInInterval(uint datetime,uint interval, uint& fromIndex){
+// 			uint saveIndex=fromIndex;
+// 			C_FixedGlass* pGlass=data+fromIndex;
+// 			for(; fromIndex<size; fromIndex++, pGlass++){
+// 				if (datetime<=pGlass->datetime)
+// 					if (pGlass->datetime-datetime<=interval)
+// 						return pGlass;
+// 			}
+// 			fromIndex=saveIndex;
+// 			return 0;
+// 		}
+// 		C_FixedGlass* FindBefore(uint datetime, uint interval, uint& fromIndex){
+// 			fromIndex=MAX(1,fromIndex);
+// 			uint saveIndex=fromIndex;
+// 			C_FixedGlass* pGlass=data+fromIndex;
+// 			for(; fromIndex<size; fromIndex++, pGlass++){
+// 				if (datetime<pGlass->datetime){
+// 					if (pGlass->datetime-datetime<interval){
+// 						pGlass--;
+// 						fromIndex--;
+// 						//_ASSERTE(fromIndex>=0);
+// 						return pGlass;
+// 					}
+// 				}
+// 			}
+// 			fromIndex=saveIndex;
+// 			return 0;
+// 		}
+// 		void Init(){
+// 			size=0;
+// 		}
+// 	} Glasses;
 
 	
 

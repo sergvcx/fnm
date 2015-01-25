@@ -127,7 +127,7 @@ struct S_FlashStatistics
 
 	S_FlashStatistics(){
 		lossComission=0;
-		Commision=0.04/100;
+		Commision=float(0.04/100);
 		countSell=0;
 		countBuy=0;
 
@@ -144,8 +144,8 @@ struct S_FlashStatistics
 		
 	}
 	void operator << (C_SubVector<S_Tick>& vec){
-		S_Tick* baseTick=0;
-		for(int i=0; i<vec.size; i++){
+		//S_Tick* baseTick=0;
+		for(uint i=0; i<vec.size; i++){
 			S_Tick& tick=vec.data[i];
 			QDateTime dt; dt=QDateTime::fromTime_t(tick.datetime);
 			//if (dt.date()<minDate || dt.date()>maxDate)
@@ -195,6 +195,7 @@ struct S_FlashStatistics
 
 };
 
+uint test_datetime;
  int main(int argc, char *argv[])
  {
 	
@@ -204,16 +205,21 @@ struct S_FlashStatistics
 
 	 
 
-// 	 C_Instrument Instrument;
-// 	 if (!Instrument.Attach("aflt"))
-// 		 return 1;
-// 	 
-// 	 S_MinMax<float> FastDeviation(0.001/100, 0.002/100);
-// 	 S_MinMax<float> SlowDeviation(0.01/100, 0.02/100);
-// 	 C_YoStrategy Strategy(Instrument,SlowDeviation,FastDeviation,10000,0);
-// 	 C_TestConnector TestConnector(Instrument);
-// 	 TestConnector.Trade(Strategy);
-// 	 return 1;
+	 C_Instrument Instrument;
+	 if (!Instrument.Attach("rosn"))
+		 return 1;
+	 
+	for (float fast=0.01/100; fast< 0.1/100; fast+=0.01/100)
+		for(float slow=0.01/100; slow< 0.5/100; slow+=0.05/100){
+			 S_MinMax<float> FastDeviation(float(fast),float(2*fast));
+			 S_MinMax<float> SlowDeviation(float(slow),float(2*slow));
+			 C_YoStrategy Strategy(Instrument,SlowDeviation,FastDeviation,0,0);
+			 C_TestConnector TestConnector(Instrument);
+			 TestConnector.Trade(Strategy);
+			 TestConnector.Close(Strategy);
+			 qDebug() << fast << slow << Strategy.cash << Strategy.commission;
+		}
+ 	 return 1;
 	 
 // 	 C_Instrument Instrument;
 // 	 QString seccode="gmkn";
@@ -223,8 +229,8 @@ struct S_FlashStatistics
 // 	 }
 // 
 // 	 
-	 //size_t idxBegin=Instrument.TickInfo.tail;
-	 //size_t idxEnd  =Instrument.pData->Ticks.size;
+// 	 //size_t idxBegin=Instrument.TickInfo.tail;
+// 	 //size_t idxEnd  =Instrument.pData->Ticks.size;
 // 	 C_SubVector<S_Tick> TickData=Instrument.TickSubVector();
 // 	
 // 	 for(float dev=0.01; dev <0.5; dev+=0.01){
@@ -237,9 +243,9 @@ struct S_FlashStatistics
 // 		qDebug()<< dev << "|B="<< stat.countBuy << "/" << stat.countGoodBuy << "|S=" << stat.countSell <<"/" << stat.countGoodSell << "|B" << stat.profitBuy << stat.lossBuy << "|S" << stat.profitSell << stat.lossSell  << "||" << profit << stat.lossComission << "=" << profit - stat.lossComission ;// dev*(stat.countBuy+stat.countSell);
 // 	//	printf();
 // 	 }
-// 	 
-// 
-// 	 return 1;
+	 
+
+	 return 1;
 
 	//============================================== offline mode =======================================
 // 	//QString seccode="VTBR";

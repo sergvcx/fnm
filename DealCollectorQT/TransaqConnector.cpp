@@ -375,7 +375,7 @@ bool CALLBACK acceptor(BYTE *pData)
 				//if ( Instrument.pTickLog)
 				//	*Instrument.pTickLog<<tick.toXML() <<"\n";
 
-				bool ok=Instrument.pData->Orders << xml_order;
+				bool ok=Instrument.pData->NewOrders << xml_order;
 				//_ASSERTE(ok);
 				queueOrder.removeFirst();
 			}
@@ -921,20 +921,20 @@ bool CALLBACK acceptor(BYTE *pData)
 				C_Instrument& Instrument=mapInstrument[seccode];
 				//---------------- new order ---------------
 				{
-					uint& head=Instrument.pData->Orders.NewOrders.head;
-					uint& tail=Instrument.pData->Orders.NewOrders.tail;
+					uint& head=Instrument.pData->NewOrders.head;
+					uint& tail=Instrument.pData->NewOrders.tail;
 					while(head>tail){
-						S_NewOrder& order=Instrument.pData->Orders.NewOrders[tail];
+						S_NewOrder& order=Instrument.pData->NewOrders[tail];
 						neworder(seccode, order);
 						tail++;
 					}
 				}
 				//------------------ cancle order--------------
 				{
-					uint& head=Instrument.pData->Orders.CancelOrders.head;
-					uint& tail=Instrument.pData->Orders.CancelOrders.tail;
+					uint& head=Instrument.pData->CancelOrders.head;
+					uint& tail=Instrument.pData->CancelOrders.tail;
 					while(head>tail){
-						S_CancelOrder& order=Instrument.pData->Orders.CancelOrders[tail];
+						S_CancelOrder& order=Instrument.pData->CancelOrders[tail];
 						cancelorder(order);
 						tail++;
 					}
