@@ -107,11 +107,11 @@ Connect:
 			S_EasyTicks&   Ticks=Instrument.pData->Ticks;
 			S_EasyQuotes& Quotes=Instrument.pData->Quotes;
 		
-			int count= Ticks.size-Instrument.TickInfo.tail;
+			int count= Ticks.head-Instrument.TickInfo.tail;
 			Ticks2Mysql( tick_query, seccode, Ticks,Instrument.TickInfo.tail,count, Instrument.TickInfo.lastDateTimeInDB);
 			Instrument.TickInfo.tail+=count;
 		
-			count = Quotes.size-Instrument.QuoteInfo.tail;
+			count = Quotes.head-Instrument.QuoteInfo.tail;
 			Quotes2Mysql(tick_query,seccode,Quotes, Instrument.QuoteInfo.tail,count, false );
 			Instrument.QuoteInfo.tail+=count;		
 		}

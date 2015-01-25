@@ -12,7 +12,7 @@
 
 //#include "TransaqConnector.h"
 
-#define TEST_MODE
+//#define TEST_MODE
 
 #ifdef TEST_MODE
 #define LIMIT_TICKS  1024*256*16		// must be power of two
@@ -31,50 +31,79 @@
 #define GLASS_DEPTH 7
 
 
-template<class T,int SIZE> class CRingBuffer{
-	T data[SIZE];
+template<class T,int SIZE> class C_StaticRingBuffer{
 	size_t size;
+
+public:
+	T data[SIZE];
 	size_t head;
 	size_t tail;
-	void Init(){
+// 	void Init(){
+// 		head=0;
+// 		tail=0;
+// 		size=SIZE;
+// 		Clear();
+// 	}
+	bool isFull(){
+		return (head-tail==SIZE);
+	}
+	bool isEmpty(){
+		return (head==tail);
+	}
+	void clear(){
 		head=0;
 		tail=0;
-		size=SIZE;
 		memset(data,0,sizeof(data));
 	}
-	CRingBuffer(){
-		Init();
+	C_StaticRingBuffer(){
+		clear();
+		size=SIZE;
 	}
-	T* Tail(){
+	T& refTail(){
+		_ASSERTE(tail<head);
+		if (tail==head)
+			return 0;
+		return data[tail&(SIZE-1)];
+	}
+	T* ptrTail(){
 		if (tail==head)
 			return 0;
 		return data+(tail&(SIZE-1));
 	}
 	
-	T* Head(){
+	T& refHead(){
+		_ASSERTE(head-tail<SIZE);
+		return data[head&(SIZE-1)];
+	}
+	T* ptrHead(){
+
 		return data+(head&(SIZE-1));
 	}
+
+	T& refLast(){
+		_ASSERTE(tail<head);
+		return data[(head-1)&(SIZE-1)];
+	}
 	
-	T* At(size_t indx){
-		if (indx<tail || head<=indx)
-			return 0;
-		return data+(indx&(SIZE-1));
+	T& at(size_t indx){
+		_ASSERTE(tail<=indx && indx<head);
+		return data[indx&(SIZE-1)];
 	}
 
 	T& operator [] (size_t indx){
-		return data+(indx&(SIZE-1));
+		_ASSERTE(tail<=indx && indx<head);
+		return data[indx&(SIZE-1)];
 	}
 
-	bool operator << (T& item){
-		if (head-tail<SIZE){
-			*Head()=item;
-			head++;
-		}
+	void operator << (T& item){
+		refHead()=item;
+		head++;
 	}
 
 	bool operator >> (T& item){
+		_ASSERTE(tail<head);
 		if (tail<head){
-			item=*Tail();
+			item=refTail();
 			tail++;
 		}
 	}
@@ -187,33 +216,45 @@ struct S_Tick{
 };
 //============================ S_EasyTicks ====================================
 
-struct S_EasyTicks{
-	S_Tick	data[LIMIT_TICKS];
-	size_t	size;
-	S_Tick& operator[] (int idx){
-		return data[idx&(LIMIT_TICKS-1)];
-	}
-	S_Tick& Last(){
-		return data[(size-1)&(LIMIT_TICKS-1)];
-	}
+class S_EasyTicks: public C_StaticRingBuffer<S_Tick,LIMIT_TICKS> {
+public:
+	//S_Tick	data[LIMIT_TICKS];
+	//size_t	size;
+	//S_Tick& operator[] (int idx){
+	//	return data[idx&(LIMIT_TICKS-1)];
+	//}
+// 	S_Tick& Last(){
+// 		return data[(size-1)&(LIMIT_TICKS-1)];
+// 	}
 	void Init(){
-		size=0;
-		S_Tick* tick=data;
-		for(int i=0; i<LIMIT_TICKS; i++,tick++){
-			tick->price		=0;
-			tick->quantity	=0;
-			tick->type		=0;
-			tick->datetime	=0;
-		}
+		//size=0;
+// 		S_Tick* tick=data;
+// 		for(int i=0; i<LIMIT_TICKS; i++,tick++){
+// 			tick->price		=0;
+// 			tick->quantity	=0;
+// 			tick->type		=0;
+// 			tick->datetime	=0;
+// 		}
+		head=0;
+		tail=0;
+		clear();
 	}
+
 	uint FindAfter(uint dt, uint fromIndex=0)
 	{
-		S_Tick* pTick=data+fromIndex;
-		for(uint i=fromIndex; i<MIN(size,LIMIT_TICKS); i++, pTick++){
-			if (pTick->datetime>dt)
+// 		S_Tick* pTick=data+fromIndex;
+// 		for(uint i=fromIndex; i<MIN(size,LIMIT_TICKS); i++, pTick++){
+// 			if (pTick->datetime>dt)
+// 				return i;
+// 		}
+		
+		for(uint i=MAX(fromIndex,tail); i<head; i++){
+			if (at(i).datetime>dt)
 				return i;
 		}
-		return size;
+		//return size;
+		return 0;
+
 	}
 	uint FindAfter(QString dt, uint fromIndex=0)
 	{
@@ -221,25 +262,28 @@ struct S_EasyTicks{
 	}
 	uint NextSecondIndex(uint fromIndex)
 	{
-		S_Tick* pTick=data+fromIndex;
-		uint from_datetime=pTick->datetime;
-		for(uint i=fromIndex; i<MIN(size,LIMIT_TICKS); i++, pTick++)
-			if (pTick->datetime>from_datetime)
+		//S_Tick* pTick=data+fromIndex;
+		uint from_datetime=at(fromIndex).datetime;
+		for(uint i=MAX(fromIndex,tail); i<head; i++)
+			if (at(i).datetime>from_datetime)
 				return i;
-		return size;
+		//return size;
+		return 0;
 	}
-	
-	void operator << (S_Tick& Tick)
-	{
-		data[ size   &(LIMIT_TICKS-1)]=Tick;
-		size++;
-	}
+	using C_StaticRingBuffer<S_Tick,LIMIT_TICKS>::operator <<;
+// 	void operator << (S_Tick& Tick)
+// 	{
+// 		data[ size   &(LIMIT_TICKS-1)]=Tick;
+// 		size++;
+// 	}
 	
 	void operator << (S_XML_Tick& Tick)
 	{
 		bool ok;
-		S_Tick& NewTick =data[ size   &(LIMIT_TICKS-1)];
-		S_Tick& LastTick=data[(size-1)&(LIMIT_TICKS-1)];
+		//S_Tick& NewTick =data[ size   &(LIMIT_TICKS-1)];
+		//S_Tick& LastTick=data[(size-1)&(LIMIT_TICKS-1)];
+		S_Tick& NewTick =refHead();//data[ size   &(LIMIT_TICKS-1)];
+		S_Tick& LastTick=refLast();//data[(size-1)&(LIMIT_TICKS-1)];
 		NewTick.type     =0;
 		NewTick.price    =Tick.price.toFloat(&ok);
 		NewTick.quantity =Tick.quantity.toInt(&ok);
@@ -262,7 +306,8 @@ struct S_EasyTicks{
 		else 
 			//NewTick.SetBuyType();
 			NewTick.SetSellType();
-		size++;
+		//size++;
+		head++;
 	}
 };
 
@@ -408,23 +453,26 @@ struct S_EasyTrade
 	uint currentpos;
 };
 
-struct S_EasyTrades 
+class S_EasyTrades : public C_StaticRingBuffer<S_EasyTrade,LIMIT_TRADES>
 {
-	S_EasyTrade data[LIMIT_TRADES];
-	uint head;
-	uint tail;
+public:
+	//S_EasyTrade data[LIMIT_TRADES];
+	//uint head;
+	//uint tail;
 
 	void Init(){
 		head=0;
 		tail=0;
+		clear();
 	}
-	S_EasyTrade& operator [] (uint idx){
-		return data[idx&(LIMIT_TRADES-1)];
-	}
+// 	S_EasyTrade& operator [] (uint idx){
+// 		return data[idx&(LIMIT_TRADES-1)];
+// 	}
+	using C_StaticRingBuffer<S_EasyTrade,LIMIT_TRADES>::operator <<;
+
 	bool operator << (S_XML_TradeInfo& Trade){
-		if (head==tail+LIMIT_TRADES)
-			return false;
-		S_EasyTrade& trade=data[head&(LIMIT_TRADES-1)];
+		_ASSERTE(!isFull());
+		S_EasyTrade& trade=refHead();
 		if (Trade.buysell=="B")
 			trade.buysell='B';
 		else if (Trade.buysell=="S")
@@ -441,9 +489,10 @@ struct S_EasyTrades
 		return true;
 	}
 	bool Insert(float price, uint quantity, char buysell, long long orderno, long long tradeno, uint datetime){
-		if (head==tail+LIMIT_TRADES)
-			return false;
-		S_EasyTrade& Trade=data[head&(LIMIT_TRADES-1)];
+		_ASSERTE(!isFull());
+		//if (head==tail+LIMIT_TRADES)
+		//	return false;
+		S_EasyTrade& Trade=refHead();
 		Trade.price=price;
 		Trade.quantity=quantity;
 		Trade.buysell=buysell;
@@ -487,40 +536,41 @@ struct S_NewOrder
 };
 
 
-struct S_NewOrders
+class S_NewOrders: public C_StaticRingBuffer<S_NewOrder,LIMIT_ORDERS>
 {
-	S_NewOrder data[LIMIT_ORDERS];
-	uint head;
-	uint tail;
+public:
+	//S_NewOrder data[LIMIT_ORDERS];
+	//uint head;
+	//uint tail;
 	void Init(){
 		head=0;
 		tail=0;
-		memset(data,0,sizeof(data));
+		clear();
 	}
-	S_NewOrder* Tail(){
-		if (tail==head)
-			return 0;
-		return data+(tail&(LIMIT_ORDERS-1));
-	}
-	S_NewOrder& Last(){
-		_ASSERTE(head>0);
-		return data[(head-1)&(LIMIT_ORDERS-1)];
-	}
+// 	S_NewOrder* Tail(){
+// 		if (tail==head)
+// 			return 0;
+// 		return data+(tail&(LIMIT_ORDERS-1));
+// 	}
+// 	S_NewOrder& Last(){
+// 		_ASSERTE(head>0);
+// 		return data[(head-1)&(LIMIT_ORDERS-1)];
+// 	}
 	// 		S_NewOrder& First(){
 	// 			_ASSERTE(head==0);
 	// 			return data[(head-1)&(LIMIT_ORDERS-1)];
 	// 		}
 	S_NewOrder* FindOrderNo(unsigned long long orderno){
-		S_NewOrder* pOrder=Tail();
-		for(uint i=tail; i<head; i++, pOrder++){
-			if ((*this)[i].server.orderno==orderno)
-				return &(*this)[i];
+		//S_NewOrder* pOrder=Tail();
+		for(uint i=tail; i<head; i++){
+			if (at(i).server.orderno==orderno)
+				return &at(i);
 		}
 		return 0;
 	}
 	S_NewOrder* Insert(float price, uint quantity, char buysell, bool bymarket=false){
-		_ASSERTE(head<tail+LIMIT_ORDERS);
-		S_NewOrder& order=(*this)[head];
+		_ASSERTE(!isFull());
+		S_NewOrder& order=refHead();//(*this)[head];
 		order.price=price;
 		order.quantity=quantity;
 		order.buysell=buysell;
@@ -540,7 +590,7 @@ struct S_NewOrders
 		uint transactionid=Reply.transactionid.toUInt();
 		_ASSERTE(transactionid);
 		for(int idx=head-1; idx>=0; idx--){
-			S_NewOrder& order=(*this)[idx];
+			S_NewOrder& order=at(idx);
 			if (order.transaq.transactionid==transactionid){
 				order.server.orderno=Reply.orderno.toULongLong();
 				order.server.price  =Reply.price.toFloat();
@@ -553,9 +603,6 @@ struct S_NewOrders
 		return false;
 	}
 
-	S_NewOrder& operator [] (uint idx)		{
-		return data[idx&(LIMIT_ORDERS-1)];
-	}
 } ;
 
 
@@ -618,25 +665,29 @@ struct S_EasyOrders
 };
 
 //======================= S_EasyQuotes ============================================
-struct S_EasyQuotes{
-	C_EasyQuote data[LIMIT_QUOTES];
-	uint size;
+class S_EasyQuotes : public C_StaticRingBuffer<C_EasyQuote,LIMIT_QUOTES> {
+public:
+	//C_EasyQuote data[LIMIT_QUOTES];
+	//uint size;
 	uint last_find_index;
 	S_EasyQuotes(){
-		size=0;
+		//size=0;
+		Init();
 	}
 	void Init(){
-		size=0;
+		clear();
+		head=0;
 		last_find_index=0;
 	}
-	C_EasyQuote& operator [] (uint idx)
-	{
-		return data[idx&(LIMIT_QUOTES-1)];
-	}
+// 	C_EasyQuote& operator [] (uint idx)
+// 	{
+// 		return data[idx&(LIMIT_QUOTES-1)];
+// 	}
 
+	using C_StaticRingBuffer<C_EasyQuote,LIMIT_QUOTES>::operator << ;
 	void operator << (S_XML_QuoteInfo& QuoteInfo){
 		bool ok;
-		C_EasyQuote& quote=data[size&(LIMIT_QUOTES-1)];
+		C_EasyQuote& quote=refHead();//data[size&(LIMIT_QUOTES-1)];
 		quote.datetime =QuoteInfo.datetime;
 		quote.price    =QuoteInfo.price.toFloat(&ok);
 		quote.buy      =QuoteInfo.buy.toInt(&ok);
@@ -644,7 +695,8 @@ struct S_EasyQuotes{
 		quote.sell     =QuoteInfo.sell.toInt(&ok);
 		if (!ok) quote.sell =0;
 		
-		size++;
+		//size++;
+		head++;
 	}
 
 
@@ -652,8 +704,8 @@ struct S_EasyQuotes{
 	{
 		S_Quote NewQuote;
 		bool isUpdated=false;
-		for(uint i=MAX(0,size-history); i<MIN(size,LIMIT_QUOTES); i++){
-			C_EasyQuote& HistoryQuote=data[i&(LIMIT_QUOTES-1)];
+		for(uint i=MAX(tail,head-history); i<head; i++){
+			C_EasyQuote& HistoryQuote=at(i) ;//data[i&(LIMIT_QUOTES-1)];
 			if (HistoryQuote.sell){
 				//------------ if history quote is sell ---------
 				if (listSellQuote.isEmpty() && HistoryQuote.sell>0 ){
@@ -766,7 +818,7 @@ struct S_EasyQuotes{
 	bool UpdateGlass(S_Glass& Glass, uint toIndex, int history=100)
 	{
 		_ASSERTE((int)toIndex>=0);
-		_ASSERTE(toIndex<size);
+		_ASSERTE(toIndex<head);
 		uint fromIndex;
 		Glass.datetime=data[toIndex&(LIMIT_QUOTES-1)].datetime;
 		if ((Glass.fromIndex <= toIndex-history) && (toIndex-history<= Glass.toIndex) && (Glass.toIndex<=toIndex)){
@@ -789,7 +841,7 @@ struct S_EasyQuotes{
 		bool isUpdated=false;
 		
 		for(uint i=fromIndex; i<=Glass.toIndex; i++){
-			C_EasyQuote& HistoryQuote=data[i&(LIMIT_QUOTES-1)];
+			C_EasyQuote& HistoryQuote=at(i);//data[i&(LIMIT_QUOTES-1)];
 			if (HistoryQuote.sell){
 				//------------ if history quote is sell ---------
 				if (Glass.listSell.isEmpty() && HistoryQuote.sell>0 ){
@@ -948,16 +1000,17 @@ struct S_EasyQuotes{
 
 	C_EasyQuote* FindBefore(uint datetime, uint from_index, uint& find_index){
 		
-		if (size==0)
+		if (head==0)
 			return 0;
 		_ASSERTE(from_index>=0);
-		_ASSERTE(from_index<size);
+		_ASSERTE(from_index<head);
 		find_index=from_index;
-		C_EasyQuote* pQuote=data+find_index;
+		//C_EasyQuote* pQuote=data+find_index;
+		C_EasyQuote* pQuote=&at(find_index);
 		if (pQuote->datetime < datetime){  // found . forward search of last bedore
 			pQuote++;
 			find_index++;
-			for(; find_index<MIN(size,LIMIT_QUOTES); find_index++,pQuote++){
+			for(; find_index<head; find_index++,pQuote++){
 				if (datetime <= pQuote->datetime) // overcross with found. Stop
 					break; 
 			}
@@ -1074,7 +1127,8 @@ public:
 	} TickInfo;
 
 	C_SubVector<S_Tick> TickSubVector(){
-		C_SubVector<S_Tick> vec(pData->Ticks.data,0,pData->Ticks.size);
+		//C_SubVector<S_Tick> vec(pData->Ticks.data,0,pData->Ticks.size);
+		C_SubVector<S_Tick> vec(pData->Ticks.data, pData->Ticks.tail, pData->Ticks.head-pData->Ticks.tail);
 		return vec;
 	}
 
@@ -1087,10 +1141,10 @@ public:
 	
 
 	bool UpdateGlass(uint toIndex=0, int history=400){
-		if (pData->Quotes.size==0)
+		if (pData->Quotes.head==0)
 			return false;
 		if (toIndex==0)
-			toIndex=pData->Quotes.size-1;
+			toIndex=pData->Quotes.head-1;
 		return pData->Quotes.UpdateGlass(Glass,toIndex,history);
 	}
 

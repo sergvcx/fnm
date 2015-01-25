@@ -79,7 +79,8 @@ void QGraphField::paintEvent(QPaintEvent * event)
 	//int LastIndex=vecDeal.size()-1;
 	S_EasyTicks& Ticks=pInstrument->pData->Ticks;
 
-	int LastIndex=Ticks.size-1;
+	//int LastIndex=Ticks.size-1;
+	int LastIndex=Ticks.head-1;
 	VisibleRect.getCoords(&x0,&y0,&x1,&y1);
 
 	x0=pix2x(x0-100);
@@ -380,8 +381,10 @@ else {
 		painter.drawEllipse(x-3,y-3,7,7);			
 	}
 
-	for(int i=0; i<MIN(Ticks.size,LIMIT_TICKS); i++, pTick++){
+	//for(int i=0; i<headMIN(Ticks.size,LIMIT_TICKS); i++, pTick++){
+	for(int i=Ticks.tail; i<Ticks.head; i++, pTick++){
 
+		
 		uint x=x2pix(pTick->datetime-minDateTime);
 		uint y=y2pix(pTick->price);
 		if (pTick->isSell())
@@ -436,9 +439,9 @@ int QGraphField::Rescale(){
 	maxY=0;
 	S_EasyTicks& Ticks=pInstrument->pData->Ticks;
 	//int DataSize=vecDeal.size();
-	int DataSize=Ticks.size;
+	//int DataSize=Ticks.size;
 	
-	for(int i=0; i<DataSize; i++){
+	for(int i=0; i<Ticks.head; i++){
 		//float val=vecDeal[i].Price;
 		float val=Ticks[i].price;
 		if (val>maxY)
@@ -450,8 +453,8 @@ int QGraphField::Rescale(){
 	MY=-(WinHeight-1)/(maxY-minY);
 	if (!bViewOfferFlag){
 		//MX=4;
-		setMinimumSize(DataSize*MX,WinHeight);
-		setMaximumSize(DataSize*MX,WinHeight);
+		setMinimumSize(Ticks.head*MX,WinHeight);
+		setMaximumSize(Ticks.head*MX,WinHeight);
 	}
 	else 
 	{
@@ -487,9 +490,9 @@ void GetStat(S_EasyTicks& vecDeal, SStatistic &Stat){
 		Stat.PriceMin=100000;
 		Stat.PriceMax=0;
 		Stat.VolumeSum=0;
-		int size=vecDeal.size;
-		_ASSERTE(Stat.idx0<vecDeal.size);
-		_ASSERTE(Stat.idx1<vecDeal.size);
+		int size=vecDeal.head;
+		_ASSERTE(Stat.idx0<vecDeal.head);
+		_ASSERTE(Stat.idx1<vecDeal.head);
 		for(int idx=Stat.idx0; idx<=Stat.idx1; idx++){
 			double Price=vecDeal[idx].price;
 			int Volume=vecDeal[idx].quantity;
@@ -512,7 +515,7 @@ void QGraphField::mousePressEvent(QMouseEvent *event){
 //	int button	=event->button();
 	S_EasyTicks& Ticks=pInstrument->pData->Ticks;
 	//int idx=MIN(vecDeal.size()-1,pix2x(Point.x()));
-	int idx=MIN(Ticks.size-1,pix2x(Point.x()));
+	int idx=MIN(Ticks.head-1,pix2x(Point.x()));
 	clickTime=Ticks[idx].datetime;
 	if (bViewOfferFlag)
 	{
@@ -553,7 +556,7 @@ void QGraphField::mousePressEvent(QMouseEvent *event){
 
 
 				
-				if (pInstrument->pData->Quotes.size){
+				if (pInstrument->pData->Quotes.head){
 					
 					S_Glass& Glass=pInstrument->Glass;
 					uint index;
@@ -597,7 +600,7 @@ void QGraphField::mouseMoveEvent(QMouseEvent *event){
 	S_EasyTicks& Ticks=pInstrument->pData->Ticks;
 	int idx;
 	if (!bViewOfferFlag){
-		idx=MIN(Ticks.size-1,pix2x(Point.x()));
+		idx=MIN(Ticks.head-1,pix2x(Point.x()));
 	
 
 

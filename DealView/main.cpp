@@ -1,9 +1,19 @@
 #include "MainWindow.h"
 
-
+//S_EasyTicks ticks;
 
  int main(int argc, char *argv[])
  {
+
+ 	 
+//  	 
+//  	 C_StaticRingBuffer<S_Tick,100> TickRB;
+//  	
+//  	 
+//  	 S_Tick a;
+//  	 TickRB <<a;
+//  	 ticks<<a;
+//  	 ticks.Head()=a;
 
 	 QApplication app(argc, argv);
 	 //app.setWindowTitle("LefcoView");

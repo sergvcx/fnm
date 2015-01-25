@@ -199,25 +199,31 @@ uint test_datetime;
  int main(int argc, char *argv[])
  {
 	
+	 
+
 	 setlocale(LC_ALL, "Russian");
 	
 	 QApplication app(argc, argv);
 
 	 
+	 
 
 	 C_Instrument Instrument;
-	 if (!Instrument.Attach("rosn"))
-		 return 1;
+	 while (!Instrument.Attach("gmkn")){
+		 Sleep(1);
+	 }
 	 
+	 int counter=0;
 	for (float fast=0.01/100; fast< 0.1/100; fast+=0.01/100)
 		for(float slow=0.01/100; slow< 0.5/100; slow+=0.05/100){
+			counter++;
 			 S_MinMax<float> FastDeviation(float(fast),float(2*fast));
 			 S_MinMax<float> SlowDeviation(float(slow),float(2*slow));
 			 C_YoStrategy Strategy(Instrument,SlowDeviation,FastDeviation,0,0);
 			 C_TestConnector TestConnector(Instrument);
 			 TestConnector.Trade(Strategy);
 			 TestConnector.Close(Strategy);
-			 qDebug() << fast << slow << Strategy.cash << Strategy.commission;
+			 qDebug() << fast << slow << Strategy.cash << Strategy.commission << Strategy.cash - Strategy.commission << Instrument.pData->Trades.head;
 		}
  	 return 1;
 	 
@@ -339,11 +345,11 @@ uint test_datetime;
 			Sleep(100);
 		}
 		
-		Instrument.TickInfo.tail=Instrument.pData->Ticks.size;
+		Instrument.TickInfo.tail=Instrument.pData->Ticks.head;
 		mapInstrument[seccode]=Instrument;
 	}
 
-	while(mapInstrument["SBER"].pData->Ticks.size==0){
+	while(mapInstrument["SBER"].pData->Ticks.head==0){
 		qDebug()<< "Zzzz...";
 		Sleep(1000);
 	}
@@ -356,7 +362,7 @@ uint test_datetime;
 			S_TestMatrix& Test=*mapTest[seccode];
 		
 			size_t idxBegin=Instrument.TickInfo.tail;
-			size_t idxEnd=Instrument.pData->Ticks.size;
+			size_t idxEnd=Instrument.pData->Ticks.head;
 			C_SubVector<S_Tick> TickPortion(Instrument.pData->Ticks.data, idxBegin, idxEnd);
 			Instrument.TickInfo.tail=idxEnd;
 	
@@ -378,7 +384,7 @@ uint test_datetime;
 						if (TickPortion.size)
 							*Test.st[i][j] << TickPortion;
 					}
-					Profit = Test.st[i][j]->Profit(Instrument.pData->Ticks.Last().price);
+					Profit = Test.st[i][j]->Profit(Instrument.pData->Ticks.refLast().price);
 					if (Profit>MaxProfit){
 						MaxProfit=Profit;
 						ij=i*10+j;

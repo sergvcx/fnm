@@ -1371,13 +1371,14 @@ uint sql_read_quotes(QSqlDatabase& db, QString StockCode, QDateTime& fromDT, QDa
 	
 	int i;
 	for(i=0; query.next(); i++){
-		C_EasyQuote& quote =quotes[quotes.size];
+		C_EasyQuote quote;// =quotes[quotes.size];
 
 		quote.datetime	=query.value(1).toInt();
 		quote.price		=query.value(2).toFloat();
 		quote.buy		=query.value(3).toInt();
 		quote.sell		=query.value(4).toInt();
-		quotes.size++;
+		//quotes.size++;
+		quotes << quote;
 	}
 	return i;
 }
