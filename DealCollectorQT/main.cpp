@@ -14,9 +14,14 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 
  int main(int argc, char *argv[])
  {
+
+	 
+
 	 QApplication app(argc, argv);
 	 setlocale(LC_ALL, "Russian");   // cout << "Русский текст в консоли" << endl;
 	 OpenXML();
+
+restart:
 	 sql_open_database("trading",db_trading);
 	 //sql_switch_all_buysell(db_trading);
 	 //MainWindow* mainWin=new MainWindow;
@@ -54,13 +59,14 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 	}
 
 	qDebug() << "map Instrument is constructed";
+Connect:
 
 	while (QTime::currentTime()<Text2Time("09:55:00") || QTime::currentTime()>Text2Time("19:00:00")){
 		printf("Zzzz...");
 		Sleep(1000);
 	}
 
-Connect:
+
 	TransaqConnector.connect();
 	while (!TransaqConnector.isConnected()){
 		qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
@@ -99,9 +105,8 @@ Connect:
 	
 	QSqlQuery tick_query(db_trading);
 
-
 	//TransaqConnector.start();
-	while (1){
+	while (Text2Time("09:55:00")<QTime::currentTime() && QTime::currentTime()<Text2Time("19:00:00")){
 		foreach(QString seccode , mapInstrument.keys()){
 			C_Instrument& Instrument=mapInstrument[seccode];
 			S_EasyTicks&   Ticks=Instrument.pData->Ticks;
@@ -126,6 +131,7 @@ Connect:
 	//Instrument.pSharedMemory->detach();
 	//TransaqConnector.change_pass();
 	sql_close_database(db_trading);
+goto restart;
 	CloseXML();
 	 return 1;
 	 

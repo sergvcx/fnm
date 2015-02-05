@@ -38,31 +38,35 @@ public:
 	T data[SIZE];
 	size_t head;
 	size_t tail;
+	bool isOverflowed;
 // 	void Init(){
 // 		head=0;
 // 		tail=0;
 // 		size=SIZE;
 // 		Clear();
 // 	}
+	C_StaticRingBuffer(){
+		clear();
+		size=SIZE;
+	}
+	void clear(){
+		head=0;
+		tail=0;
+		isOverflowed=false;
+		memset(data,0,sizeof(data));
+	}
 	bool isFull(){
 		return (head-tail==SIZE);
 	}
 	bool isEmpty(){
 		return (head==tail);
 	}
-	void clear(){
-		head=0;
-		tail=0;
-		memset(data,0,sizeof(data));
-	}
-	C_StaticRingBuffer(){
-		clear();
-		size=SIZE;
-	}
+
+
 	T& refTail(){
 		_ASSERTE(tail<head);
-		if (tail==head)
-			return 0;
+		//if (tail==head)
+		//	return 0;
 		return data[tail&(SIZE-1)];
 	}
 	T* ptrTail(){
@@ -81,7 +85,9 @@ public:
 	}
 
 	T& refLast(){
-		_ASSERTE(tail<head);
+		//_ASSERTE(tail<head);
+		if (head==0)
+			return data[(head)&(SIZE-1)];
 		return data[(head-1)&(SIZE-1)];
 	}
 	
@@ -815,12 +821,12 @@ public:
 		return isUpdated;
 	}
 
-	bool UpdateGlass(S_Glass& Glass, uint toIndex, int history=100)
+	bool UpdateGlass(S_Glass& Glass, int toIndex, int history=100)
 	{
 		_ASSERTE((int)toIndex>=0);
 		_ASSERTE(toIndex<head);
-		uint fromIndex;
-		Glass.datetime=data[toIndex&(LIMIT_QUOTES-1)].datetime;
+		int fromIndex;
+		Glass.datetime=at(toIndex).datetime;
 		if ((Glass.fromIndex <= toIndex-history) && (toIndex-history<= Glass.toIndex) && (Glass.toIndex<=toIndex)){
 			fromIndex=Glass.toIndex;
 			Glass.toIndex=toIndex;
@@ -1006,28 +1012,24 @@ public:
 		_ASSERTE(from_index<head);
 		find_index=from_index;
 		//C_EasyQuote* pQuote=data+find_index;
-		C_EasyQuote* pQuote=&at(find_index);
-		if (pQuote->datetime < datetime){  // found . forward search of last bedore
-			pQuote++;
+		if (at(find_index).datetime < datetime){  // found . forward search of last bedore
 			find_index++;
-			for(; find_index<head; find_index++,pQuote++){
-				if (datetime <= pQuote->datetime) // overcross with found. Stop
+			for(; find_index<head; find_index++){
+				if (datetime <= at(find_index).datetime) // overcross with found. Stop
 					break; 
 			}
 			find_index--;
-			pQuote--;
-			return pQuote;
+			return &at(find_index);
 		}
 		// backward search
 		else { // (datetime<=pQuote->datetime)  backward search
 			find_index--;
-			pQuote--;
 			while ((int)find_index>=0){
-				if (pQuote->datetime < datetime) // found .stop
-					return pQuote;
+				if (at(find_index).datetime < datetime) // found .stop
+					return &at(find_index);
 				find_index--;
-				pQuote--;
 			}
+			find_index=0;
 		}
 		return 0;
 	}

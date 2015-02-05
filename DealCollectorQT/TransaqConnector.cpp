@@ -358,6 +358,10 @@ bool CALLBACK acceptor(BYTE *pData)
 			Instrument.Lock();
 			while (!queueTrade.isEmpty()){
 				S_XML_TradeInfo& xml_trade=queueTrade.head();
+				if (Instrument.pData->Trades.isFull()){
+					Instrument.pData->Trades.tail++;
+					Instrument.pData->Trades.isOverflowed=true;
+				}
 				Instrument.pData->Trades << xml_trade;
 				queueTrade.removeFirst();
 			}
@@ -374,7 +378,10 @@ bool CALLBACK acceptor(BYTE *pData)
 				S_XML_OrderInfo& xml_order=queueOrder.head();
 				//if ( Instrument.pTickLog)
 				//	*Instrument.pTickLog<<tick.toXML() <<"\n";
-
+				if (Instrument.pData->NewOrders.isFull()){
+					Instrument.pData->NewOrders.tail++;
+					Instrument.pData->NewOrders.isOverflowed=true;
+				}
 				bool ok=Instrument.pData->NewOrders << xml_order;
 				//_ASSERTE(ok);
 				queueOrder.removeFirst();
@@ -392,7 +399,10 @@ bool CALLBACK acceptor(BYTE *pData)
 				S_XML_Tick& xml_tick=queueTick.head();
 				//if ( Instrument.pTickLog)
 				//	*Instrument.pTickLog<<tick.toXML() <<"\n";
-				
+				if (Instrument.pData->Ticks.isFull()){
+					Instrument.pData->Ticks.tail++;
+					Instrument.pData->Ticks.isOverflowed=true;
+				}
  				Instrument.pData->Ticks << xml_tick;
 				queueTick.removeFirst();
 			}
@@ -410,6 +420,10 @@ bool CALLBACK acceptor(BYTE *pData)
 				
 				if ( Instrument.QuoteInfo.pQuoteLog)
 					*Instrument.QuoteInfo.pQuoteLog << xml_quote.toXML() << "\n";
+				if (Instrument.pData->Quotes.isFull()){
+					Instrument.pData->Quotes.tail++;
+					Instrument.pData->Quotes.isOverflowed=true;
+				}
  				Instrument.pData->Quotes<< xml_quote ;
 				queueQuote.removeFirst();
 			}

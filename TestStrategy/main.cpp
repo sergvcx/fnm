@@ -7,7 +7,8 @@
 #include <conio.h>
 #include "strategy.h"
 #include "testconnector.h"
-
+#include "qcustomplot.h"
+#include "math.h"
 void Sleep( int millisecondsToWait )
 {
 	QTime dieTime = QTime::currentTime().addMSecs( millisecondsToWait );
@@ -198,32 +199,102 @@ struct S_FlashStatistics
 uint test_datetime;
  int main(int argc, char *argv[])
  {
-	
-	 
+
 
 	 setlocale(LC_ALL, "Russian");
-	
+
+	 
 	 QApplication app(argc, argv);
+
+	 // создаем виджет QCustomPlot
+	 QCustomPlot cPlot;
+// 	 // генерируем данные
+// 	 QVector<double> x(101), y(101);
+// 	 for (int i=0; i<101; ++i)
+// 	 {
+// 		 x[i] = i/50.0 - 1; // x изменяется от -1 до 1
+// 		 y[i] = x[i]*x[i];
+// 	 }
+// 	 // создаем график и добавляем данные:
+// 	 cPlot.addGraph();
+// 	 cPlot.graph(0)->setData(x, y);
+// 	 // задаем обозначения осей координат:
+// 	 cPlot.xAxis->setLabel("x");
+// 	 cPlot.yAxis->setLabel("y");
+// 	 // устанавливаем диапазоны отображения данных:
+ 	 cPlot.xAxis->setRange(-50, 50);
+ 	 cPlot.yAxis->setRange(-50, 50);
+// 	 // рисуем график
+// 	 cPlot.replot();
+
+	 ///--------------
+ 	 QCustomPlot* customPlot=&cPlot;
+// 	 QCPBars *myBars = new QCPBars(customPlot->xAxis, customPlot->yAxis);
+// 	 customPlot->addPlottable(myBars);
+// 	 // now we can modify properties of myBars:
+// 	 myBars->setName("Bars Series 1");
+// 	 QVector<double> keyData;
+// 	 QVector<double> valueData;
+// 	 keyData << 1 << 2 << 3;
+// 	 valueData << 2 << 4 << 8;
+// 	 myBars->setData(keyData, valueData);
+// 	 customPlot->rescaleAxes();
+// 	 customPlot->replot();
+
+	 //---------------------------
+	 QCPRange keyRange(-25,25);
+	 QCPRange valueRange(-45,45);
+		int keySize=100;
+		int valueSize=100;
+
+	QCPColorMapData colorMapData(keySize, valueSize,keyRange, valueRange);
+	for(int k=0; k<keySize; k++)
+		for(int v=0; v<valueSize; v++){
+			colorMapData.setCell(k,v,sin(sqrt(float(1*((k-50)*(k-50)+(v-50)*(v-50))))));
+		}
+	
+	QCPColorMap* myColorMap =new  QCPColorMap(customPlot->xAxis, customPlot->yAxis);
+	customPlot->addPlottable(myColorMap);
+	myColorMap->setData(&colorMapData);
+	myColorMap->setGradient(QCPColorGradient::gpPolar);
+	//customPlot->rescaleAxes();
+	myColorMap->rescaleDataRange(true);
+	//colorMapData.recalculateDataBounds();
+	customPlot->replot();
+
+//---
+
+	// cPlot.setWindowTitle("QCustomPlot: Quadratic Demo");
+	 cPlot.resize(548, 420);
+	 cPlot.show();
+
+	// return app.exec();
+
+
+
+	 
 
 	 
 	 
 
 	 C_Instrument Instrument;
-	 while (!Instrument.Attach("gmkn")){
+	 while (!Instrument.Attach("rosn")){
 		 Sleep(1);
 	 }
 	 
-	 int counter=0;
-	for (float fast=0.01/100; fast< 0.1/100; fast+=0.01/100)
-		for(float slow=0.01/100; slow< 0.5/100; slow+=0.05/100){
+	int counter=0;
+	for (float fast=0.01/100; fast< 0.5/100; fast+=0.01/100)
+		for(float slow=0.01/100; slow< 2.0/100; slow+=0.05/100){
 			counter++;
-			 S_MinMax<float> FastDeviation(float(fast),float(2*fast));
-			 S_MinMax<float> SlowDeviation(float(slow),float(2*slow));
-			 C_YoStrategy Strategy(Instrument,SlowDeviation,FastDeviation,0,0);
-			 C_TestConnector TestConnector(Instrument);
-			 TestConnector.Trade(Strategy);
-			 TestConnector.Close(Strategy);
-			 qDebug() << fast << slow << Strategy.cash << Strategy.commission << Strategy.cash - Strategy.commission << Instrument.pData->Trades.head;
+			
+			S_MinMax<float> FastDeviation(float(fast),float(2*fast));
+			S_MinMax<float> SlowDeviation(float(slow),float(2*slow));
+			C_YoStrategy Strategy(Instrument,SlowDeviation,FastDeviation,0,0);
+			C_TestConnector TestConnector(Instrument);
+			TestConnector.Trade(Strategy);
+			TestConnector.Close(Strategy);
+			if (Instrument.pData->Trades.head>10 && Instrument.pData->Trades.head<100)
+			qDebug() << fast << slow << Strategy.cash << Strategy.commission << Strategy.cash - Strategy.commission << Instrument.pData->Trades.head;
 		}
  	 return 1;
 	 
