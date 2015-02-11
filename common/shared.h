@@ -241,7 +241,7 @@ public:
 // 			tick->type		=0;
 // 			tick->datetime	=0;
 // 		}
-		head=0;
+		head=0; // ERROR HERE 
 		tail=0;
 		clear();
 	}

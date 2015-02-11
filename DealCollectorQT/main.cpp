@@ -61,7 +61,7 @@ restart:
 	qDebug() << "map Instrument is constructed";
 Connect:
 
-	while (QTime::currentTime()<Text2Time("09:55:00") || QTime::currentTime()>Text2Time("19:00:00")){
+	while (QTime::currentTime()<Text2Time("09:55:00") || QTime::currentTime()>Text2Time("21:00:00")){
 		printf("Zzzz...");
 		Sleep(1000);
 	}
@@ -106,7 +106,7 @@ Connect:
 	QSqlQuery tick_query(db_trading);
 
 	//TransaqConnector.start();
-	while (Text2Time("09:55:00")<QTime::currentTime() && QTime::currentTime()<Text2Time("19:00:00")){
+	while (Text2Time("09:55:00")<QTime::currentTime() && QTime::currentTime()<Text2Time("21:00:00")){
 		foreach(QString seccode , mapInstrument.keys()){
 			C_Instrument& Instrument=mapInstrument[seccode];
 			S_EasyTicks&   Ticks=Instrument.pData->Ticks;
