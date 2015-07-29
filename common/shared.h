@@ -48,6 +48,7 @@ public:
 	C_StaticRingBuffer(){
 		clear();
 		size=SIZE;
+		_ASSERTE((size& (~size + 1)) == size);
 	}
 	void clear(){
 		head=0;
@@ -220,9 +221,9 @@ struct S_Tick{
 		return dt;
 	}
 };
-//============================ S_EasyTicks ====================================
+//============================ S_RingEasyTicks ====================================
 
-class S_EasyTicks: public C_StaticRingBuffer<S_Tick,LIMIT_TICKS> {
+class S_RingEasyTicks: public C_StaticRingBuffer<S_Tick,LIMIT_TICKS> {
 public:
 	//S_Tick	data[LIMIT_TICKS];
 	//size_t	size;
@@ -459,7 +460,7 @@ struct S_EasyTrade
 	uint currentpos;
 };
 
-class S_EasyTrades : public C_StaticRingBuffer<S_EasyTrade,LIMIT_TRADES>
+class S_RingEasyTrades : public C_StaticRingBuffer<S_EasyTrade,LIMIT_TRADES>
 {
 public:
 	//S_EasyTrade data[LIMIT_TRADES];
@@ -542,7 +543,7 @@ struct S_NewOrder
 };
 
 
-class S_NewOrders: public C_StaticRingBuffer<S_NewOrder,LIMIT_ORDERS>
+class S_RingNewOrders: public C_StaticRingBuffer<S_NewOrder,LIMIT_ORDERS>
 {
 public:
 	//S_NewOrder data[LIMIT_ORDERS];
@@ -659,7 +660,7 @@ struct S_EasyOrders
 {
 
 
-	S_NewOrders NewOrders;
+	S_RingNewOrders NewOrders;
 	S_CancelOrders CancelOrders;
 	
 	
@@ -670,13 +671,13 @@ struct S_EasyOrders
 	}
 };
 
-//======================= S_EasyQuotes ============================================
-class S_EasyQuotes : public C_StaticRingBuffer<C_EasyQuote,LIMIT_QUOTES> {
+//======================= S_RingEasyQuotes ============================================
+class S_RingEasyQuotes : public C_StaticRingBuffer<C_EasyQuote,LIMIT_QUOTES> {
 public:
 	//C_EasyQuote data[LIMIT_QUOTES];
 	//uint size;
 	uint last_find_index;
-	S_EasyQuotes(){
+	S_RingEasyQuotes(){
 		//size=0;
 		Init();
 	}
@@ -1048,12 +1049,11 @@ public:
 class C_SharedMemoryInstrument {
 public:
 	
-	S_InstrumentInfo Info;
-	
-	S_EasyTicks	 Ticks;
-	S_EasyQuotes Quotes;
-	S_EasyTrades Trades;
-	S_NewOrders  NewOrders;
+	S_InstrumentInfo Info;	//! Instrtument details
+	S_RingEasyTicks	 Ticks;		//! 
+	S_RingEasyQuotes Quotes;
+	S_RingEasyTrades Trades;
+	S_RingNewOrders  NewOrders;
 	S_CancelOrders CancelOrders;
 	void Init(){
 		Ticks.Init();
@@ -1125,7 +1125,7 @@ public:
 		uint tailLogQuote;
 		uint lastDateTimeInDB;
 		C_XML_Logger* pTickLog;
-		S_EasyTicks* pTicks;
+		S_RingEasyTicks* pTicks;
 	} TickInfo;
 
 	C_SubVector<S_Tick> TickSubVector(){
@@ -1137,7 +1137,7 @@ public:
 	struct {
 		uint tail;
 		C_XML_Logger* pQuoteLog;
-		S_EasyQuotes* pQuotes;
+		S_RingEasyQuotes* pQuotes;
 	} QuoteInfo;
 
 	

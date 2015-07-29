@@ -1207,7 +1207,7 @@ uint sql_get_last_id_from_tbl(QSqlDatabase& db, QString tbl)
 }
 
 
-void Ticks2Mysql ( QSqlQuery& query, QString seccode, S_EasyTicks& ticks,   uint fromIndex, uint count, unsigned afterDateTime)
+void Ticks2Mysql ( QSqlQuery& query, QString seccode, S_RingEasyTicks& ticks,   uint fromIndex, uint count, unsigned afterDateTime)
 {
 	if (count==0)
 		return;
@@ -1258,7 +1258,7 @@ void Ticks2Mysql ( QSqlQuery& query, QString seccode, S_EasyTicks& ticks,   uint
 
 }
 
-void Quotes2Mysql( QSqlQuery& query, QString seccode, S_EasyQuotes& quotes, uint fromIndex, uint count, bool echo)
+void Quotes2Mysql( QSqlQuery& query, QString seccode, S_RingEasyQuotes& quotes, uint fromIndex, uint count, bool echo)
 {
 
 
@@ -1276,7 +1276,7 @@ void Quotes2Mysql( QSqlQuery& query, QString seccode, S_EasyQuotes& quotes, uint
 	if (echo)
 		qDebug()<< "<" +seccode+ ">";
 	for (uint i=fromIndex; i<fromIndex+count; i++){
-		C_EasyQuote& quote =quotes[i];
+		C_EasyQuote& quote =quotes[i]; ///!!! 	_ASSERTE(tail<=indx && indx<head);
 
 		listDatetime<< quote.datetime;
 		listPrice	<< quote.price;
@@ -1308,7 +1308,7 @@ void Quotes2Mysql( QSqlQuery& query, QString seccode, S_EasyQuotes& quotes, uint
 }
 
 
-uint sql_read_ticks(QSqlDatabase& db, QString StockCode, QDateTime& fromDT, QDateTime& toDT, S_EasyTicks& ticks)
+uint sql_read_ticks(QSqlDatabase& db, QString StockCode, QDateTime& fromDT, QDateTime& toDT, S_RingEasyTicks& ticks)
 {
 	QSqlQuery query(db);
 
@@ -1357,7 +1357,7 @@ uint sql_read_ticks(QSqlDatabase& db, QString StockCode, QDateTime& fromDT, QDat
 
 
 
-uint sql_read_quotes(QSqlDatabase& db, QString StockCode, QDateTime& fromDT, QDateTime& toDT, S_EasyQuotes& quotes)
+uint sql_read_quotes(QSqlDatabase& db, QString StockCode, QDateTime& fromDT, QDateTime& toDT, S_RingEasyQuotes& quotes)
 {
 	QSqlQuery query(db);
 	uint from_dt=fromDT.toTime_t();
@@ -1399,6 +1399,36 @@ uint sql_show_tables(QSqlDatabase& db, QString suffix, QList<QString>& listTable
 	return i;
 }
 
+bool sql_check_table(QSqlDatabase& db, QString tbl){
+	QSqlQuery query(db);
+	QString cmd="CHECK TABLE "+tbl;
+	query.exec(cmd);
+	//VALID(query);
+	 if (!query.isActive()){
+		 DISPLAY_ERROR(query);
+		 return false;
+	 }
+	return true;
+}
+
+bool sql_check_database(QSqlDatabase& db){
+
+	QList<QString> listTables;
+	sql_show_tables(db, "", listTables);
+	_ASSERTE(listTables.size());
+	for(int i=0; i<listTables.size();i++){
+		QString tbl=listTables[i];
+		printf("checking %s ...",STR(tbl));
+		if (sql_check_table(db,tbl)==false){
+			printf("ERROR!\n");
+			return false;
+		}
+		printf("OK!\n");
+
+	}
+	return true;
+
+}
 
 bool sql_switch_buysell(QSqlDatabase& db, QString tbl, uint index)
 {

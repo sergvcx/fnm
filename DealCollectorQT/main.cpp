@@ -21,8 +21,17 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 	 setlocale(LC_ALL, "Russian");   // cout << "Русский текст в консоли" << endl;
 	 OpenXML();
 
+	 TransaqConnector <<  "GMKN" 
+		 <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
+		 << "ODVA" <<"PLZL"<<"SVAV"<<"MGNT" <<"MSNG"   <<"MTSS"  <<"MTLRP"  <<"NLMK" <<"NMTP" <<"NVTK" <<"ROSN"
+		 <<"RTKM" <<"RTKMP" <<"HYDR"  <<"CHMF" <<"URKA" <<"YNDX" <<"VTBR" ; 
+
+	 QMap<QString,C_Instrument> mapInstrument;
+
 restart:
 	 sql_open_database("trading",db_trading);
+	 //sql_check_database(db_trading);
+
 	 //sql_switch_all_buysell(db_trading);
 	 //MainWindow* mainWin=new MainWindow;
 	 //if (argc==2){
@@ -34,12 +43,8 @@ restart:
 	//  mainWin->show();
 	// return app.exec();
 	 
-	 TransaqConnector <<  "GMKN" 
- 		<<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
- 		<< "ODVA" <<"PLZL"<<"SVAV"<<"MGNT" <<"MSNG"   <<"MTSS"  <<"MTLRP"  <<"NLMK" <<"NMTP" <<"NVTK" <<"ROSN"
- 		<<"RTKM" <<"RTKMP" <<"HYDR"  <<"CHMF" <<"URKA" <<"YNDX" <<"VTBR" ; 
 
-	QMap<QString,C_Instrument> mapInstrument;
+	
 
 	for(int i=0; i<TransaqConnector.listActive.size();i++){
 		QString seccode=TransaqConnector.listActive.at(i);
@@ -109,15 +114,15 @@ Connect:
 	while (Text2Time("09:55:00")<QTime::currentTime() && QTime::currentTime()<Text2Time("21:00:00")){
 		foreach(QString seccode , mapInstrument.keys()){
 			C_Instrument& Instrument=mapInstrument[seccode];
-			S_EasyTicks&   Ticks=Instrument.pData->Ticks;
-			S_EasyQuotes& Quotes=Instrument.pData->Quotes;
+			S_RingEasyTicks&   Ticks=Instrument.pData->Ticks;
+			S_RingEasyQuotes& Quotes=Instrument.pData->Quotes;
 		
 			int count= Ticks.head-Instrument.TickInfo.tail;
 			Ticks2Mysql( tick_query, seccode, Ticks,Instrument.TickInfo.tail,count, Instrument.TickInfo.lastDateTimeInDB);
 			Instrument.TickInfo.tail+=count;
 		
 			count = Quotes.head-Instrument.QuoteInfo.tail;
-			Quotes2Mysql(tick_query,seccode,Quotes, Instrument.QuoteInfo.tail,count, false );
+			Quotes2Mysql(tick_query,seccode,Quotes, Instrument.QuoteInfo.tail,count, false );  ///!!! 	_ASSERTE(tail<=indx && indx<head);
 			Instrument.QuoteInfo.tail+=count;		
 		}
 		
@@ -128,9 +133,17 @@ Connect:
 
 
 	TransaqConnector.disconnect();
-	//Instrument.pSharedMemory->detach();
+	for(int i=0; i<TransaqConnector.listActive.size();i++){
+		QString seccode=TransaqConnector.listActive.at(i);
+		C_Instrument& Instrument=mapInstrument[seccode];
+		Instrument.Detach();
+		mapInstrument.remove(seccode);
+	}
+
 	//TransaqConnector.change_pass();
 	sql_close_database(db_trading);
+
+
 goto restart;
 	CloseXML();
 	 return 1;
