@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QMenu>
 #include <QAction>
-#include "Monitor.h"
+#include <QLabel>
 
 
 
@@ -32,7 +32,7 @@ private:
 	QTimer *Timer;
 	QTimer *StartStopTimer;			// Этот таймер подсоединяется к базе данных , запускает закачку сделок и отсоединияется вечером
 	QTimer *SMSTimer;
-	CMonitor* Monitor;
+	//CMonitor* Monitor;
 	QLabel *locationLabel;
 	QLabel *formulaLabel;
 

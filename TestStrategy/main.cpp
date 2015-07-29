@@ -278,7 +278,7 @@ uint test_datetime;
 	 
 
 	 C_Instrument Instrument;
-	 while (!Instrument.Attach("rosn")){
+	 while (!Instrument.Attach("gmkn")){
 		 Sleep(1);
 	 }
 	 
@@ -364,7 +364,7 @@ uint test_datetime;
 // 	uint idxEnd=0;
 // 	uint idxFind;
 // 	S_Glass& Glass=Instrument.Glass;
-// 	S_EasyTicks& Ticks=Instrument.pData->Ticks;
+// 	S_RingEasyTicks& Ticks=Instrument.pData->Ticks;
 // 	Glass.toIndex=0;
 // 
 // 	while (idxEnd<idxFinal){

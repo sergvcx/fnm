@@ -9,10 +9,10 @@
 //CThreadAllDeals* pThreadAllDeals;
 MainWindow::MainWindow()
 {
-	SPortfolioErr p,g;
-	SPortfolioErr& f=p;
+	//SPortfolioErr p,g;
+	//SPortfolioErr& f=p;
 	//p=g;
-	pDBManager		= new CDBManager;
+	//pDBManager		= new CDBManager;
 	//pThreadAllDeals	= new CThreadAllDeals;
 	//pThreadAllDeals->pDBManager=pDBManager;
 	
@@ -20,9 +20,9 @@ MainWindow::MainWindow()
 	Timer = new QTimer(this);
 	StartStopTimer = new QTimer(this);
 	SMSTimer = new QTimer(this);
-	Monitor = new CMonitor;
+	//Monitor = new CMonitor;
 
-	setCentralWidget(Monitor);
+	//setCentralWidget(Monitor);
 
 	createActions();
 	createMenus();
@@ -100,7 +100,8 @@ void MainWindow::createActions(){
 	
 	
 	//connect(actCheckTables,		SIGNAL(triggered()), pDBManager, SLOT(CheckTables()));
-	connect(actDropTradings,	SIGNAL(triggered()), pDBManager, SLOT(TradingDropAll()));
+	//connect(actDropTradings,	SIGNAL(triggered()), pDBManager, SLOT(TradingDropAll()));
+/*
 	connect(actCreateFromPortfolio,	SIGNAL(triggered()), pDBManager, SLOT(TradingCreateAllFrom_portfolio()));
 	connect(actCleanPortfolio,	SIGNAL(triggered()), pDBManager, SLOT(TradingClean_portfolio()));
 	
@@ -112,7 +113,7 @@ void MainWindow::createActions(){
 	connect(actDropAllReq,		SIGNAL(triggered()), pDBManager, SLOT(TradingDropAll_req()));
 	connect(actAlterAll,		SIGNAL(triggered()), pDBManager, SLOT(TradingAlterAll()));
 	connect(actDeleteTradingDealToday,		SIGNAL(triggered()), pDBManager, SLOT(TradingDeleteDealsToday()));
-
+*/
 //	connect(actUpdateAllInSecond,SIGNAL(triggered()), pDBManager, SLOT(TradingUpdateAllInSecond()));
 	
 
@@ -122,7 +123,7 @@ void MainWindow::createActions(){
 	//connect(actStartAllDeals, SIGNAL(triggered()), this, SLOT(newFile()));
 	connect(actAbout, SIGNAL(triggered()), this, SLOT(about()));
 
-	connect(Timer, SIGNAL(timeout()), Monitor, SLOT(updateMonitor()));
+//	connect(Timer, SIGNAL(timeout()), Monitor, SLOT(updateMonitor()));
 //	connect(StartStopTimer, SIGNAL(timeout()), pThreadAllDeals, SLOT(onTimer()));
 //	connect(SMSTimer, SIGNAL(timeout()), pThreadAllDeals, SLOT(onSMSTimer()));
 // 	connect(actCreateQuikRequest, SIGNAL(triggered()), pDBManager, SLOT(QuikCreate_request()));
@@ -180,7 +181,7 @@ void MainWindow::closeEvent(QCloseEvent *event){
 }
 
 void MainWindow::newFile(){
-int g=1;
+
 }
 void MainWindow::StartAllDeals(){
 //	pThreadAllDeals->start();

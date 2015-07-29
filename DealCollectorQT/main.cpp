@@ -7,6 +7,7 @@
 #include <conio.h>
 //using namespace std;
 
+QMap<QString,C_Instrument> mapInstrument;
 C_TransaqConnector TransaqConnector;
 QSqlDatabase db_trading;
 
@@ -17,68 +18,51 @@ bool sql_switch_all_buysell(QSqlDatabase& db);
 
 	 
 
-	 QApplication app(argc, argv);
-	 setlocale(LC_ALL, "Russian");   // cout << "Русский текст в консоли" << endl;
-	 OpenXML();
+	QApplication app(argc, argv);
+	setlocale(LC_ALL, "Russian");   // cout << "Русский текст в консоли" << endl;
+	OpenXML();
 
-	 TransaqConnector <<  "GMKN" 
+	QList<QString> listSecurity;
+	listSecurity <<  "GMKN" 
 		 <<"LKOH" << "GAZP" << "SBER" << "SBERP" << "AFLT" << "MSTT" 
 		 << "ODVA" <<"PLZL"<<"SVAV"<<"MGNT" <<"MSNG"   <<"MTSS"  <<"MTLRP"  <<"NLMK" <<"NMTP" <<"NVTK" <<"ROSN"
-		 <<"RTKM" <<"RTKMP" <<"HYDR"  <<"CHMF" <<"URKA" <<"YNDX" <<"VTBR" ; 
+		<<"RTKM" <<"RTKMP" <<"HYDR"  <<"CHMF" <<"URKA" <<"YNDX" <<"VTBR" ; 
 
-	 QMap<QString,C_Instrument> mapInstrument;
-
-restart:
-	 sql_open_database("trading",db_trading);
-	 //sql_check_database(db_trading);
-
-	 //sql_switch_all_buysell(db_trading);
-	 //MainWindow* mainWin=new MainWindow;
-	 //if (argc==2){
-	//	 if (strcmp(argv[1],"-auto")==0){
-	//		pThreadAllDeals->start();
-	//	 }
-	 //}
-
-	//  mainWin->show();
-	// return app.exec();
-	 
-
-	
-
-	for(int i=0; i<TransaqConnector.listActive.size();i++){
-		QString seccode=TransaqConnector.listActive.at(i);
+	//----------- Create instruments in shared memory -------------------
+	for(int i=0; i<listSecurity.size();i++){
+		QString seccode=listSecurity.at(i);
 		C_Instrument Instrument;
-		while (!Instrument.Attach(seccode)){
-			qDebug() << seccode << "attach error!!!";
-			Sleep(100);
-		}
-		mapInstrument[seccode]=Instrument; // MUST BE IN THE END !!!
+		bool ok=Instrument.Create(seccode);
+		_ASSERTE(ok);
+		qDebug()<< "Instrument" << seccode << "created";
+		mapInstrument[seccode]=Instrument;
+	 }
+
+	//----------- Start mysql ----------------------------------------
+restart:	 
+	sql_open_database("trading",db_trading);
+	for(int i=0; i<listSecurity.size();i++){
+		QString seccode=listSecurity.at(i);
+		C_Instrument& Instrument=mapInstrument[seccode];
 		sql_create_seccode_deal (db_trading,seccode);
 		sql_create_seccode_quote(db_trading,seccode);
 		Instrument.TickInfo.lastDateTimeInDB=sql_get_last_datetime_from_seccode_deal(db_trading, seccode);
-		//Instrument.TickInfo.tail=Instrument.pData->Ticks.FindAfter(lastDateTime);
-
-		qDebug() << seccode << "attached!!!";
-		//_getch();
 	}
+	qDebug() << "map of instruments is constructed";
 
-	qDebug() << "map Instrument is constructed";
-Connect:
+reconnect:
 
 	while (QTime::currentTime()<Text2Time("09:55:00") || QTime::currentTime()>Text2Time("21:00:00")){
 		printf("Zzzz...");
 		Sleep(1000);
 	}
 
-
+	// ----------- Start transaq ---------------------------------------
 	TransaqConnector.connect();
 	while (!TransaqConnector.isConnected()){
 		qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
 		Sleep(1000);
-		//TransaqConnector.connect();
 	}
-	
 	qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
 
 	TransaqConnector.get_servtime_difference();
@@ -86,44 +70,35 @@ Connect:
 		qDebug() << "Disconnecting...";
 		TransaqConnector.disconnect();
 		Sleep(1000);
-		goto Connect;
-		//_getch();
-		//return -1;
+		goto reconnect;
 	}
 
 	Sleep(1000);
 	
-	if (TransaqConnector.subscribe(TransaqConnector.listActive)){
+	if (TransaqConnector.subscribe(listSecurity)){
 		TransaqConnector.disconnect();
 		qDebug() << "Error in subscribe";
 		return 1;
 	}
 	
-	if (TransaqConnector.subscribe_ticks(TransaqConnector.listActive)){	 
+	if (TransaqConnector.subscribe_ticks(listSecurity)){	 
 		TransaqConnector.disconnect();
 		qDebug() << "Error in subscribe_ticks";
 		return 1;
 	}
 
+	// -------------- parse incoming deals 2 mysql ---------------
 
-
-	
 	QSqlQuery tick_query(db_trading);
 
-	//TransaqConnector.start();
 	while (Text2Time("09:55:00")<QTime::currentTime() && QTime::currentTime()<Text2Time("21:00:00")){
 		foreach(QString seccode , mapInstrument.keys()){
 			C_Instrument& Instrument=mapInstrument[seccode];
 			S_RingEasyTicks&   Ticks=Instrument.pData->Ticks;
 			S_RingEasyQuotes& Quotes=Instrument.pData->Quotes;
 		
-			int count= Ticks.head-Instrument.TickInfo.tail;
-			Ticks2Mysql( tick_query, seccode, Ticks,Instrument.TickInfo.tail,count, Instrument.TickInfo.lastDateTimeInDB);
-			Instrument.TickInfo.tail+=count;
-		
-			count = Quotes.head-Instrument.QuoteInfo.tail;
-			Quotes2Mysql(tick_query,seccode,Quotes, Instrument.QuoteInfo.tail,count, false );  ///!!! 	_ASSERTE(tail<=indx && indx<head);
-			Instrument.QuoteInfo.tail+=count;		
+			Ticks2Mysql( tick_query, seccode, Ticks,  Instrument.TickInfo.lastDateTimeInDB);
+			Quotes2Mysql(tick_query, seccode, Quotes, false );  
 		}
 		
 		Sleep(1000);
@@ -133,20 +108,13 @@ Connect:
 
 
 	TransaqConnector.disconnect();
-	for(int i=0; i<TransaqConnector.listActive.size();i++){
-		QString seccode=TransaqConnector.listActive.at(i);
-		C_Instrument& Instrument=mapInstrument[seccode];
-		Instrument.Detach();
-		mapInstrument.remove(seccode);
-	}
-
-	//TransaqConnector.change_pass();
 	sql_close_database(db_trading);
 
-
 goto restart;
+
+	
 	CloseXML();
-	 return 1;
+	return 1;
 	 
  }
 

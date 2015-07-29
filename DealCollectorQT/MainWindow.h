@@ -4,11 +4,7 @@
 #include <QMainWindow>
 #include <QMenu>
 #include <QAction>
-#include "Monitor.h"
 #include "DBMAnager.h"
-#include "ThreadAllDeals.h"
-
-
 
 class MainWindow : public QMainWindow
 {
@@ -17,7 +13,7 @@ public:
 	MainWindow();
 	void closeEvent(QCloseEvent *event);
 	
-	CDBManager*	 pDBManager;
+	//CDBManager*	 pDBManager;
 
 private slots:
 	void newFile();
@@ -34,7 +30,7 @@ private:
 	QTimer *Timer;
 	QTimer *StartStopTimer;			// Этот таймер подсоединяется к базе данных , запускает закачку сделок и отсоединияется вечером
 	QTimer *SMSTimer;
-	CMonitor* Monitor;
+	//CMonitor* Monitor;
 	QLabel *locationLabel;
 	QLabel *formulaLabel;
 

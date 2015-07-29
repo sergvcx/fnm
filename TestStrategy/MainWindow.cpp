@@ -10,7 +10,7 @@
 MainWindow::MainWindow()
 {
 	
-	setCentralWidget(Monitor);
+	//setCentralWidget(Monitor);
 
 	createActions();
 	createMenus();

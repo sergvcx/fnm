@@ -34,7 +34,7 @@
 
 
 
-
+extern QMap<QString,C_Instrument> mapInstrument;	
 
 //std::ofstream xmlfile;
 typeFreeMemory FreeMemory;
@@ -49,7 +49,7 @@ void UnloadLibrary( HMODULE hm )
 		std::cout<<"Fail in FreeLibrary"<<std::endl;
 	}
 }
-extern CThreadAllDeals* pThreadAllDeals;
+
 
 
 
@@ -230,8 +230,8 @@ bool CALLBACK acceptor(BYTE *pData)
 						std::cerr<< "ERROR: Empty seccode" <<std::endl;
 					else{
 						//qDebug() << SecInfo.seccode ;
-						if (TransaqConnector.mapInstrument.contains(SecInfo.seccode)){
-							copy(TransaqConnector.mapInstrument[SecInfo.seccode].pData->Info,SecInfo);
+						if (mapInstrument.contains(SecInfo.seccode)){
+							copy(mapInstrument[SecInfo.seccode].pData->Info,SecInfo);
 							//QString fname="xml_quote_"+SecInfo.seccode+".xml";
 							 //mapSecurity[SecInfo.seccode].xml_quote.open("dd");   //fname.toAscii().data());
 							 //xml_markets<<"<?xml version='1.0' encoding='UTF-8'?>";
@@ -352,8 +352,8 @@ bool CALLBACK acceptor(BYTE *pData)
 	}
 	//------- разгребаем свои сделки ---------
 	foreach ( QString seccode, mapTrade.keys()){
-		if (TransaqConnector.mapInstrument.contains(seccode)){
-			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
+		if (mapInstrument.contains(seccode)){
+			C_Instrument& Instrument=mapInstrument[seccode];
 			QQueue<S_XML_TradeInfo>& queueTrade=mapTrade[seccode];
 			Instrument.Lock();
 			while (!queueTrade.isEmpty()){
@@ -370,8 +370,8 @@ bool CALLBACK acceptor(BYTE *pData)
 	}
 	//------- разгребаем заявки  ---------
 	foreach ( QString seccode, mapOrder.keys()){
-		if (TransaqConnector.mapInstrument.contains(seccode)){
-			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
+		if (mapInstrument.contains(seccode)){
+			C_Instrument& Instrument=mapInstrument[seccode];
 			QQueue<S_XML_OrderInfo>& queueOrder=mapOrder[seccode];
 			Instrument.Lock();
 			while (!queueOrder.isEmpty()){
@@ -383,7 +383,7 @@ bool CALLBACK acceptor(BYTE *pData)
 					Instrument.pData->NewOrders.isOverflowed=true;
 				}
 				bool ok=Instrument.pData->NewOrders << xml_order;
-				//_ASSERTE(ok);
+				_ASSERTE(ok);
 				queueOrder.removeFirst();
 			}
 			Instrument.Unlock();
@@ -391,8 +391,8 @@ bool CALLBACK acceptor(BYTE *pData)
 	}
 	//------- разгребаем тики ---------
 	foreach ( QString seccode, mapTick.keys()){
-		if (TransaqConnector.mapInstrument.contains(seccode)){
-			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
+		if (mapInstrument.contains(seccode)){
+			C_Instrument& Instrument=mapInstrument[seccode];
 			QQueue<S_XML_Tick>& queueTick=mapTick[seccode];
 			Instrument.Lock();
 			while (!queueTick.isEmpty()){
@@ -411,8 +411,8 @@ bool CALLBACK acceptor(BYTE *pData)
 	}
 	//------- разгребаем стаканы ---------------
 	foreach ( QString seccode, mapQuote.keys()){
-		if (TransaqConnector.mapInstrument.contains(seccode)){
-			C_Instrument& Instrument=TransaqConnector.mapInstrument[seccode];
+		if (mapInstrument.contains(seccode)){
+			C_Instrument& Instrument=mapInstrument[seccode];
 			QQueue<S_XML_QuoteInfo>& queueQuote=mapQuote[seccode];
 			Instrument.Lock();
 			while (!queueQuote.isEmpty()){
@@ -441,194 +441,194 @@ bool CALLBACK acceptor(BYTE *pData)
 }
 
 
-	//============ init ===========================================
-	C_TransaqConnector::C_TransaqConnector(){
-		isBusy=false;
-		servtime_difference=0;
-		error[0]=0;
-		hm  = LoadLibraryA("txmlconnector.dll");
-		if (hm) {
-			try	{
-				
-				// Получение адресов функций библиотеки
-	#ifdef CONNECTOR_166PLUS
-				Initialize = reinterpret_cast<typeInitialize>(GetProcAddress(hm, "Initialize"));
-				if (!Initialize)	{
-					sprintf_s(error, buffSize, "\"InitLog\" not found (0x%X)", GetLastError());
-					throw std::runtime_error(error);
-				}
-
-				UnInitialize = reinterpret_cast<typeUninitialize>(GetProcAddress(hm, "UnInitialize"));
-				if (!UnInitialize)	{
-					sprintf_s(error, buffSize, "\"UnInitialize\" not found (0x%X)", GetLastError());
-					throw std::runtime_error(error);
-				}
-		
-				SetLogLevel = reinterpret_cast<typeSetLogLevel>(GetProcAddress(hm, "SetLogLevel"));
-				if (!SetLogLevel)	{
-					sprintf_s(error, buffSize, "\"SetLogLevel\" not found (0x%X)", GetLastError());
-					throw std::runtime_error(error);
-				}
-	#endif
-		
-				SetCallback = reinterpret_cast<typeSetCallback>(GetProcAddress(hm, "SetCallback"));
-				if (!SetCallback)	{
-					sprintf_s(error, buffSize, "\"SetCallback\" not found (0x%X)", GetLastError());
-					throw std::runtime_error(error);
-				}
-		
-				SendCommand = reinterpret_cast<typeSendCommand>(GetProcAddress(hm,"SendCommand"));
-				if (!SendCommand)	{
-					sprintf_s(error, buffSize, "\"SendCommand\" not found (0x%X)", GetLastError());
-					throw std::runtime_error(error);
-				}
-		
-				FreeMemory = reinterpret_cast<typeFreeMemory>(GetProcAddress(hm, "FreeMemory"));
-				if (!FreeMemory)	{
-					sprintf_s(error, buffSize, "\"FreeMemory\" not found (0x%X)", GetLastError());
-					throw std::runtime_error(error);
-				}
-
-	#ifdef CONNECTOR_166PLUS
-				// Инициализация библиотеки
-				int level = 3;
-				std::cout<<"Initializing library: \".\\LOGS\"  level: "<< level <<std::endl;
-				BYTE* res = Initialize(reinterpret_cast<const BYTE*>(".\\LOGS"), level);
-		
-				if (res) {
-					sprintf_s(error, buffSize, "Failed to initialize library: %s", res);
-					FreeMemory(res);
-					throw std::runtime_error(error);
-				} else {
-					std::cout<<"Library initialized successfully!"<<std::endl;
-				}
-	#endif
-		
-				SetCallback(acceptor);
-		
-				
-				
-
-	/*	
-	#ifdef CONNECTOR_166PLUS
-				// Смена уровня логирования библиотеки
-				int newLevel = 2;
-				std::cout<<"Log level change. Previous level: "<< level <<". New level: " << newLevel <<std::endl;
-				res = SetLogLevel(newLevel);
-				if (res) {
-					std::cout<<"Failed to set log level: "<<res<<std::endl;
-					FreeMemory(res);
-				} else {
-					std::cout<<"Log level changed successfully!"<<std::endl;
-				}
-	#endif
-	*/
+//============ init ===========================================
+C_TransaqConnector::C_TransaqConnector(){
+	isBusy=false;
+	servtime_difference=0;
+	error[0]=0;
+	hm  = LoadLibraryA("txmlconnector.dll");
+	if (hm) {
+		try	{
+			
+			// Получение адресов функций библиотеки
+#ifdef CONNECTOR_166PLUS
+			Initialize = reinterpret_cast<typeInitialize>(GetProcAddress(hm, "Initialize"));
+			if (!Initialize)	{
+				sprintf_s(error, buffSize, "\"InitLog\" not found (0x%X)", GetLastError());
+				throw std::runtime_error(error);
 			}
-			catch (std::runtime_error& e) {
-				std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
-				UnloadLibrary(hm);
-			}
-		}
-	}
-	//============ deinit ===========================================
-	C_TransaqConnector::~C_TransaqConnector() {
-		
-		try{	
 
-		#ifdef CONNECTOR_166PLUS
-			// Деинициализация библиотеки 
-			std::cout<<"Uninitializing library..." <<std::endl;
-			BYTE* res = UnInitialize();
+			UnInitialize = reinterpret_cast<typeUninitialize>(GetProcAddress(hm, "UnInitialize"));
+			if (!UnInitialize)	{
+				sprintf_s(error, buffSize, "\"UnInitialize\" not found (0x%X)", GetLastError());
+				throw std::runtime_error(error);
+			}
+	
+			SetLogLevel = reinterpret_cast<typeSetLogLevel>(GetProcAddress(hm, "SetLogLevel"));
+			if (!SetLogLevel)	{
+				sprintf_s(error, buffSize, "\"SetLogLevel\" not found (0x%X)", GetLastError());
+				throw std::runtime_error(error);
+			}
+#endif
+	
+			SetCallback = reinterpret_cast<typeSetCallback>(GetProcAddress(hm, "SetCallback"));
+			if (!SetCallback)	{
+				sprintf_s(error, buffSize, "\"SetCallback\" not found (0x%X)", GetLastError());
+				throw std::runtime_error(error);
+			}
+	
+			SendCommand = reinterpret_cast<typeSendCommand>(GetProcAddress(hm,"SendCommand"));
+			if (!SendCommand)	{
+				sprintf_s(error, buffSize, "\"SendCommand\" not found (0x%X)", GetLastError());
+				throw std::runtime_error(error);
+			}
+	
+			FreeMemory = reinterpret_cast<typeFreeMemory>(GetProcAddress(hm, "FreeMemory"));
+			if (!FreeMemory)	{
+				sprintf_s(error, buffSize, "\"FreeMemory\" not found (0x%X)", GetLastError());
+				throw std::runtime_error(error);
+			}
+
+#ifdef CONNECTOR_166PLUS
+			// Инициализация библиотеки
+			int level = 3;
+			std::cout<<"Initializing library: \".\\LOGS\"  level: "<< level <<std::endl;
+			BYTE* res = Initialize(reinterpret_cast<const BYTE*>(".\\LOGS"), level);
+	
 			if (res) {
-				sprintf_s(error, buffSize, "Failed to uninitialize library: %s", res);
+				sprintf_s(error, buffSize, "Failed to initialize library: %s", res);
 				FreeMemory(res);
 				throw std::runtime_error(error);
 			} else {
-				std::cout<<"Library uninitialized successfully!"<<std::endl;
+				std::cout<<"Library initialized successfully!"<<std::endl;
 			}
-		#endif
-		} 
-		catch (std::runtime_error& e) {
-			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
-			UnloadLibrary(hm);
-		}
-	}
-	//============ connect ===========================================
-	int C_TransaqConnector::connect()
-	{
-		try{	
-			QString Cmd;
-			Cmd = "<command id='connect'>\n";
-			Cmd+= CONNECT_INFO;
-			Cmd+= "		<logsdir>.\\LOGS\\</logsdir>\n";
-			Cmd+= "		<loglevel>2</loglevel>\n";
-			Cmd+= "</command>";
-			qDebug() << "[connect-command:]\n" << Cmd+"\n"; 
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-			QString  Echo = codec->toUnicode((char*)ss); 
-			qDebug() << "[connect-echo   :]\n" << Echo +"\n"; 
+#endif
+	
+			SetCallback(acceptor);
+	
+			
+			
 
-			FreeMemory(ss);
+/*	
+#ifdef CONNECTOR_166PLUS
+			// Смена уровня логирования библиотеки
+			int newLevel = 2;
+			std::cout<<"Log level change. Previous level: "<< level <<". New level: " << newLevel <<std::endl;
+			res = SetLogLevel(newLevel);
+			if (res) {
+				std::cout<<"Failed to set log level: "<<res<<std::endl;
+				FreeMemory(res);
+			} else {
+				std::cout<<"Log level changed successfully!"<<std::endl;
+			}
+#endif
+*/
 		}
 		catch (std::runtime_error& e) {
 			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
 			UnloadLibrary(hm);
 		}
-		return 0;
 	}
-	//============ disconnect ===========================================
-	int C_TransaqConnector::disconnect()
-	{
-		try{
-			QString  Cmd="<command id='disconnect'/>";
-			qDebug() << "[disconnect-command:]\n" << Cmd << "\n"; 
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-			QString  Echo = codec->toUnicode((char*)ss); 
-			qDebug() << "[connect-echo   :]\n" << Echo +"\n"; 
-			FreeMemory(ss);
-		} 
-		catch (std::runtime_error& e) {
-			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
-			UnloadLibrary(hm);
-		}
-		return 0;
-	}
-	//============ server_status ===========================================
-	int C_TransaqConnector::server_status()
-	{
-		try {
-			std::cout<<"Sending 'server status' server status..."<<std::endl;
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='server_status'/>"));
-			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-			QString  en = codec->toUnicode((char*)ss); 
-			qDebug() << en+"\n"; 
+}
+//============ deinit ===========================================
+C_TransaqConnector::~C_TransaqConnector() {
+	
+	try{	
 
-			FreeMemory(ss);
+	#ifdef CONNECTOR_166PLUS
+		// Деинициализация библиотеки 
+		std::cout<<"Uninitializing library..." <<std::endl;
+		BYTE* res = UnInitialize();
+		if (res) {
+			sprintf_s(error, buffSize, "Failed to uninitialize library: %s", res);
+			FreeMemory(res);
+			throw std::runtime_error(error);
+		} else {
+			std::cout<<"Library uninitialized successfully!"<<std::endl;
 		}
-		catch (std::runtime_error& e) {
-			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
-			UnloadLibrary(hm);
-			return 1;
-		}
-		return 0;
+	#endif
+	} 
+	catch (std::runtime_error& e) {
+		std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+		UnloadLibrary(hm);
 	}
-	//============ get_servtime_difference ===========================================
-	int C_TransaqConnector::get_servtime_difference()
-	{
-		try {
-			std::cout<<"Sending 'get_servtime_difference' ..."<<std::endl;
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='get_servtime_difference'/>"));
-			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-			QString  en = codec->toUnicode((char*)ss); 
-			qDebug() << en+"\n"; 
+}
+//============ connect ===========================================
+int C_TransaqConnector::connect()
+{
+	try{	
+		QString Cmd;
+		Cmd = "<command id='connect'>\n";
+		Cmd+= CONNECT_INFO;
+		Cmd+= "		<logsdir>.\\LOGS\\</logsdir>\n";
+		Cmd+= "		<loglevel>2</loglevel>\n";
+		Cmd+= "</command>";
+		qDebug() << "[connect-command:]\n" << Cmd+"\n"; 
+		BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
+		QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+		QString  Echo = codec->toUnicode((char*)ss); 
+		qDebug() << "[connect-echo   :]\n" << Echo +"\n"; 
 
-			QString success;
-			QString diff;
-			QString text;
-			bool ok=ParseResult(en,success,"diff",diff,text);
-			_ASSERTE(ok);
+		FreeMemory(ss);
+	}
+	catch (std::runtime_error& e) {
+		std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+		UnloadLibrary(hm);
+	}
+	return 0;
+}
+//============ disconnect ===========================================
+int C_TransaqConnector::disconnect()
+{
+	try{
+		QString  Cmd="<command id='disconnect'/>";
+		qDebug() << "[disconnect-command:]\n" << Cmd << "\n"; 
+		BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
+		QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+		QString  Echo = codec->toUnicode((char*)ss); 
+		qDebug() << "[connect-echo   :]\n" << Echo +"\n"; 
+		FreeMemory(ss);
+	} 
+	catch (std::runtime_error& e) {
+		std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+		UnloadLibrary(hm);
+	}
+	return 0;
+}
+//============ server_status ===========================================
+int C_TransaqConnector::server_status()
+{
+	try {
+		std::cout<<"Sending 'server status' server status..."<<std::endl;
+		BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='server_status'/>"));
+		QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+		QString  en = codec->toUnicode((char*)ss); 
+		qDebug() << en+"\n"; 
+
+		FreeMemory(ss);
+	}
+	catch (std::runtime_error& e) {
+		std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+		UnloadLibrary(hm);
+		return 1;
+	}
+	return 0;
+}
+//============ get_servtime_difference ===========================================
+int C_TransaqConnector::get_servtime_difference()
+{
+	try {
+		std::cout<<"Sending 'get_servtime_difference' ..."<<std::endl;
+		BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='get_servtime_difference'/>"));
+		QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+		QString  en = codec->toUnicode((char*)ss); 
+		qDebug() << en+"\n"; 
+
+		QString success;
+		QString diff;
+		QString text;
+		bool ok=ParseResult(en,success,"diff",diff,text);
+		_ASSERTE(ok);
 // 			QXmlStreamReader xml(en);
 // 			while (!xml.atEnd() && !xml.hasError()){
 // 				xml.readNext();
@@ -646,316 +646,317 @@ bool CALLBACK acceptor(BYTE *pData)
 // 						diff = attributes.value("diff").toString();
 // 				}
 // 			}
-			if (success=="true")
-				servtime_difference=diff.toInt();
+		if (success=="true")
+			servtime_difference=diff.toInt();
 
-			FreeMemory(ss);
-		}
-		catch (std::runtime_error& e) {
-			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
-			UnloadLibrary(hm);
-			return 1;
-		}
-		return 0;
+		FreeMemory(ss);
 	}
-	//============ subscribe (quotes only) ===========================================
-	int C_TransaqConnector::subscribe(QList<QString>& SeccodeList)
-	{
-		try {
-			std::cout<<"Sending 'subscribe' command..."<<std::endl;
-			QString Cmd;
-			QString seccode;
-			Cmd ="<command id='subscribe'>";
-			Cmd+=	"<quotes>";
-			foreach(seccode,SeccodeList){
-				if (!TransaqConnector.mapInstrument.contains(seccode)){
-					std::cerr<< "ERROR: mapSecurity does not contains" << STR(seccode) << std::endl;
-					return 1;
-				}
-				Cmd+=	"<security>";
-				Cmd+=		"<board>"+ QString(TransaqConnector.mapInstrument[seccode].pData->Info.board) +"</board>";
-				Cmd+=		"<seccode>" + seccode + "</seccode>"  ;
-				Cmd+=	"</security>";
-			}
-			Cmd+=	"</quotes>";
-			Cmd+="</command>";
-			
-
-			qDebug() << Cmd+"\n";
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-			QString  en = codec->toUnicode((char*)ss); 
-			qDebug() << "[subscribe echo:]" << en << "\n"; 
-
-			FreeMemory(ss);
-		}
-		catch (std::runtime_error& e) {
-			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
-			UnloadLibrary(hm);
-			return 1;
-		}
-		return 0;
+	catch (std::runtime_error& e) {
+		std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+		UnloadLibrary(hm);
+		return 1;
 	}
-	//============ subscribe_ticks (list) ===========================================
-	int C_TransaqConnector::subscribe_ticks(QList<QString>& SeccodeList, unsigned long long tradeno)
-	{
-		try {
-			std::cout<<"Sending 'subscribe ticks' command..."<<std::endl;
-			QString Cmd;
-			QString seccode;
-			Cmd ="<command id='subscribe_ticks'>";
-			foreach(seccode,SeccodeList){
-				if (!TransaqConnector.mapInstrument.contains(seccode)){
-					std::cerr<< "ERROR: mapSecurity does not contains" << STR(seccode) << std::endl;
-					continue;
-				}
-				Cmd+="<security secid='" + QString(TransaqConnector.mapInstrument[seccode].pData->Info.secid) + "' tradeno='1'/>"  ;
-			}
-			Cmd+="</command>";
-			qDebug() << Cmd+"\n";
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-			QString  en = codec->toUnicode((char*)ss); 
-			qDebug() << "[subscribe_ticks echo:]"<< en << "\n"; 
-
-			FreeMemory(ss);
-		}
-		catch (std::runtime_error& e) {
-			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
-			UnloadLibrary(hm);
-			return 1;
-		}
-		return 0;
-	}
-	//============ subscribe_ticks (seccode) ===========================================
-	int C_TransaqConnector::subscribe_ticks(QString& seccode)
-	{
-		try {
-			std::cout<<"Sending 'subscribe ticks' command..."<<std::endl;
-			
-			if (!TransaqConnector.mapInstrument.contains(seccode)){
-				std::cerr<< "ERROR: TransaqConnector does not contains" << STR(seccode) << std::endl;
+	return 0;
+}
+//============ subscribe (quotes only) ===========================================
+int C_TransaqConnector::subscribe(QList<QString>& SeccodeList)
+{
+	try {
+		std::cout<<"Sending 'subscribe' command..."<<std::endl;
+		QString Cmd;
+		QString seccode;
+		Cmd ="<command id='subscribe'>";
+		Cmd+=	"<quotes>";
+		foreach(seccode,SeccodeList){
+			if (!mapInstrument.contains(seccode)){
+				std::cerr<< "ERROR: mapSecurity does not contains" << STR(seccode) << std::endl;
 				return 1;
 			}
-			QString Cmd;
-			Cmd ="<command id='subscribe_ticks'>";
 			Cmd+=	"<security>";
-			Cmd+=		"<board> TQBR </board>";
-			Cmd+=		"<seccode>"+seccode+"</seccode>";
-			Cmd+=		"<tradeno>1</tradeno>";
+			Cmd+=		"<board>"+ QString(mapInstrument[seccode].pData->Info.board) +"</board>";
+			Cmd+=		"<seccode>" + seccode + "</seccode>"  ;
 			Cmd+=	"</security>";
-			Cmd+=	"<filter>false</filter>";
-			Cmd+="</command>";
-
-			printf(STR(Cmd));
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-			QString  en = codec->toUnicode((char*)ss); 
-			qDebug() << en+"\n"; 
-
-			FreeMemory(ss);
 		}
-		catch (std::runtime_error& e) {
-			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
-			UnloadLibrary(hm);
+		Cmd+=	"</quotes>";
+		Cmd+="</command>";
+		
+
+		qDebug() << Cmd+"\n";
+		BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
+		QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+		QString  en = codec->toUnicode((char*)ss); 
+		qDebug() << "[subscribe echo:]" << en << "\n"; 
+
+		FreeMemory(ss);
+	}
+	catch (std::runtime_error& e) {
+		std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+		UnloadLibrary(hm);
+		return 1;
+	}
+	return 0;
+}
+//============ subscribe_ticks (list) ===========================================
+int C_TransaqConnector::subscribe_ticks(QList<QString>& SeccodeList, unsigned long long tradeno)
+{
+	try {
+		std::cout<<"Sending 'subscribe ticks' command..."<<std::endl;
+		QString Cmd;
+		QString seccode;
+		Cmd ="<command id='subscribe_ticks'>";
+		foreach(seccode,SeccodeList){
+			if (!mapInstrument.contains(seccode)){
+				std::cerr<< "ERROR: mapSecurity does not contains" << STR(seccode) << std::endl;
+				continue;
+			}
+			Cmd+="<security secid='" + QString(mapInstrument[seccode].pData->Info.secid) + "' tradeno='"+QString::number(tradeno)+"'/>"  ;
+		}
+		Cmd+="</command>";
+		qDebug() << Cmd+"\n";
+		BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
+		QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+		QString  en = codec->toUnicode((char*)ss); 
+		qDebug() << "[subscribe_ticks echo:]"<< en << "\n"; 
+
+		FreeMemory(ss);
+	}
+	catch (std::runtime_error& e) {
+		std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+		UnloadLibrary(hm);
+		return 1;
+	}
+	return 0;
+}
+//============ subscribe_ticks (seccode) ===========================================
+int C_TransaqConnector::subscribe_ticks(QString& seccode)
+{
+	try {
+		std::cout<<"Sending 'subscribe ticks' command..."<<std::endl;
+		
+		if (!mapInstrument.contains(seccode)){
+			std::cerr<< "ERROR: TransaqConnector does not contains" << STR(seccode) << std::endl;
 			return 1;
 		}
-		return 0;
+		QString Cmd;
+		Cmd ="<command id='subscribe_ticks'>";
+		Cmd+=	"<security>";
+		Cmd+=		"<board> TQBR </board>";
+		Cmd+=		"<seccode>"+seccode+"</seccode>";
+		Cmd+=		"<tradeno>1</tradeno>";
+		Cmd+=	"</security>";
+		Cmd+=	"<filter>false</filter>";
+		Cmd+="</command>";
+
+		printf(STR(Cmd));
+		BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
+		QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+		QString  en = codec->toUnicode((char*)ss); 
+		qDebug() << en+"\n"; 
+
+		FreeMemory(ss);
 	}
-	//============ neworder =====================================================
-	//int C_TransaqConnector::neworder(QString seccode,float price, uint quantity, QString buysell, QString& result, int& transactionid)
-	int C_TransaqConnector::neworder(QString seccode,S_NewOrder& order)
-	{
-		try {
-			std::cout<<"Sending 'neworder' command..."<<std::endl;
+	catch (std::runtime_error& e) {
+		std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+		UnloadLibrary(hm);
+		return 1;
+	}
+	return 0;
+}
+//============ neworder =====================================================
+//int C_TransaqConnector::neworder(QString seccode,float price, uint quantity, QString buysell, QString& result, int& transactionid)
+int C_TransaqConnector::neworder(QString seccode,S_NewOrder& order)
+{
+	try {
+		std::cout<<"Sending 'neworder' command..."<<std::endl;
 
-			if (!TransaqConnector.mapInstrument.contains(seccode)){
-				std::cerr<< "ERROR: TransaqConnector does not contains" << STR(seccode) << std::endl;
-				return 1;
+		if (!mapInstrument.contains(seccode)){
+			std::cerr<< "ERROR: TransaqConnector does not contains" << STR(seccode) << std::endl;
+			return 1;
+		}
+		QString Cmd;
+		Cmd ="<command id='neworder'>";
+		Cmd+=	"<security>";
+		Cmd+=		"<board> TQBR </board>";
+		Cmd+=		"<seccode>"+seccode+"</seccode>";
+		Cmd+=	"</security>";
+		Cmd+=	"<client>" CLIENT_ID "</client>";
+		Cmd+=	"<price>"+QString::number(order.price)+"</price>";
+		Cmd+=	"<quantity>"+QString::number(order.quantity)+"</quantity>";
+		Cmd+=	"<buysell>"+QString(order.buysell)+"</buysell>";
+		//Cmd+=	"<brokerref>"+brokerref+"</brokerref>";
+		Cmd+="</command>";
+
+		printf(STR(Cmd));
+		BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
+		QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+		QString  en = codec->toUnicode((char*)ss); 
+		qDebug() << en+"\n"; 
+
+		FreeMemory(ss);
+		QString success;
+		QString transactionid;
+		QString text;
+		if (ParseResult(en,success,"transactionid",transactionid,text)){
+			if (success=="true"){
+				order.transaq.success=true;
+				order.transaq.transactionid=transactionid.toUInt();
 			}
-			QString Cmd;
-			Cmd ="<command id='neworder'>";
-			Cmd+=	"<security>";
-			Cmd+=		"<board> TQBR </board>";
-			Cmd+=		"<seccode>"+seccode+"</seccode>";
-			Cmd+=	"</security>";
-			Cmd+=	"<client>" CLIENT_ID "</client>";
-			Cmd+=	"<price>"+QString::number(order.price)+"</price>";
-			Cmd+=	"<quantity>"+QString::number(order.quantity)+"</quantity>";
-			Cmd+=	"<buysell>"+QString(order.buysell)+"</buysell>";
-			//Cmd+=	"<brokerref>"+brokerref+"</brokerref>";
-			Cmd+="</command>";
+			else if (success=="false"){
+				order.transaq.success=false;
+				strncpy(order.transaq.result,STR(text),128);
+			}
+			
+			//return transactionid.toInt();
+		}
+		
+		
+	}
+	catch (std::runtime_error& e) {
+		std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+		UnloadLibrary(hm);
+		return 1;
+	}
+	return 0;
+}
 
-			printf(STR(Cmd));
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-			QString  en = codec->toUnicode((char*)ss); 
-			qDebug() << en+"\n"; 
+int C_TransaqConnector::cancelorder(S_CancelOrder& order)
+{
+	try {
+		std::cout<<"Sending 'cancle order' command..."<<std::endl;
 
-			FreeMemory(ss);
-			QString success;
-			QString transactionid;
-			QString text;
-			if (ParseResult(en,success,"transactionid",transactionid,text)){
-				if (success=="true"){
-					order.transaq.success=true;
-					order.transaq.transactionid=transactionid.toUInt();
-				}
-				else if (success=="false"){
-					order.transaq.success=false;
-					strncpy(order.transaq.result,STR(text),128);
-				}
+		QString Cmd;
+		Cmd ="<command id='cancelorder'>";
+		Cmd+=	"<transactionid>";
+		Cmd+=		QString::number(order.transactionid);
+		Cmd+=	"</transactionid>";
+		Cmd+="</command>";
+
+		printf(STR(Cmd));
+		BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
+		QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+		QString  en = codec->toUnicode((char*)ss); 
+		qDebug() << en+"\n"; 
+
+		FreeMemory(ss);
+		QString success;
+		QString dummy;
+		QString result;
+
+		if (ParseResult(en,success,"dummy",dummy,result)){
+			if (success=="true"){
+				order.transaq.success=true;
+				//order.transaq.transactionid=transactionid.toUInt();
+			}
+			else if (success=="false"){
+				order.transaq.success=false;
+				strncpy(order.transaq.result,STR(result),128);
 				
-				//return transactionid.toInt();
-			}
-			
-			
-		}
-		catch (std::runtime_error& e) {
-			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
-			UnloadLibrary(hm);
-			return 1;
-		}
-		return 0;
-	}
-
-	int C_TransaqConnector::cancelorder(S_CancelOrder& order)
-	{
-		try {
-			std::cout<<"Sending 'cancle order' command..."<<std::endl;
-
-			QString Cmd;
-			Cmd ="<command id='cancelorder'>";
-			Cmd+=	"<transactionid>";
-			Cmd+=		QString::number(order.transactionid);
-			Cmd+=	"</transactionid>";
-			Cmd+="</command>";
-
-			printf(STR(Cmd));
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>(STR(Cmd)));
-			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-			QString  en = codec->toUnicode((char*)ss); 
-			qDebug() << en+"\n"; 
-
-			FreeMemory(ss);
-			QString success;
-			QString dummy;
-			QString result;
-
-			if (ParseResult(en,success,"dummy",dummy,result)){
-				if (success=="true"){
-					order.transaq.success=true;
-					//order.transaq.transactionid=transactionid.toUInt();
-				}
-				else if (success=="false"){
-					order.transaq.success=false;
-					strncpy(order.transaq.result,STR(result),128);
-					
-				}
-
-				//strncpy(order)
-				//return transactionid.toInt();
 			}
 
+			//strncpy(order)
+			//return transactionid.toInt();
+		}
 
-		}
-		catch (std::runtime_error& e) {
-			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
-			UnloadLibrary(hm);
-			return 1;
-		}
+
+	}
+	catch (std::runtime_error& e) {
+		std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+		UnloadLibrary(hm);
+		return 1;
+	}
+	return 0;
+}
+
+
+//============ get_securities  ===========================================
+int C_TransaqConnector::get_securities(){
+		//В команде 'get_securites' идентификаторы приведены для примера.
+		//В реальном коде необходимо использовать данные, присылаемые сервером
+		std::cout<<"Sending \"get_securities\" command..."<<std::endl;
+		BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='get_securities'></command>"));
+		QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+		QString  en = codec->toUnicode((char*)ss); 
+		qDebug() << en+"\n"; 
+		FreeMemory(ss);
 		return 0;
+}
+//============ change_pass  ===========================================
+int C_TransaqConnector::change_pass(){
+	try{	
+		std::cout<<"Sending \"change_pass\" command..."<<std::endl;
+		BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='change_pass' oldpass='' newpass=''></command>"));
+		QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+		QString  en = codec->toUnicode((char*)ss); 
+		qDebug() << en+"\n"; 
+		FreeMemory(ss);
 	}
+	catch (std::runtime_error& e) {
+		std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
+		UnloadLibrary(hm);
+		return 1;
+	}
+	return 0;
+}
+//=====================================================================
+/*
+C_TransaqConnector& C_TransaqConnector::operator<< (QString seccode){
+	listActive << seccode;
+	C_Instrument Instrument;
+	bool ok=Instrument.Create(seccode);
+	qDebug()<< "Instrument" << seccode << "created";
+	_ASSERTE(ok);
+	//Instrument.pQuoteLog= new C_XML_Logger(seccode+"_quote.xml");
+	//Instrument.pQuoteLog->Header();
+	//Instrument.pTickLog= new C_XML_Logger(seccode+"_tick.xml");
+	//Instrument.pTickLog->Header();
+	//bool ok;
+	
+	mapInstrument[seccode]=Instrument;
+	
+	return *this;
+}*/
+//C_TransaqConnector& C_TransaqConnector::operator<< (Qlist<QString>& seccode){
+//	
+//	return *this;
+//}
+bool C_TransaqConnector::isConnected(){
+	//while (isBusy)
+	//	Sleep(500);
+	//server_status();
+	//Sleep(500);
+	//while (isBusy)
+	//	Sleep(500);
+	return (ServerStatus.connected=="true");
+}
 
-
-	//============ get_securities  ===========================================
-	int C_TransaqConnector::get_securities(){
-			//В команде 'get_securites' идентификаторы приведены для примера.
-			//В реальном коде необходимо использовать данные, присылаемые сервером
-			std::cout<<"Sending \"get_securities\" command..."<<std::endl;
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='get_securities'></command>"));
-			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-			QString  en = codec->toUnicode((char*)ss); 
-			qDebug() << en+"\n"; 
-			FreeMemory(ss);
-			return 0;
-	}
-	//============ change_pass  ===========================================
-	int C_TransaqConnector::change_pass(){
-		try{	
-			std::cout<<"Sending \"change_pass\" command..."<<std::endl;
-			BYTE* ss = SendCommand(reinterpret_cast<BYTE*>("<command id='change_pass' oldpass='' newpass=''></command>"));
-			QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-			QString  en = codec->toUnicode((char*)ss); 
-			qDebug() << en+"\n"; 
-			FreeMemory(ss);
-		}
-		catch (std::runtime_error& e) {
-			std::cout<<"A fatal error occurred: "<<e.what()<<std::endl;
-			UnloadLibrary(hm);
-			return 1;
-		}
-		return 0;
-	}
-	//=====================================================================
-	C_TransaqConnector& C_TransaqConnector::operator<< (QString seccode){
-		listActive << seccode;
-		C_Instrument Instrument;
-		bool ok=Instrument.Create(seccode);
-		qDebug()<< "Instrument" << seccode << "created";
-		_ASSERTE(ok);
-		//Instrument.pQuoteLog= new C_XML_Logger(seccode+"_quote.xml");
-		//Instrument.pQuoteLog->Header();
-		//Instrument.pTickLog= new C_XML_Logger(seccode+"_tick.xml");
-		//Instrument.pTickLog->Header();
-		//bool ok;
-		
-		mapInstrument[seccode]=Instrument;
-		
-		return *this;
-	}
-	//C_TransaqConnector& C_TransaqConnector::operator<< (Qlist<QString>& seccode){
-	//	
-	//	return *this;
-	//}
-	bool C_TransaqConnector::isConnected(){
-		//while (isBusy)
-		//	Sleep(500);
-		//server_status();
-		//Sleep(500);
-		//while (isBusy)
-		//	Sleep(500);
-		return (ServerStatus.connected=="true");
-	}
-
-	void C_TransaqConnector::run(){
-		qDebug() << "trasaq is listening...";
-		while(1){
-			foreach(QString seccode, mapInstrument.keys()){
-				C_Instrument& Instrument=mapInstrument[seccode];
-				//---------------- new order ---------------
-				{
-					uint& head=Instrument.pData->NewOrders.head;
-					uint& tail=Instrument.pData->NewOrders.tail;
-					while(head>tail){
-						S_NewOrder& order=Instrument.pData->NewOrders[tail];
-						neworder(seccode, order);
-						tail++;
-					}
-				}
-				//------------------ cancle order--------------
-				{
-					uint& head=Instrument.pData->CancelOrders.head;
-					uint& tail=Instrument.pData->CancelOrders.tail;
-					while(head>tail){
-						S_CancelOrder& order=Instrument.pData->CancelOrders[tail];
-						cancelorder(order);
-						tail++;
-					}
+void C_TransaqConnector::run(){
+	qDebug() << "trasaq is listening...";
+	while(1){
+		foreach(QString seccode, mapInstrument.keys()){
+			C_Instrument& Instrument=mapInstrument[seccode];
+			//---------------- new order ---------------
+			{
+				uint& head=Instrument.pData->NewOrders.head;
+				uint& tail=Instrument.pData->NewOrders.tail;
+				while(head>tail){
+					S_NewOrder& order=Instrument.pData->NewOrders[tail];
+					neworder(seccode, order);
+					tail++;
 				}
 			}
-			msleep(100);			
+			//------------------ cancle order--------------
+			{
+				uint& head=Instrument.pData->CancelOrders.head;
+				uint& tail=Instrument.pData->CancelOrders.tail;
+				while(head>tail){
+					S_CancelOrder& order=Instrument.pData->CancelOrders[tail];
+					cancelorder(order);
+					tail++;
+				}
+			}
 		}
-		
-
+		msleep(100);			
 	}
+	
+
+}

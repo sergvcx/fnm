@@ -12,10 +12,6 @@
 #include <QThread>
 #include <qtdEBUG>
 
-//class C_SharedMemoryInstrument;
-//class C_Instrument;
-
-
 #define CONNECTOR_166PLUS // пример для версии библиотеки версии 1.66 (5.02) или выше
 
 #define TACCESS_API  __declspec(dllimport)
@@ -86,12 +82,13 @@ public:
 	bool isBusy;
 	S_XML_ServerStatus ServerStatus;
 
-	QList<QString> listActive;
+	//QList<QString> listActive;
 	C_TransaqConnector();
 	~C_TransaqConnector();
 	int connect();
 	int disconnect();
 	int server_status();
+	//В tradeno указывается номер сделки, после которой надо начать отдавать тики по данному инструменту. Если 0, то с момента выполнения подписки. Чтобы получить все известные серверу тики, то можно задать заведомо малое значение tradeno, например, единицу.
 	int subscribe_ticks(QList<QString>& SeccodeList, unsigned long long tradeno=1);
 	int subscribe_ticks(QString& seccode);
 	int subscribe(QList<QString>& SeccodeList);
@@ -101,14 +98,6 @@ public:
 	//int neworder(QString seccode,float price, uint quantity, QString buysell);
 	int neworder(QString seccode,S_NewOrder& order);
 	int cancelorder(S_CancelOrder& order);
-
-	C_TransaqConnector& operator << (QString seccode);
-	//C_TransaqConnector& operator << (QList<QString>& list);
-	QMap<QString,C_Instrument> mapInstrument;	
-
-	//QQueue<S_XML_Tick> queueTick;
-	//QQueue<S_XML_QuoteInfo> queueQuote;
-
 
 	bool isConnected();
 protected:	

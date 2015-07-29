@@ -1,6 +1,6 @@
 #include "MainWindow.h"
 
-//S_EasyTicks ticks;
+//S_RingEasyTicks ticks;
 
  int main(int argc, char *argv[])
  {

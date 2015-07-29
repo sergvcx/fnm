@@ -98,7 +98,7 @@ public:
 	}
 
 	T& operator [] (size_t indx){
-		_ASSERTE(tail<=indx && indx<head);
+		//_ASSERTE(tail<=indx && indx<head);
 		return data[indx&(SIZE-1)];
 	}
 
@@ -321,7 +321,7 @@ public:
 
 struct S_InstrumentInfo{
 	char	seccode[16];
-	char	shortname[16];
+	char	shortname[128];
 	int		decimals;
 	char	active[16];
 	char	secid[16];
@@ -822,7 +822,7 @@ public:
 		return isUpdated;
 	}
 
-	bool UpdateGlass(S_Glass& Glass, int toIndex, int history=100)
+	bool UpdateGlass(S_Glass& Glass, size_t toIndex, int history=100)
 	{
 		_ASSERTE((int)toIndex>=0);
 		_ASSERTE(toIndex<head);
@@ -1214,7 +1214,7 @@ public:
 			return false;
 		}
 		if (!pSharedMemory->attach()) {
-			//_ASSERTE(false);
+			_ASSERTE(false);
 			return false;
 		}
 		pData=(C_SharedMemoryInstrument*)pSharedMemory->data();
