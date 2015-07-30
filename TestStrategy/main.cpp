@@ -278,7 +278,7 @@ uint test_datetime;
 	 
 
 	 C_Instrument Instrument;
-	 while (!Instrument.Attach("gmkn")){
+	 while (!Instrument.Attach("GMKN")){
 		 Sleep(1);
 	 }
 	 
@@ -293,8 +293,8 @@ uint test_datetime;
 			C_TestConnector TestConnector(Instrument);
 			TestConnector.Trade(Strategy);
 			TestConnector.Close(Strategy);
-			if (Instrument.pData->Trades.head>10 && Instrument.pData->Trades.head<100)
-			qDebug() << fast << slow << Strategy.cash << Strategy.commission << Strategy.cash - Strategy.commission << Instrument.pData->Trades.head;
+			if (Instrument.pData->ringEasyTrades.head>10 && Instrument.pData->ringEasyTrades.head<100)
+			qDebug() << fast << slow << Strategy.cash << Strategy.commission << Strategy.cash - Strategy.commission << Instrument.pData->ringEasyTrades.head;
 		}
  	 return 1;
 	 
@@ -307,7 +307,7 @@ uint test_datetime;
 // 
 // 	 
 // 	 //size_t idxBegin=Instrument.TickInfo.tail;
-// 	 //size_t idxEnd  =Instrument.pData->Ticks.size;
+// 	 //size_t idxEnd  =Instrument.pData->ringEasyTicks.size;
 // 	 C_SubVector<S_Tick> TickData=Instrument.TickSubVector();
 // 	
 // 	 for(float dev=0.01; dev <0.5; dev+=0.01){
@@ -336,7 +336,7 @@ uint test_datetime;
 // 		Sleep(1000);
 // 	}
 // 
-// 	if (Instrument.pData->Quotes.size==0){
+// 	if (Instrument.pData->ringEasyQuotes.size==0){
 // 		qDebug()<< "no quotes!!! press Enter...";
 // 		_getch();
 // 
@@ -357,35 +357,35 @@ uint test_datetime;
 // 						myBuy.min);
 // 
 // 	
-// 	uint idxStart=Instrument.pData->Ticks.FindAfter("2015-01-15 10:30:00");
-// 	uint idxFinal=Instrument.pData->Ticks.FindAfter("2015-01-15 18:30:00");
+// 	uint idxStart=Instrument.pData->ringEasyTicks.FindAfter("2015-01-15 10:30:00");
+// 	uint idxFinal=Instrument.pData->ringEasyTicks.FindAfter("2015-01-15 18:30:00");
 // 
 // 	uint idxBegin=idxStart;
 // 	uint idxEnd=0;
 // 	uint idxFind;
 // 	S_Glass& Glass=Instrument.Glass;
-// 	S_RingEasyTicks& Ticks=Instrument.pData->Ticks;
+// 	S_RingEasyTicks& ringEasyTicks=Instrument.pData->ringEasyTicks;
 // 	Glass.toIndex=0;
 // 
 // 	while (idxEnd<idxFinal){
-// 		idxEnd=Instrument.pData->Ticks.NextSecondIndex(idxBegin);
-// 		C_SubVector<S_Tick> TickPortion(Instrument.pData->Ticks.data, idxBegin, idxEnd);
+// 		idxEnd=Instrument.pData->ringEasyTicks.NextSecondIndex(idxBegin);
+// 		C_SubVector<S_Tick> TickPortion(Instrument.pData->ringEasyTicks.data, idxBegin, idxEnd);
 // 		
 // 
-// 		if (Instrument.pData->Quotes.FindBefore(Ticks.data[idxBegin].datetime+2, Glass.toIndex, idxFind)){
-// 			Instrument.pData->Quotes.UpdateGlass(Glass,idxFind,200);			
+// 		if (Instrument.pData->ringEasyQuotes.FindBefore(ringEasyTicks.data[idxBegin].datetime+2, Glass.toIndex, idxFind)){
+// 			Instrument.pData->ringEasyQuotes.UpdateGlass(Glass,idxFind,200);			
 // 		}
 // 
 // 		if (!Glass.listBuy.isEmpty() && !Glass.listSell.isEmpty()){
 // 			float maxSpread=Glass.listSell.first().price;
 // 			float minSpread=Glass.listBuy.first().price;
-// 			Test.Update(minSpread, maxSpread,Ticks.data[idxBegin].datetime);
+// 			Test.Update(minSpread, maxSpread,ringEasyTicks.data[idxBegin].datetime);
 // 		}
 // 		Test << TickPortion;
 // 
 // 		idxBegin=idxEnd;
 // 	}
-// 	qDebug()<< s << b << Test.Profit(Ticks.data[1000].price)*100 << "%";
+// 	qDebug()<< s << b << Test.Profit(ringEasyTicks.data[1000].price)*100 << "%";
 // 
 // }
 // 	qDebug() << "Press to continue...";
@@ -416,11 +416,11 @@ uint test_datetime;
 			Sleep(100);
 		}
 		
-		Instrument.TickInfo.tail=Instrument.pData->Ticks.head;
+		Instrument.TickInfo.tail=Instrument.pData->ringEasyTicks.head;
 		mapInstrument[seccode]=Instrument;
 	}
 
-	while(mapInstrument["SBER"].pData->Ticks.head==0){
+	while(mapInstrument["SBER"].pData->ringEasyTicks.head==0){
 		qDebug()<< "Zzzz...";
 		Sleep(1000);
 	}
@@ -433,16 +433,16 @@ uint test_datetime;
 			S_TestMatrix& Test=*mapTest[seccode];
 		
 			size_t idxBegin=Instrument.TickInfo.tail;
-			size_t idxEnd=Instrument.pData->Ticks.head;
-			C_SubVector<S_Tick> TickPortion(Instrument.pData->Ticks.data, idxBegin, idxEnd);
+			size_t idxEnd=Instrument.pData->ringEasyTicks.head;
+			C_SubVector<S_Tick> TickPortion(Instrument.pData->ringEasyTicks.data, idxBegin, idxEnd);
 			Instrument.TickInfo.tail=idxEnd;
 	
 			//QList<S_Quote> listBuyQuote;
 			//QList<S_Quote> listSellQuote;
-			//Instrument.pData->Quotes.UpdateCurrentQuotes(listBuyQuote,listSellQuote);
+			//Instrument.pData->ringEasyQuotes.UpdateCurrentQuotes(listBuyQuote,listSellQuote);
 			Instrument.UpdateGlass();
 		
-			//qDebug() << Instrument.pData->Quotes.toXML(6);
+			//qDebug() << Instrument.pData->ringEasyQuotes.toXML(6);
 			float MaxProfit=-100;
 			float Profit=-100;
 			int ij=0;
@@ -455,7 +455,7 @@ uint test_datetime;
 						if (TickPortion.size)
 							*Test.st[i][j] << TickPortion;
 					}
-					Profit = Test.st[i][j]->Profit(Instrument.pData->Ticks.refLast().price);
+					Profit = Test.st[i][j]->Profit(Instrument.pData->ringEasyTicks.refLast().price);
 					if (Profit>MaxProfit){
 						MaxProfit=Profit;
 						ij=i*10+j;
@@ -477,13 +477,13 @@ uint test_datetime;
  
 	
 // 
-// 	size_t idxBegin=0;//Instrument.pData->Ticks.size;
+// 	size_t idxBegin=0;//Instrument.pData->ringEasyTicks.size;
 // 	
 // 	uint fromIndex=0;
-// 	while(idxBegin<Instrument.pData->Ticks.size){
+// 	while(idxBegin<Instrument.pData->ringEasyTicks.size){
 // 		
-// 		size_t idxEnd=Instrument.pData->Ticks.NextSecondIndex(idxBegin);
-// 		C_SubVector<S_Tick> TickPortion(Instrument.pData->Ticks.data, idxBegin, idxEnd);
+// 		size_t idxEnd=Instrument.pData->ringEasyTicks.NextSecondIndex(idxBegin);
+// 		C_SubVector<S_Tick> TickPortion(Instrument.pData->ringEasyTicks.data, idxBegin, idxEnd);
 // 		idxBegin=idxEnd;
 // 		S1[0] << TickPortion;
 // 		//QList<S_Quote> listBuyQuote;

@@ -540,6 +540,12 @@ struct S_NewOrder
 		while (transaq.success==-1);
 		return transaq.success;
 	}
+	bool isTransaqSuccess(){
+		return (transaq.success!=-1);
+	}
+	bool isServerSuccess(){
+		return (server.accepttime>0);
+	}
 };
 
 
@@ -574,6 +580,14 @@ public:
 				return &at(i);
 		}
 		return 0;
+	}
+	bool findOrderNo(unsigned long long orderno, uint& idx){
+		//S_NewOrder* pOrder=Tail();
+		for(uint idx=tail; idx<head; idx++){
+			if (at(idx).server.orderno==orderno)
+				return true;
+		}
+		return false;
 	}
 	S_NewOrder* Insert(float price, uint quantity, char buysell, bool bymarket=false){
 		_ASSERTE(!isFull());
@@ -623,6 +637,13 @@ struct S_CancelOrder {
 		while (transaq.success==-1);
 		return (transaq.success);
 	}
+	bool isTransaqSuccess(){
+		return (transaq.success!=-1);
+	}
+	bool isServerSuccess(){
+		int ret=strcmp(result,"Заявка снята");
+		return (ret==0);
+	}
 };
 
 struct S_CancelOrders 
@@ -660,14 +681,14 @@ struct S_EasyOrders
 {
 
 
-	S_RingNewOrders NewOrders;
+	S_RingNewOrders ringNewOrders;
 	S_CancelOrders CancelOrders;
 	
 	
 	
 	void Init(){
 		CancelOrders.Init();
-		NewOrders.Init();
+		ringNewOrders.Init();
 	}
 };
 
@@ -1050,17 +1071,17 @@ class C_SharedMemoryInstrument {
 public:
 	
 	S_InstrumentInfo Info;	//! Instrtument details
-	S_RingEasyTicks	 Ticks;		//! 
-	S_RingEasyQuotes Quotes;
-	S_RingEasyTrades Trades;
-	S_RingNewOrders  NewOrders;
+	S_RingEasyTicks	 ringEasyTicks;		//! 
+	S_RingEasyQuotes ringEasyQuotes;
+	S_RingEasyTrades ringEasyTrades;
+	S_RingNewOrders  ringNewOrders;
 	S_CancelOrders CancelOrders;
 	void Init(){
-		Ticks.Init();
+		ringEasyTicks.Init();
 	//	Glasses.Init();
-		Quotes.Init();
-		Trades.Init();
-		NewOrders.Init();
+		ringEasyQuotes.Init();
+		ringEasyTrades.Init();
+		ringNewOrders.Init();
 		CancelOrders.Init();
 	}
 
@@ -1091,8 +1112,8 @@ public:
 	} TickInfo;
 
 	C_SubVector<S_Tick> TickSubVector(){
-		//C_SubVector<S_Tick> vec(pData->Ticks.data,0,pData->Ticks.size);
-		C_SubVector<S_Tick> vec(pData->Ticks.data, pData->Ticks.tail, pData->Ticks.head-pData->Ticks.tail);
+		//C_SubVector<S_Tick> vec(pData->ringEasyTicks.data,0,pData->ringEasyTicks.size);
+		C_SubVector<S_Tick> vec(pData->ringEasyTicks.data, pData->ringEasyTicks.tail, pData->ringEasyTicks.head-pData->ringEasyTicks.tail);
 		return vec;
 	}
 
@@ -1105,11 +1126,11 @@ public:
 	
 
 	bool UpdateGlass(uint toIndex=0, int history=400){
-		if (pData->Quotes.head==0)
+		if (pData->ringEasyQuotes.head==0)
 			return false;
 		if (toIndex==0)
-			toIndex=pData->Quotes.head-1;
-		return pData->Quotes.UpdateGlass(Glass,toIndex,history);
+			toIndex=pData->ringEasyQuotes.head-1;
+		return pData->ringEasyQuotes.UpdateGlass(Glass,toIndex,history);
 	}
 
 	QString Name(){
@@ -1132,13 +1153,13 @@ public:
 // 	uint WhichDateTime(uint dt){
 // 		int idx=-1;
 // 		uint i=0;
-// 		for(int i=0; i<pData->Ticks.size;i++){
-// 			if (pData->Ticks.data[i].datetime==dt){
+// 		for(int i=0; i<pData->ringEasyTicks.size;i++){
+// 			if (pData->ringEasyTicks.data[i].datetime==dt){
 // 				break;
 // 			}
 // 		}
-// 		for(idx=i; idx<pData->Ticks.size; idx++){
-// 			if (pData->Ticks.data[i].datetime!=dt){
+// 		for(idx=i; idx<pData->ringEasyTicks.size; idx++){
+// 			if (pData->ringEasyTicks.data[i].datetime!=dt){
 // 				break;
 // 			}
 // 		}
