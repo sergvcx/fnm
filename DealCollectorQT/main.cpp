@@ -97,8 +97,8 @@ reconnect:
 			S_RingEasyTicks&   Ticks=Instrument.pData->Ticks;
 			S_RingEasyQuotes& Quotes=Instrument.pData->Quotes;
 		
-			Ticks2Mysql( tick_query, seccode, Ticks,  Instrument.TickInfo.lastDateTimeInDB);
-			Quotes2Mysql(tick_query, seccode, Quotes, false );  
+			sql_wirite_ticks( tick_query, seccode, Ticks,  Instrument.TickInfo.lastDateTimeInDB);
+			sql_wirite_quotes(tick_query, seccode, Quotes, false );  
 		}
 		
 		Sleep(1000);

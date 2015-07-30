@@ -88,7 +88,7 @@ uint sql_get_last_id_from_tbl(QSqlDatabase& db, QString tbl)
 }
 
 
-void Ticks2Mysql ( QSqlQuery& query, QString seccode, S_RingEasyTicks& ticks, unsigned filterDateTime)
+void sql_wirite_ticks ( QSqlQuery& query, QString seccode, S_RingEasyTicks& ticks, unsigned filterDateTime)
 {
 	if (ticks.isEmpty())
 		return;
@@ -139,7 +139,7 @@ void Ticks2Mysql ( QSqlQuery& query, QString seccode, S_RingEasyTicks& ticks, un
 
 }
 
-void Quotes2Mysql( QSqlQuery& query, QString seccode, S_RingEasyQuotes& quotes, bool echo)
+void sql_wirite_quotes( QSqlQuery& query, QString seccode, S_RingEasyQuotes& quotes, bool echo)
 {
 
 

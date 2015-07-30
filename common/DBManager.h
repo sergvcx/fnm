@@ -15,5 +15,5 @@ uint sql_read_quotes(QSqlDatabase& db, QString StockCode, QDateTime& fromDT, QDa
 uint sql_show_tables(QSqlDatabase& db, QString suffix, QList<QString>& listTables);
 bool sql_check_database(QSqlDatabase& db);
 
-void Ticks2Mysql ( QSqlQuery& query, QString seccode, S_RingEasyTicks& ticks,    unsigned afterDateTime);
-void Quotes2Mysql( QSqlQuery& query, QString seccode, S_RingEasyQuotes& quotes,  bool echo);
+void sql_wirite_ticks ( QSqlQuery& query, QString seccode, S_RingEasyTicks& ticks,    unsigned afterDateTime);
+void sql_wirite_quotes( QSqlQuery& query, QString seccode, S_RingEasyQuotes& quotes,  bool echo);

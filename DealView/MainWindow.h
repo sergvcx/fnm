@@ -37,7 +37,7 @@ class MainWindow : public QMainWindow
 public:
 	MainWindow();
 	//void closeEvent(QCloseEvent *event);
-	void ReadProfile();
+
 	QSqlDatabase db_trading;
 	QString StockCode;
 	QLabel *labelIndex;
@@ -58,7 +58,6 @@ public slots:
 	void newFile();
 	void Draw();
 	void Attach();
-	//void StartAllDeals();
 	void about();
 	void updateStatusBar();
 	void SelectStock(int Item);
@@ -119,13 +118,6 @@ private:
 
 	QDateTime DateTime0;
 	QDateTime DateTime1;
-
-	QVector<SPortfolio*> Portfolios;
-// 	QVector<S_EasyTrade> Trade;
-// 	QVector<C_EasyQuote> Quote;
-// 	QVector<C_EasyTrade*> TimeLineTrade;
-// 	QVector<C_EasyQuote*> TimeLineQuote;
-// 	QVector<S_Tick*> TimeLineTrade;
 
 
 };

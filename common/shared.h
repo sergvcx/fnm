@@ -21,8 +21,8 @@
 #define LIMIT_KILLS  1024*16	 //32768*8
 #define LIMIT_TRADES 1024*16
 #else
-#define LIMIT_TICKS  1024*256*4		// must be power of two
-#define LIMIT_QUOTES 1024*256*4		// must be power of two
+#define LIMIT_TICKS  128*256*4		// must be power of two
+#define LIMIT_QUOTES 128*256*4		// must be power of two
 #define LIMIT_ORDERS 1024		// must be power of two
 #define LIMIT_KILLS 128 //32768*8
 #define LIMIT_TRADES 1024
@@ -1063,45 +1063,7 @@ public:
 		NewOrders.Init();
 		CancelOrders.Init();
 	}
-// 	struct {
-// 		C_FixedGlass data[LIMIT_GLASSES];
-// 		uint size;
-// 		C_FixedGlass* FindInInterval(uint datetime,uint interval, uint& fromIndex){
-// 			uint saveIndex=fromIndex;
-// 			C_FixedGlass* pGlass=data+fromIndex;
-// 			for(; fromIndex<size; fromIndex++, pGlass++){
-// 				if (datetime<=pGlass->datetime)
-// 					if (pGlass->datetime-datetime<=interval)
-// 						return pGlass;
-// 			}
-// 			fromIndex=saveIndex;
-// 			return 0;
-// 		}
-// 		C_FixedGlass* FindBefore(uint datetime, uint interval, uint& fromIndex){
-// 			fromIndex=MAX(1,fromIndex);
-// 			uint saveIndex=fromIndex;
-// 			C_FixedGlass* pGlass=data+fromIndex;
-// 			for(; fromIndex<size; fromIndex++, pGlass++){
-// 				if (datetime<pGlass->datetime){
-// 					if (pGlass->datetime-datetime<interval){
-// 						pGlass--;
-// 						fromIndex--;
-// 						//_ASSERTE(fromIndex>=0);
-// 						return pGlass;
-// 					}
-// 				}
-// 			}
-// 			fromIndex=saveIndex;
-// 			return 0;
-// 		}
-// 		void Init(){
-// 			size=0;
-// 		}
-// 	} Glasses;
 
-	
-
-	
 };
 
 //======================= C_Instrument ============================================
