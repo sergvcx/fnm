@@ -358,11 +358,11 @@ bool CALLBACK acceptor(BYTE *pData)
 			Instrument.Lock();
 			while (!queueTrade.isEmpty()){
 				S_XML_TradeInfo& xml_trade=queueTrade.head();
-				if (Instrument.pData->Trades.isFull()){
-					Instrument.pData->Trades.tail++;
-					Instrument.pData->Trades.isOverflowed=true;
+				if (Instrument.pData->ringEasyTrades.isFull()){
+					Instrument.pData->ringEasyTrades.tail++;
+					Instrument.pData->ringEasyTrades.isOverflowed=true;
 				}
-				Instrument.pData->Trades << xml_trade;
+				Instrument.pData->ringEasyTrades << xml_trade;
 				queueTrade.removeFirst();
 			}
 			Instrument.Unlock();
@@ -378,11 +378,11 @@ bool CALLBACK acceptor(BYTE *pData)
 				S_XML_OrderInfo& xml_order=queueOrder.head();
 				//if ( Instrument.pTickLog)
 				//	*Instrument.pTickLog<<tick.toXML() <<"\n";
-				if (Instrument.pData->NewOrders.isFull()){
-					Instrument.pData->NewOrders.tail++;
-					Instrument.pData->NewOrders.isOverflowed=true;
+				if (Instrument.pData->ringNewOrders.isFull()){
+					Instrument.pData->ringNewOrders.tail++;
+					Instrument.pData->ringNewOrders.isOverflowed=true;
 				}
-				bool ok=Instrument.pData->NewOrders << xml_order;
+				bool ok=Instrument.pData->ringNewOrders << xml_order;
 				_ASSERTE(ok);
 				queueOrder.removeFirst();
 			}
@@ -399,11 +399,11 @@ bool CALLBACK acceptor(BYTE *pData)
 				S_XML_Tick& xml_tick=queueTick.head();
 				//if ( Instrument.pTickLog)
 				//	*Instrument.pTickLog<<tick.toXML() <<"\n";
-				if (Instrument.pData->Ticks.isFull()){
-					Instrument.pData->Ticks.tail++;
-					Instrument.pData->Ticks.isOverflowed=true;
+				if (Instrument.pData->ringEasyTicks.isFull()){
+					Instrument.pData->ringEasyTicks.tail++;
+					Instrument.pData->ringEasyTicks.isOverflowed=true;
 				}
- 				Instrument.pData->Ticks << xml_tick;
+ 				Instrument.pData->ringEasyTicks << xml_tick;
 				queueTick.removeFirst();
 			}
 			Instrument.Unlock();
@@ -420,11 +420,11 @@ bool CALLBACK acceptor(BYTE *pData)
 				
 				if ( Instrument.QuoteInfo.pQuoteLog)
 					*Instrument.QuoteInfo.pQuoteLog << xml_quote.toXML() << "\n";
-				if (Instrument.pData->Quotes.isFull()){
-					Instrument.pData->Quotes.tail++;
-					Instrument.pData->Quotes.isOverflowed=true;
+				if (Instrument.pData->ringEasyQuotes.isFull()){
+					Instrument.pData->ringEasyQuotes.tail++;
+					Instrument.pData->ringEasyQuotes.isOverflowed=true;
 				}
- 				Instrument.pData->Quotes<< xml_quote ;
+				Instrument.pData->ringEasyQuotes<< xml_quote ;
 				queueQuote.removeFirst();
 			}
 			Instrument.Unlock();
@@ -936,10 +936,10 @@ void C_TransaqConnector::run(){
 			C_Instrument& Instrument=mapInstrument[seccode];
 			//---------------- new order ---------------
 			{
-				uint& head=Instrument.pData->NewOrders.head;
-				uint& tail=Instrument.pData->NewOrders.tail;
+				uint& head=Instrument.pData->ringNewOrders.head;
+				uint& tail=Instrument.pData->ringNewOrders.tail;
 				while(head>tail){
-					S_NewOrder& order=Instrument.pData->NewOrders[tail];
+					S_NewOrder& order=Instrument.pData->ringNewOrders[tail];
 					neworder(seccode, order);
 					tail++;
 				}

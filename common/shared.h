@@ -641,7 +641,7 @@ struct S_CancelOrder {
 		return (transaq.success!=-1);
 	}
 	bool isServerSuccess(){
-		int ret=strcmp(result,"Заявка снята");
+		int ret=strcmp(transaq.result,"Заявка снята");
 		return (ret==0);
 	}
 };

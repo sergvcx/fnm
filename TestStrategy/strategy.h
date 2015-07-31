@@ -365,10 +365,10 @@ while (isUpdated){
 
 
 
-class C_RandomStrategy{
+class C_SimpleStrategy{
 public:	
 	C_Instrument* pInstrument;
-	float money_in_hand;
+	float money;
 	float money_in_buy;
 	float commission;
 	float commission_rate;
@@ -378,10 +378,7 @@ public:
 	uint stocks_in_buy;
 
 	S_MinMax<float>		Deviation;
-	
-	//QList<S_NewOrder*> listSellOrder;
-	//QList<S_NewOrder*> listBuyOrder;
-	
+		
 	S_NewOrder* sellOrder;
 	S_NewOrder* buyOrder;
 	
@@ -389,9 +386,9 @@ public:
 	//uint fast_buy_datetime;
 
 
-	C_RandomStrategy(C_Instrument& Instrument, float Cash, int Stocks, float Commission=0.1/100){
+	C_SimpleStrategy (C_Instrument& Instrument, float Cash, int Stocks, float Commission=0.1/100){
 		pInstrument=&Instrument;
-		money_in_hand=Cash;
+		money=Cash;
 		money_in_buy=0;
 		commission=0;
 		commission_rate=Commission;
@@ -419,10 +416,10 @@ public:
 	}
 
 
-	S_NewOrder* sendNewOrder(float price, int quantity, char buysell ){
-
-		S_RingNewOrders& Orders=pInstrument->pData->ringNewOrders;
-		S_NewOrder* pOrder=Orders.Insert(price,quantity,buysell);
+	S_NewOrder* sendNewOrder(float price, int quantity, char buysell )
+	{
+		S_RingNewOrders& ringNewOrders=pInstrument->pData->ringNewOrders;
+		S_NewOrder* pOrder=ringNewOrders.Insert(price,quantity,buysell);
 
 //#ifdef TEST_MODE
 //		int static order_counter=0;
@@ -435,7 +432,6 @@ public:
 //#endif
 		while(!pOrder->isTransaqSuccess());
 		while(!pOrder->isServerSuccess());
-		
 		return pOrder;
 	}
 
@@ -444,20 +440,20 @@ public:
 	bool checkOrders(S_MinMax<float>& spread)
 	{
 		if(buyOrder){
-			if (buyOrder->price < spread.min){
+			if (buyOrder->price < spread.min*0.99){
 				if (sendCancelOrder(buyOrder)){
 					stocks_in_buy=0;
-					money_in_hand+=money_in_buy;
-					buyOrder=0;
 				}
+				buyOrder=0;
 			}
 		}
 		if(sellOrder){
-			if (sellOrder->price > spread.max){
-				if (sendCancelOrder(buyOrder)){
+			if (sellOrder->price > spread.max*1.01){
+				if (sendCancelOrder(sellOrder)){
 					stocks_in_hand+=sellOrder->quantity;
 					stocks_in_sell=0;
 				}
+				sellOrder=0;
 			}
 		}
 		return true;
@@ -471,7 +467,7 @@ public:
 		for(uint i=ringEasyTrades.tail; i<ringEasyTrades.head ;i++){
 			S_EasyTrade& Trade=ringEasyTrades[i];
 			uint idxOrder;
-			bool isOk=ringNewOrders.FindOrderNo(Trade.orderno, idxOrder);
+			bool isOk=ringNewOrders.findOrderNo(Trade.orderno, idxOrder);
 			_ASSERTE(isOk);
 			if (!isOk) continue;
 			S_NewOrder& order=ringNewOrders[idxOrder];
@@ -484,85 +480,52 @@ public:
 				_ASSERTE(buyOrder);
 				stocks_in_hand  +=Trade.quantity;
 				stocks_in_buy   -=Trade.quantity;
-				money_in_buy    -=Trade.quantity*Trade.price;
 				commission      +=Trade.quantity*Trade.price*commission_rate;
-				order.quantity-=Trade.quantity;
+				order.quantity  -=Trade.quantity;
 				if (order.quantity==0)
 					buyOrder=0;
 			} else if (Trade.buysell=='S'){
 				_ASSERTE(sellOrder);
-				money_in_hand +=Trade.quantity*Trade.price;
+				money +=Trade.quantity*Trade.price;
 				stocks_in_sell-=Trade.quantity;
 				commission+=Trade.quantity*Trade.price*commission_rate;
-				order->quantity-=Trade.quantity;
+				order.quantity-=Trade.quantity;
 				if (order.quantity==0)
 					sellOrder=0;
 			} else _ASSERTE(0);
 
 			ringEasyTrades.tail++;
-			if (order.quantity==0 && ringNewOrders.tail==idxOrder){
-				ringNewOrders.tail++;
+
+			while  (ringNewOrders.tail< ringNewOrders.head) {
+				if (ringNewOrders.refTail().quantity==0)
+					ringNewOrders.tail++;
+				else 
+					break;
 			}
-		}
-	}
-
-
-	void Update(S_MinMax<float>& spread){
-		bool isUpdated=true;
-
-		RescanTrades();
-		if (InvalidateOrders(spread)){
-
-		}
-		while (isUpdated){
-
-			isUpdated=NewOrder(spread);
 
 		}
 	}
 
 	bool makeNewOrders(S_MinMax<float>& spread)
 	{
-
-		stocks_in_buy =listFastBuyOrder.size() +listSlowBuyOrder.size();
-		stocks_in_sell=listFastSellOrder.size()+listSlowSellOrder.size();
-		_ASSERTE(stocks_in_buy+stocks_in_sell<3);
-		if (stocks_in_buy+stocks_in_sell==2) 
-			return false; // no new orders
-
-		// Add new orders
-		if (stocks_in_buy==0){
-			if (stocks_in_sell==0 ){			// Start slow sell
-				S_NewOrder* pOrder=NewSlowOrder('S',spread); //slow
-				stocks_in_sell=1;
-				stocks_in_hand--;
-				listSlowSellOrder<<pOrder;
-				return true;
-			}
-			else if (stocks_in_sell==1){		// Start fast sell
-				S_NewOrder* pOrder=NewFastOrder('S',spread); //slow
-				stocks_in_sell=2;
-				stocks_in_hand--;
-				listFastSellOrder<<pOrder;
-				return true;
-			}
-			_ASSERTE(false);
+		if (stocks_in_sell==0 && stocks_in_hand){
+			sellOrder=sendNewOrder(spread.max,stocks_in_hand,'S');
+			_ASSERTE(sellOrder);
+			stocks_in_sell=stocks_in_hand;
+			stocks_in_hand=0;
+			return true;
 		}
 
-		if (stocks_in_buy==0){		// slow buy
-			buyOrder=sendNewOrder(spread.min,3,'B',);
+		if (stocks_in_buy==0 ){		//  buy
+			buyOrder=sendNewOrder(spread.min,3,'B');
 			stocks_in_buy=3;
-
-			listSlowBuyOrder<<pOrder;
-			return true;
-		}
-		if (stocks_in_sell==0 && stocks_in_buy==1){		// fast buy
-			S_NewOrder* pOrder=NewFastOrder('B',spread); //fast
-			stocks_in_buy=2;
-			listFastBuyOrder<<pOrder;
-			return true;
 		}
 		return false;
 	}
 
+	void update(S_MinMax<float>& spread){
+		rescanTrades();
+		checkOrders(spread);
+		makeNewOrders(spread);
+	}
 };

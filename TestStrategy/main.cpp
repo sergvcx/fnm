@@ -277,10 +277,16 @@ uint test_datetime;
 	 
 	 
 
-	 C_Instrument Instrument;
-	 while (!Instrument.Attach("GMKN")){
-		 Sleep(1);
-	 }
+	C_Instrument Instrument;
+	while (!Instrument.Attach("GMKN")){
+		Sleep(1);
+	}
+	
+	C_SimpleStrategy Simple(Instrument,1000,0);
+	
+
+
+
 	 
 	int counter=0;
 	for (float fast=0.01/100; fast< 0.5/100; fast+=0.01/100)

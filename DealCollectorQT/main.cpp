@@ -94,8 +94,8 @@ reconnect:
 	while (Text2Time("09:55:00")<QTime::currentTime() && QTime::currentTime()<Text2Time("21:00:00")){
 		foreach(QString seccode , mapInstrument.keys()){
 			C_Instrument& Instrument=mapInstrument[seccode];
-			S_RingEasyTicks&   Ticks=Instrument.pData->Ticks;
-			S_RingEasyQuotes& Quotes=Instrument.pData->Quotes;
+			S_RingEasyTicks&   Ticks=Instrument.pData->ringEasyTicks;
+			S_RingEasyQuotes& Quotes=Instrument.pData->ringEasyQuotes;
 		
 			sql_wirite_ticks( tick_query, seccode, Ticks,  Instrument.TickInfo.lastDateTimeInDB);
 			sql_wirite_quotes(tick_query, seccode, Quotes, false );  
