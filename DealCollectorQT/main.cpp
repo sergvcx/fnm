@@ -59,11 +59,16 @@ reconnect:
 
 	// ----------- Start transaq ---------------------------------------
 	TransaqConnector.connect();
-	while (!TransaqConnector.isConnected()){
-		qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
-		Sleep(1000);
+	for(int i=0; i<100; i++){
+		if (!TransaqConnector.isConnected()){
+			qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
+			Sleep(1000);
+		}
+		else break;
 	}
 	qDebug() << "Connected=" << TransaqConnector.ServerStatus.connected << " state=" << TransaqConnector.ServerStatus.status <<"\n";
+	if (!TransaqConnector.isConnected())
+		goto reconnect;
 
 	TransaqConnector.get_servtime_difference();
 	if (TransaqConnector.servtime_difference!=0) {
