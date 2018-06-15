@@ -536,12 +536,15 @@ void MainWindow::ReadDeal()
 	Instrument.Create(StockCode+"_db");
 	Instrument.Init();
 
-	sql_read_ticks (db_trading, StockCode, DateTime0, DateTime1, Instrument.pData->Ticks);
-	sql_read_quotes(db_trading, StockCode, DateTime0, DateTime1, Instrument.pData->Quotes);
+	//sql_read_ticks (db_trading, StockCode, DateTime0, DateTime1, Instrument.pData->Ticks);
+	sql_read_ticks(db_trading, StockCode, DateTime0, DateTime1, Instrument.pData->ringEasyTicks);
+	//sql_read_quotes(db_trading, StockCode, DateTime0, DateTime1, Instrument.pData->Quotes);
+	sql_read_quotes(db_trading, StockCode, DateTime0, DateTime1, Instrument.pData->ringEasyQuotes);
 
-	uint lastIdx=Instrument.pData->Ticks.head-1;
-	qGraphField->minDateTime=Instrument.pData->Ticks.data[0].datetime;
-	qGraphField->maxDateTime=Instrument.pData->Ticks.data[lastIdx].datetime;
+	//uint lastIdx=Instrument.pData->Ticks.head-1;
+	uint lastIdx = Instrument.pData->ringEasyTicks.head - 1;
+	qGraphField->minDateTime=Instrument.pData->ringEasyTicks.data[0].datetime;
+	qGraphField->maxDateTime=Instrument.pData->ringEasyTicks.data[lastIdx].datetime;
 }
 /*
 //--------------------------------------------

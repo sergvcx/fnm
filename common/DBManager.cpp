@@ -7,6 +7,7 @@ bool sql_open_database(QString db_name, QSqlDatabase& db_trading)
 {
 	uint unic=QDateTime::currentDateTime().toTime_t();
 	db_trading = QSqlDatabase::addDatabase("QMYSQL",db_name+QString::number(unic));
+	//db_trading = QSqlDatabase::addDatabase("QSQLITE", db_name + QString::number(unic));
 	db_trading.setHostName("");
 	db_trading.setDatabaseName(db_name);
 	db_trading.setUserName("root");
@@ -88,7 +89,7 @@ uint sql_get_last_id_from_tbl(QSqlDatabase& db, QString tbl)
 }
 
 
-void sql_wirite_ticks ( QSqlQuery& query, QString seccode, S_RingEasyTicks& ticks, unsigned filterDateTime)
+void sql_write_ticks ( QSqlQuery& query, QString seccode, S_RingEasyTicks& ticks, unsigned filterDateTime)
 {
 	if (ticks.isEmpty())
 		return;
@@ -139,13 +140,74 @@ void sql_wirite_ticks ( QSqlQuery& query, QString seccode, S_RingEasyTicks& tick
 
 }
 
-void sql_wirite_quotes( QSqlQuery& query, QString seccode, S_RingEasyQuotes& quotes, bool echo)
+
+
+
+void sql_write_trades(QSqlQuery& query, QString seccode, S_RingEasyTrades& trades, unsigned filterDateTime)
+{
+	if (trades.isEmpty())
+		return;
+
+	
+
+	int isOk = query.prepare("INSERT INTO " + seccode + "_deal (trdate,trtime,volume,price,trtype)  VALUES (?, ?, ?, ?, ?)");
+	_ASSERTE(isOk);
+
+	QVariantList listDate;
+	QVariantList listTime;
+	QVariantList listVolume;
+	QVariantList listPrice;
+	QVariantList listType;
+
+	//if (echo)
+	//	qDebug()<< "<" +seccode+ ">";
+
+
+	while (trades.tail<trades.head) {
+		S_EasyTrade& trade = trades.refTail();
+
+
+		if (trade.datetime>filterDateTime) {
+			QString date = DateTime2TextDate(trade.datetime);
+			printf(STR(date));
+			listDate << date;
+			QString time = DateTime2TextTime(trade.datetime);
+			listTime << time;
+			listVolume << trade.quantity;
+			listPrice << trade.price;
+			listType << ((trade.buysell=='S')? (1) << 8:(-1)<<8);
+		}
+		trades.tail++;
+	}
+	//if (echo)
+	//	qDebug()<< "</" +seccode+ ">";
+
+	query.addBindValue(listDate);
+	query.addBindValue(listTime);
+	query.addBindValue(listVolume);
+	query.addBindValue(listPrice);
+	query.addBindValue(listType);
+
+	printf("execBatch...");
+	if (!query.execBatch()) {
+		printf(ASCII(query.lastQuery()));
+		printf("\n");
+		printf(ASCII(query.lastError().text()));
+		printf("\n");
+		QMessageBox::critical(0, QObject::tr("Database Error"), query.lastError().text());
+	}
+
+	//printf("ok! %d ticks inserted\n",size);
+
+}
+
+void sql_write_quotes( QSqlQuery& query, QString seccode, S_RingEasyQuotes& quotes, bool echo)
 {
 
 
 	if (quotes.isEmpty())
 		return;
-
+// HERE ERROR AFTER WEEKEND !!!!
 	int isOk=query.prepare("INSERT INTO " + seccode+ "_quote (datetime,price,buy,sell)  VALUES (?, ?, ?, ?)");
 	_ASSERTE(isOk);
 

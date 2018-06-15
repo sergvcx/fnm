@@ -10,11 +10,14 @@ INCLUDEPATH += "$(MYSQL)"\include
 INCLUDEPATH += ..\common
 SOURCES     += ..\common\shared.cpp
 SOURCES     += ..\common\dbmanager.cpp
+SOURCES     += ..\common\TransaqConnector.cpp
+
 QT += sql
 DEFINES += _CRT_SECURE_NO_DEPRECATE
 HEADERS += ..\common\main.h
 HEADERS += ..\common\shared.h
 HEADERS += ..\common\dbmanager.h
+HEADERS += ..\common\TransaqConnector.h
 
 #HEADERS += ..\common\DealContainer.h
 

@@ -77,7 +77,7 @@ void QGraphField::paintEvent(QPaintEvent * event)
 	int x0,y0,x1,y1;
 	QRect VisibleRect=event->rect();
 	//int LastIndex=vecDeal.size()-1;
-	S_RingEasyTicks& Ticks=pInstrument->pData->Ticks;
+	S_RingEasyTicks& Ticks=pInstrument->pData->ringEasyTicks;
 
 	//int LastIndex=Ticks.size-1;
 	int LastIndex=Ticks.head-1;
@@ -342,7 +342,7 @@ if (!bViewOfferFlag){
 }
 //============================================
 else {
-	S_RingEasyTicks& Ticks=pInstrument->pData->Ticks;
+	S_RingEasyTicks& Ticks=pInstrument->pData->ringEasyTicks;
 	S_Tick* pTick=Ticks.data;
 	painter.setPen(BlackPen);
 
@@ -437,7 +437,7 @@ else {
 int QGraphField::Rescale(){
 	minY= 1000000;	
 	maxY=0;
-	S_RingEasyTicks& Ticks=pInstrument->pData->Ticks;
+	S_RingEasyTicks& Ticks=pInstrument->pData->ringEasyTicks;
 	//int DataSize=vecDeal.size();
 	//int DataSize=Ticks.size;
 	
@@ -513,7 +513,7 @@ void GetStat(S_RingEasyTicks& vecDeal, SStatistic &Stat){
 void QGraphField::mousePressEvent(QMouseEvent *event){
 	QPoint Point=event->pos();
 //	int button	=event->button();
-	S_RingEasyTicks& Ticks=pInstrument->pData->Ticks;
+	S_RingEasyTicks& Ticks=pInstrument->pData->ringEasyTicks;
 	//int idx=MIN(vecDeal.size()-1,pix2x(Point.x()));
 	int idx=MIN(Ticks.head-1,pix2x(Point.x()));
 	clickTime=Ticks[idx].datetime;
@@ -556,16 +556,16 @@ void QGraphField::mousePressEvent(QMouseEvent *event){
 
 
 				
-				if (pInstrument->pData->Quotes.head){
+				if (pInstrument->pData->ringEasyQuotes.head){
 					
 					S_Glass& Glass=pInstrument->Glass;
 					uint index;
 					//uint dt=clickTime;//Ticks.data[idx].datetime;
 					if (clickTime)
 						//if (pInstrument->pData->Quotes.FindBefore(Ticks.data[idx].datetime, Glass.toIndex, index)){
-						if (pInstrument->pData->Quotes.FindBefore(clickTime, Glass.toIndex, index)){
+						if (pInstrument->pData->ringEasyQuotes.FindBefore(clickTime, Glass.toIndex, index)){
 							//QDateTime dt; dt.setTime_t(Ticks.data[idx].datetime);
-							pInstrument->pData->Quotes.UpdateGlass(Glass,index,400);
+							pInstrument->pData->ringEasyQuotes.UpdateGlass(Glass,index,400);
 						}
 				}
 
@@ -597,7 +597,7 @@ void QGraphField::mousePressEvent(QMouseEvent *event){
 }
 void QGraphField::mouseMoveEvent(QMouseEvent *event){
 	QPoint Point=event->pos();
-	S_RingEasyTicks& Ticks=pInstrument->pData->Ticks;
+	S_RingEasyTicks& Ticks=pInstrument->pData->ringEasyTicks;
 	int idx;
 	if (!bViewOfferFlag){
 		idx=MIN(Ticks.head-1,pix2x(Point.x()));

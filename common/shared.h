@@ -21,9 +21,9 @@
 #define LIMIT_KILLS  1024*16	 //32768*8
 #define LIMIT_TRADES 1024*16
 #else
-#define LIMIT_TICKS  128*256*4		// must be power of two
-#define LIMIT_QUOTES 128*256*4		// must be power of two
-#define LIMIT_ORDERS 1024		// must be power of two
+#define LIMIT_TICKS  128*256*16		// must be power of two
+#define LIMIT_QUOTES 128*256*4*4		// must be power of two
+#define LIMIT_ORDERS 16*1024		// must be power of two
 #define LIMIT_KILLS 128 //32768*8
 #define LIMIT_TRADES 1024
 #endif
@@ -93,7 +93,7 @@ public:
 	}
 	
 	T& at(size_t indx){
-		_ASSERTE(tail<=indx && indx<head);
+		//_ASSERTE(tail<=indx && indx<head);
 		return data[indx&(SIZE-1)];
 	}
 
@@ -130,6 +130,18 @@ inline QString DateTime2Text(QDateTime& dt)
 inline QDateTime Text2DateTime(QString date_time)
 {
 	return QDateTime::fromString(date_time,"yyyy-MM-dd hh:mm:ss");
+}
+
+inline QString DateTime2TextTime(uint datetime) {
+	QDateTime dt;
+	dt.setTime_t(datetime);
+	
+	return dt.toString("hhmmss");
+}
+inline QString DateTime2TextDate(uint datetime) {
+	QDateTime dt;
+	dt.setTime_t(datetime);
+	return dt.toString("yyyyMMdd");
 }
 
 inline QTime Text2Time(QString time)
@@ -380,6 +392,9 @@ struct S_XML_QuoteInfo {
 struct S_Quote {
 	int	  quantity;
 	float price;
+	void echo() {
+		printf("%d\t%f.2\n", quantity, price);
+	}
 	//QDateTime datetime_create;
 	//QDateTime datetime_update;
 };
@@ -396,6 +411,29 @@ struct S_Glass
 	S_Glass(){
 		fromIndex=0;
 		toIndex=0;
+	}
+	void echo() {
+		//QListIterator<S_Quote> i(listSell);
+		printf("---------------\n");
+		//i.toBack();
+		///while (i.hasPrevious()) {
+	//		const S_Quote q = i.previous();// .echo();
+		//	q.echo();
+	//	}
+		foreach(S_Quote item, listSell)
+		{
+			item.echo();
+			// will items always be processed in numerical order by index?
+			// do something with "item";
+		}
+
+		printf("   \n");
+		foreach(S_Quote item, listBuy)
+		{
+			item.echo();
+			// will items always be processed in numerical order by index?
+			// do something with "item";
+		}
 	}
 };
 // void DiffGlass(QList<S_Quote>& listPrevBuyQuote, QList<S_Quote>& listPrevSellQuote, 
@@ -423,7 +461,10 @@ struct S_XML_OrderInfo{
 	QString price;
 	QString quantity;
 	QString result; //сообщение биржи в случае отказа выставить  заявку
-
+	QString toXML() {
+		QString XML = "<S_XML_OrderInfo transactionid='" + transactionid +	"' orderno='" + orderno + "' seccode='" + seccode + "' client='" + client + "' status='" + status + "' time='" + time + "' quantity='" + quantity + "' price='" + price +  "'/>";
+		return XML;
+	}
 };
 
 struct S_XML_TradeInfo
@@ -452,7 +493,7 @@ struct S_EasyTrade
 {
 	unsigned long long tradeno;
 	unsigned long long orderno;
-	uint time;
+	uint datetime;
 	uint quantity;
 	char buysell;
 	float commision;
@@ -490,10 +531,32 @@ public:
 		trade.currentpos=Trade.currentpos.toUInt();
 		trade.quantity=Trade.quantity.toUInt();
 		trade.price=Trade.price.toFloat();
-		trade.time=Text2DateTime(Trade.time).toTime_t();
-		trade.time=Text2DateTime(Trade.time).toTime_t();
+		trade.datetime= QDateTime::fromString(Trade.time, "dd.MM.yyyy hh:mm:ss").toTime_t();
 		head++;
 		return true;
+
+/*
+		//qDebug() << Tick.tradetime;
+		QDateTime dt = QDateTime::fromString(Tick.tradetime, "dd.MM.yyyy hh:mm:ss");
+		ok = dt.isValid();
+		if (ok) {
+			NewTick.datetime = dt.toTime_t();
+			if (NewTick.datetime == LastTick.datetime) {
+				NewTick.type |= IN_SECOND;
+				LastTick.type |= IN_SECOND;
+			}
+			else
+				NewTick.type |= FIRST_IN_SECOND;
+		}
+		if (Tick.buysell == "S")
+			//NewTick.SetSellType();
+			NewTick.SetBuyType();
+		else
+			//NewTick.SetBuyType();
+			NewTick.SetSellType();
+			*/
+
+
 	}
 	bool Insert(float price, uint quantity, char buysell, long long orderno, long long tradeno, uint datetime){
 		_ASSERTE(!isFull());
@@ -505,7 +568,7 @@ public:
 		Trade.buysell=buysell;
 		Trade.orderno=orderno;
 		Trade.tradeno=tradeno;
-		Trade.time = datetime;
+		Trade.datetime = datetime;
 		head++;
 		return true;
 	}
@@ -520,6 +583,7 @@ struct S_NewOrder
 	uint quantity;
 	char buysell;
 	bool bymarket;
+	char status[16];
 	//--------- transaq reply ------
 	struct {
 		int  success;
@@ -544,7 +608,20 @@ struct S_NewOrder
 		return (transaq.success!=-1);
 	}
 	bool isServerSuccess(){
-		return (server.accepttime>0);
+		//return (server.accepttime>0);
+		return (server.orderno>0);
+	}
+	void echo() {
+
+	}
+	bool isCancelled() {
+		return !strcmp("cancelled", status);
+	}
+	bool isActive() {
+		return !strcmp("active", status);
+	}
+	bool isMatched() {
+		return !strcmp("matched", status);
 	}
 };
 
@@ -606,7 +683,7 @@ public:
 
 		return &order;
 	}
-	bool operator << (S_XML_OrderInfo& Reply)
+	bool validate(S_XML_OrderInfo& Reply)
 	{
 		uint transactionid=Reply.transactionid.toUInt();
 		_ASSERTE(transactionid);
@@ -618,6 +695,7 @@ public:
 				order.server.quantity=Reply.quantity.toUInt();
 				order.server.balance =Reply.balance.toUInt();
 				strncpy(order.server.result,STR(Reply.result),127);
+				strncpy(order.status, STR(Reply.status), 16);
 				return true;
 			}
 		}
@@ -1111,6 +1189,9 @@ public:
 		S_RingEasyTicks* pTicks;
 	} TickInfo;
 
+	struct {
+		uint lastDateTimeInDB;
+	} TradeInfo;
 	C_SubVector<S_Tick> TickSubVector(){
 		//C_SubVector<S_Tick> vec(pData->ringEasyTicks.data,0,pData->ringEasyTicks.size);
 		C_SubVector<S_Tick> vec(pData->ringEasyTicks.data, pData->ringEasyTicks.tail, pData->ringEasyTicks.head-pData->ringEasyTicks.tail);
@@ -1173,8 +1254,8 @@ public:
 	//}
 	
 	
-	bool Create(QString seccode){
-		pSharedMemory=new QSharedMemory(seccode);
+	bool Create(QString seccode, QString suffix){
+		pSharedMemory=new QSharedMemory(seccode+ suffix);
 		//if (!pSharedMemory)
 		//	return false;
 		_ASSERTE(pSharedMemory);

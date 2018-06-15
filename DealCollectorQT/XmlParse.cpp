@@ -2,7 +2,7 @@
 #include <iostream>
 #include "main.h"
 #include "shared.h"
-
+#define STR(a) a.toAscii().data()
 bool ParseResult(QString& result, QString& success_value, QString att_key, QString& att_value, QString& result_text)
 {
 	QXmlStreamReader xml(result);
@@ -348,6 +348,7 @@ int ParseTrade(QXmlStreamReader& xml,S_XML_TradeInfo& trade)
 
 			if(xml.name() == "time") {
 				trade.time= xml.readElementText();
+				printf(STR(trade.time));
 				continue;
 			}
 
